@@ -3,6 +3,7 @@ package plantillas
 import (
 	"bytes"
 	"hash/crc32"
+	"horus-es/go-util/errores"
 	"horus-es/go-util/parse"
 	"log"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/davrux/go-smtptester"
+	"github.com/stretchr/testify/assert"
 )
 
 type tParte struct {
@@ -82,43 +84,65 @@ func crc(t *testing.T, fn string, start, end string) uint32 {
 
 func TestMergeXhtmlTemplate(t *testing.T) {
 	p, err := os.ReadFile("template_test.html")
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	assert.Nil(t, err)
 	f, err := MergeXhtmlTemplate("template_test.html", string(p), factura, "", parse.DMA, parse.EUR)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	assert.Nil(t, err)
 	os.WriteFile("template_test_out.html", []byte(f), 0666)
-	crc1 := crc(t, "template_test_out.html", "", "")
-	crc2 := crc(t, "template_test_expect.html", "", "")
-	if crc1 != crc2 {
-		t.Fatal("HTMLs diferentes")
-	}
+	crc1 := crc(t, "template_test_expect.html", "", "")
+	crc2 := crc(t, "template_test_out.html", "", "")
+	assert.Equal(t, crc1, crc2)
 }
 
-func TestGeneraPDF(t *testing.T) {
+func ExampleMergeXhtmlTemplate() {
+	// Cargar plantilla
+	plantilla, err := os.ReadFile("plantilla.html")
+	errores.PanicIfError(err)
+	// Fusionar plantilla con estructura factura
+	f, err := MergeXhtmlTemplate(
+		"html",
+		string(plantilla),
+		factura,
+		"/assets",
+		parse.DMA,
+		parse.EUR,
+	)
+	errores.PanicIfError(err)
+	// Guardar salida
+	os.WriteFile("pagina.html", []byte(f), 0666)
+}
+
+func TestGenerateXhtmlPdf(t *testing.T) {
 	plantilla, err := os.ReadFile("template_test.html")
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	assert.Nil(t, err)
 	wd, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	assert.Nil(t, err)
 	wd = "file:///" + strings.ReplaceAll(wd, "\\", "/")
-	err = GenerateXhtmlPdf("template_test.html", string(plantilla), factura, wd, parse.DMA, parse.EUR, "template_test_out.pdf", "--no-outline")
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-	crc1 := crc(t, "template_test_out.pdf", "\n>>\n", "")
-	crc2 := crc(t, "template_test_expect.pdf", "\n>>\n", "")
-	if crc1 != crc2 {
-		t.Fatal("PDFs diferentes")
-	}
+	err = GenerateXhtmlPdf("template", string(plantilla), factura, wd, parse.DMA, parse.EUR, "template_test_out.pdf", "--no-outline")
+	assert.Nil(t, err)
+	crc1 := crc(t, "template_test_expect.pdf", "\n>>\n", "")
+	crc2 := crc(t, "template_test_out.pdf", "\n>>\n", "")
+	assert.Equal(t, crc1, crc2)
 }
 
-func TestEnviaEmail(t *testing.T) {
+func ExampleGenerateXhtmlPdf() {
+	// Carga plantilla HTML
+	plantilla, err := os.ReadFile("plantilla.html")
+	errores.PanicIfError(err)
+	// Genera fichero PDF
+	err = GenerateXhtmlPdf(
+		"pdf",
+		string(plantilla),
+		factura,
+		"file:///assets",
+		parse.DMA,
+		parse.EUR,
+		"fichero.pdf",
+		"--no-outline",
+	)
+	errores.PanicIfError(err)
+}
+
+func TestSendXhtmlMail(t *testing.T) {
 	// servidor SMTP dummy
 	s := smtptester.Standard()
 	go func() {
@@ -128,31 +152,51 @@ func TestEnviaEmail(t *testing.T) {
 		}
 	}()
 	defer s.Close()
-	time.Sleep(time.Second * 10) // Tiempo para aceptar el fw de windows
+	time.Sleep(time.Second * 10) // Tiempo para deshabilitar el fw de windows
 	// cargamos plantilla
 	plantilla, err := os.ReadFile("template_test.html")
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	assert.Nil(t, err)
 	// enviamos correo
 	from := "automaticos@horus.es"
 	to := "pablo.leon@horus.es"
 	bcc := "pablo.leon100@gmail.com"
 	err = SendXhtmlMail("template_test.html", string(plantilla), factura, "https://spark2.horus.es/assets", parse.DMA, parse.EUR, []string{"template_test_expect.pdf"},
 		from, to, "Prueba de correo", []string{bcc}, []string{bcc},
-		"localhost", 2525, "automaticos@horus.es", "NkZRdDg0SDhGSw==")
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+		"localhost", 2525, "smtpuser", "c2VjcmV0bw==")
+	assert.Nil(t, err)
 	// comparamos
 	eml, ok := smtptester.GetBackend(s).Load(from, []string{to, bcc})
 	if !ok {
 		t.Fatal("Correo no transmitido")
 	}
 	os.WriteFile("template_test_out.eml", eml.Data, 0666)
-	crc1 := crc(t, "template_test_out.eml", "<!DOCTYPE ", "</html>")
-	crc2 := crc(t, "template_test_expect.eml", "<!DOCTYPE ", "</html>")
-	if crc1 != crc2 {
-		t.Fatal("EMLs diferentes")
-	}
+	crc1 := crc(t, "template_test_expect.eml", "<!DOCTYPE ", "</html>")
+	crc2 := crc(t, "template_test_out.eml", "<!DOCTYPE ", "</html>")
+	assert.Equal(t, crc1, crc2)
+}
+
+func ExampleSendXhtmlMail() {
+	// Carga plantilla HTML
+	plantilla, err := os.ReadFile("plantilla.html")
+	errores.PanicIfError(err)
+	// Enviar por correo
+	err = SendXhtmlMail(
+		"mail",
+		string(plantilla),
+		factura,
+		"https://spark2.horus.es/assets",
+		parse.DMA,
+		parse.EUR,
+		[]string{"adjunto.pdf"},
+		"remitente@horus.es",
+		"destinatario@horus.es",
+		"Asunto",
+		[]string{"bcc@horus.es"},
+		[]string{"replyto@horus.es"},
+		"smtp.horus.es",
+		25,
+		"automaticos@horus.es",
+		"secreto",
+	)
+	errores.PanicIfError(err)
 }
