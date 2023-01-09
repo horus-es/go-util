@@ -8,9 +8,13 @@ Las plantillas soportan la sintaxis estándar de GO y además los siguientes att
   * th:text="content" => reemplaza el contenido del tag
   * th:attr="value"   => reemplaza el valor del atributo
 
-Ejemplos de plantillas compatibles con mailing en https://postmarkapp.com/transactional-email-templates
+Se soportan las funciones de formato DATETIME, DATE, TIME, PRICE y BR.
 
-Uso de los atributos de thymeleaf en https://www.thymeleaf.org/doc/tutorials/2.1/usingthymeleaf.html
+Ejemplo de plantillla en https://github.com/horus-es/go-util/blob/main/plantillas/template_test.html
+
+Ejemplos de plantillas preparadas para mailing en https://postmarkapp.com/transactional-email-templates
+
+Ejemplos de uso de los atributos de Thymeleaf en https://www.thymeleaf.org/doc/tutorials/2.1/usingthymeleaf.html
 */
 package plantillas
 
@@ -36,8 +40,12 @@ import (
 )
 
 // Fusiona una plantilla XHTML con un struct o map de datos.
-// assets es la ruta de las imágenes u otras referencias (attributos src y href).
-// name es un nombre arbitrario para la plantilla que aparece en los mensajes de error.
+//   - name: nombre arbitrario para la plantilla que aparece en los mensajes de error
+//   - xhtml: plantilla en formato XHTML
+//   - datos: estructura de datos para fusionar con la plantilla
+//   - assets: ruta de imágenes u otros recursos (attributos src y href)
+//   - ff: formato de las fechas para las funciones DATETIME y DATE
+//   - fp: formato de los precios para la funcion PRICE
 func MergeXhtmlTemplate(name, xhtml string, datos any, assets string, ff parse.FormatoFecha, fp parse.FormatoPrecio) (string, error) {
 	gotmpl, err := thTemplate(name, xhtml, assets)
 	if err != nil {
@@ -74,11 +82,11 @@ func MergeXhtmlTemplate(name, xhtml string, datos any, assets string, ff parse.F
 		"TIME": func(x any) string {
 			switch t := x.(type) {
 			case time.Time:
-				return parse.PrintHora(t, true)
+				return parse.PrintHora(t, false)
 			case string:
 				t2, err := parse.ParseFechaHora(t, ff)
 				if err == nil {
-					return parse.PrintHora(t2, true)
+					return parse.PrintHora(t2, false)
 				}
 			}
 			errores.PanicIfTrue(true, "fecha %q no soportada", x)
@@ -239,7 +247,16 @@ func selectSpaceAttr(tag *etree.Element, space string) []*etree.Attr {
 	return result
 }
 
-// Envia un correo a partir de una plantilla XHTML
+// Envia un correo a partir de una plantilla XHTML. Parámetros:
+//   - name: nombre arbitrario para la plantilla que aparece en los mensajes de error
+//   - xhtml: plantilla en formato XHTML
+//   - datos: estructura de datos para fusionar con la plantilla
+//   - assets: URL de imágenes u otros recursos (attributos src y href). Debe ser una ruta públicamente accesible por internet.
+//   - ff: formato de las fechas para las funciones DATETIME y DATE
+//   - fp: formato de los precios para la funcion PRICE
+//   - adjuntos: ficheros a adjuntar
+//   - to,form,subject,bcc,replyto: parámetros MIME
+//   - host,port,username,password: parámtros SMTP. La contraseña debe ir codificada en base64.
 func SendXhtmlMail(name, xhtml string, datos any, assets string, ff parse.FormatoFecha, fp parse.FormatoPrecio, adjuntos []string,
 	from, to, subject string, bcc, replyto []string,
 	host string, port int, username, password string) error {
@@ -299,7 +316,15 @@ func SendXhtmlMail(name, xhtml string, datos any, assets string, ff parse.Format
 }
 
 // Genera un fichero PDF a partir de una plantilla XHTML
-// usando la utilidad wkhtmltopdf, que debe estar previamente instalada
+// usando la utilidad wkhtmltopdf, que debe estar previamente instalada. Parámetros:
+//   - name: nombre arbitrario para la plantilla que aparece en los mensajes de error.
+//   - xhtml: plantilla en formato XHTML
+//   - datos: estructura de datos para fusionar con la plantilla
+//   - assets: ruta de imágenes u otros recursos (attributos src y href). Si es una ruta local, debe estar precedida por file://
+//   - ff: formato de las fechas para las funciones DATETIME y DATE
+//   - fp: formato de los precios para la funcion PRICE
+//   - out: fichero PDF de salida
+//   - opciones: opciones adicionales utilidad wkhtmltopdf (ver https://wkhtmltopdf.org/usage/wkhtmltopdf.txt)
 func GenerateXhtmlPdf(name, xhtml string, datos any, assets string, ff parse.FormatoFecha, fp parse.FormatoPrecio, out string, opciones ...string) error {
 	// Procesa la plantilla XHTML
 	body, err := MergeXhtmlTemplate(name, xhtml, datos, assets, ff, fp)
