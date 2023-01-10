@@ -11,13 +11,13 @@ import (
 )
 
 // https://en.wikipedia.org/wiki/Date_format_by_country
-type FormatoFecha string
+type Fecha string
 
 const (
-	ISO FormatoFecha = "ISO" // RFC3339
-	DMA FormatoFecha = "DMA" // Dia/Mes/Año
-	MDA FormatoFecha = "MDA" // Mes/Dia/Año
-	AMD FormatoFecha = "AMD" // Año-Mes-Dia
+	ISO Fecha = "ISO" // RFC3339
+	DMA Fecha = "DMA" // Dia/Mes/Año
+	MDA Fecha = "MDA" // Mes/Dia/Año
+	AMD Fecha = "AMD" // Año-Mes-Dia
 )
 
 var reParseFecha1 = regexp.MustCompile(`^([1-9])/`)
@@ -27,7 +27,7 @@ var reParseFecha3 = regexp.MustCompile(`/([1-9])( |$)`)
 // Parsea una fecha con hora opcional
 // Admite varios tipos de fecha: ff=ISO (ISO A-M-D), ff=MDA (USA M/D/A), ff=AMD (internacional A-M-D), ff=DMA (resto D/M/A)
 // Para MDA, AMD y DMA también se admiten . y - como separador de fecha, el separador de hora siempre es :
-func ParseFechaHora(s string, ff FormatoFecha) (result time.Time, err error) {
+func ParseFechaHora(s string, ff Fecha) (result time.Time, err error) {
 	switch ff {
 	case DMA:
 		t := strings.ReplaceAll(s, "-", "/")
@@ -126,7 +126,7 @@ func MustParseHora(s string) time.Time {
 }
 
 // Parsea una fecha+hora a pgtype.Timestamp. Mismas consideraciones que ParseFechaHora. Los vacios se consideran null.
-func ParseTimestamp(s string, ff FormatoFecha) (result pgtype.Timestamp, err error) {
+func ParseTimestamp(s string, ff Fecha) (result pgtype.Timestamp, err error) {
 	if s == "" {
 		result.Status = pgtype.Null
 		return
@@ -140,7 +140,7 @@ func ParseTimestamp(s string, ff FormatoFecha) (result pgtype.Timestamp, err err
 }
 
 // Parsea una fecha a pgtype.Date. Mismas consideraciones que ParseFechaHora. Los vacios se consideran null.
-func ParseDate(s string, ff FormatoFecha) (result pgtype.Date, err error) {
+func ParseDate(s string, ff Fecha) (result pgtype.Date, err error) {
 	if s == "" {
 		result.Status = pgtype.Null
 		return
@@ -169,7 +169,7 @@ func ParseTime(s string) (result pgtype.Time, err error) {
 }
 
 // Imprime una fecha+hora
-func PrintFechaHora(fh time.Time, ff FormatoFecha) string {
+func PrintFechaHora(fh time.Time, ff Fecha) string {
 	switch ff {
 	case DMA:
 		return fh.Format("02/01/2006 15:04")
@@ -183,7 +183,7 @@ func PrintFechaHora(fh time.Time, ff FormatoFecha) string {
 }
 
 // Imprime una fecha
-func PrintFecha(fh time.Time, ff FormatoFecha) string {
+func PrintFecha(fh time.Time, ff Fecha) string {
 	switch ff {
 	case DMA:
 		return fh.Format("02/01/2006")
@@ -204,7 +204,7 @@ func PrintHora(fh time.Time, secs bool) string {
 }
 
 // Imprime un pgtype.Timestamp
-func PrintTimestamp(fh pgtype.Timestamp, ff FormatoFecha) string {
+func PrintTimestamp(fh pgtype.Timestamp, ff Fecha) string {
 	if fh.Status != pgtype.Present {
 		return ""
 	}
@@ -212,7 +212,7 @@ func PrintTimestamp(fh pgtype.Timestamp, ff FormatoFecha) string {
 }
 
 // Imprime un pgtype.Date
-func PrintDate(fh pgtype.Date, ff FormatoFecha) string {
+func PrintDate(fh pgtype.Date, ff Fecha) string {
 	if fh.Status != pgtype.Present {
 		return ""
 	}

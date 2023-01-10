@@ -11,7 +11,7 @@ import (
 
 	"github.com/davrux/go-smtptester"
 	"github.com/horus-es/go-util/errores"
-	"github.com/horus-es/go-util/parse"
+	"github.com/horus-es/go-util/formato"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -85,7 +85,7 @@ func crc(t *testing.T, fn string, start, end string) uint32 {
 func TestMergeXhtmlTemplate(t *testing.T) {
 	p, err := os.ReadFile("template_test.html")
 	assert.Nil(t, err)
-	f, err := MergeXhtmlTemplate("template_test.html", string(p), factura, "", parse.DMA, parse.EUR)
+	f, err := MergeXhtmlTemplate("template_test.html", string(p), factura, "", formato.DMA, formato.EUR)
 	assert.Nil(t, err)
 	os.WriteFile("template_test_out.html", []byte(f), 0666)
 	crc1 := crc(t, "template_test_expect.html", "", "")
@@ -103,8 +103,8 @@ func ExampleMergeXhtmlTemplate() {
 		string(plantilla),
 		factura,
 		"/assets",
-		parse.DMA,
-		parse.EUR,
+		formato.DMA,
+		formato.EUR,
 	)
 	errores.PanicIfError(err)
 	// Guardar salida
@@ -117,7 +117,7 @@ func TestGenerateXhtmlPdf(t *testing.T) {
 	wd, err := os.Getwd()
 	assert.Nil(t, err)
 	wd = "file:///" + strings.ReplaceAll(wd, "\\", "/")
-	err = GenerateXhtmlPdf("template", string(plantilla), factura, wd, parse.DMA, parse.EUR, "template_test_out.pdf", "--no-outline")
+	err = GenerateXhtmlPdf("template", string(plantilla), factura, wd, formato.DMA, formato.EUR, "template_test_out.pdf", "--no-outline")
 	assert.Nil(t, err)
 	crc1 := crc(t, "template_test_expect.pdf", "\n>>\n", "")
 	crc2 := crc(t, "template_test_out.pdf", "\n>>\n", "")
@@ -134,8 +134,8 @@ func ExampleGenerateXhtmlPdf() {
 		string(plantilla),
 		factura,
 		"file:///assets",
-		parse.DMA,
-		parse.EUR,
+		formato.DMA,
+		formato.EUR,
 		"fichero.pdf",
 		"--no-outline",
 	)
@@ -160,7 +160,7 @@ func TestSendXhtmlMail(t *testing.T) {
 	from := "automaticos@horus.es"
 	to := "pablo.leon@horus.es"
 	bcc := "pablo.leon100@gmail.com"
-	err = SendXhtmlMail("template_test.html", string(plantilla), factura, "https://spark2.horus.es/assets", parse.DMA, parse.EUR, []string{"template_test_expect.pdf"},
+	err = SendXhtmlMail("template_test.html", string(plantilla), factura, "https://spark2.horus.es/assets", formato.DMA, formato.EUR, []string{"template_test_expect.pdf"},
 		from, to, "Prueba de correo", []string{bcc}, []string{bcc},
 		"localhost", 2525, "smtpuser", "c2VjcmV0bw==")
 	assert.Nil(t, err)
@@ -185,8 +185,8 @@ func ExampleSendXhtmlMail() {
 		string(plantilla),
 		factura,
 		"https://spark2.horus.es/assets",
-		parse.DMA,
-		parse.EUR,
+		formato.DMA,
+		formato.EUR,
 		[]string{"adjunto.pdf"},
 		"remitente@horus.es",
 		"destinatario@horus.es",

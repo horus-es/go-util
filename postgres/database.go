@@ -14,8 +14,9 @@ import (
 	"github.com/georgysavva/scany/dbscan"
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/horus-es/go-util/errores"
+	"github.com/horus-es/go-util/formato"
+	"github.com/horus-es/go-util/logger"
 	"github.com/horus-es/go-util/misc"
-	"github.com/horus-es/go-util/parse"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
@@ -23,11 +24,11 @@ import (
 )
 
 var dbPool *pgxpool.Pool
-var dbLog *errores.Logger
+var dbLog *logger.Logger
 var inTest bool
 
 // Conecta a la base de datos y establece el logger. Si el logger es nil, todos los mensajes se meustran por consola.
-func InitPool(connectString string, logger *errores.Logger) {
+func InitPool(connectString string, logger *logger.Logger) {
 	var err error
 	dbPool, err = pgxpool.Connect(context.Background(), connectString)
 	errores.PanicIfError(err, "Error conectando base de datos")
@@ -360,18 +361,18 @@ func reemplaza(query string, params ...any) string {
 			case pgtype.Null:
 				valor = "null"
 			case pgtype.Present:
-				valor = misc.EscapeSQL(parse.PrintUUID(v))
+				valor = misc.EscapeSQL(formato.PrintUUID(v))
 			default:
 				valor = "undefined"
 			}
 		case time.Time:
-			valor = misc.EscapeSQL(parse.PrintFechaHora(v, parse.ISO))
+			valor = misc.EscapeSQL(formato.PrintFechaHora(v, formato.ISO))
 		case pgtype.Date:
 			switch v.Status {
 			case pgtype.Null:
 				valor = "null"
 			case pgtype.Present:
-				valor = misc.EscapeSQL(parse.PrintDate(v, parse.ISO))
+				valor = misc.EscapeSQL(formato.PrintDate(v, formato.ISO))
 			default:
 				valor = "undefined"
 			}
@@ -380,7 +381,7 @@ func reemplaza(query string, params ...any) string {
 			case pgtype.Null:
 				valor = "null"
 			case pgtype.Present:
-				valor = misc.EscapeSQL(parse.PrintTimestamp(v, parse.ISO))
+				valor = misc.EscapeSQL(formato.PrintTimestamp(v, formato.ISO))
 			default:
 				valor = "undefined"
 			}
@@ -389,7 +390,7 @@ func reemplaza(query string, params ...any) string {
 			case pgtype.Null:
 				valor = "null"
 			case pgtype.Present:
-				valor = misc.EscapeSQL(parse.PrintTime(v, true))
+				valor = misc.EscapeSQL(formato.PrintTime(v, true))
 			default:
 				valor = "undefined"
 			}
@@ -398,7 +399,7 @@ func reemplaza(query string, params ...any) string {
 			case pgtype.Null:
 				valor = "null"
 			case pgtype.Present:
-				valor = misc.EscapeSQL(parse.PrintIntervalIso(v))
+				valor = misc.EscapeSQL(formato.PrintIntervalIso(v))
 			default:
 				valor = "undefined"
 			}

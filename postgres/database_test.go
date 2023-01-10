@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/horus-es/go-util/parse"
+	"github.com/horus-es/go-util/formato"
 	"github.com/jackc/pgtype"
 	"github.com/stretchr/testify/assert"
 )
@@ -154,7 +154,7 @@ func TestGetOrderedRowsPanic(t *testing.T) {
 
 func TestInsertUpdateDelete(t *testing.T) {
 	p1 := T_personal{}
-	p1.Operador = parse.MustParseUUID(UUIDoperador)
+	p1.Operador = formato.MustParseUUID(UUIDoperador)
 	p1.Nombre = "InsertRow"
 	p1.Codigo = "TestInsertUpdateDelete " + time.Now().Format("01-02-2006 15:04:05")
 	p1.Hash.Status = pgtype.Present
@@ -174,7 +174,7 @@ func TestInsertUpdateDelete(t *testing.T) {
 
 func ExampleInsertRow() {
 	u := T_personal{}
-	u.Operador, _ = parse.ParseUUID(UUIDoperador)
+	u.Operador, _ = formato.ParseUUID(UUIDoperador)
 	u.Codigo = "Test"
 	u.Nombre = "Usuario de prueba"
 	u.Activo = true
@@ -191,7 +191,7 @@ func ExampleInsertRow() {
 
 func ExampleDeleteRow() {
 	u := T_personal{}
-	u.Operador, _ = parse.ParseUUID(UUIDoperador)
+	u.Operador, _ = formato.ParseUUID(UUIDoperador)
 	u.Codigo = "Test"
 	u.Nombre = "Usuario de prueba"
 	u.Activo = true
@@ -222,7 +222,7 @@ func ExampleUpdateRow() {
 
 func TestInsertUpdateDeleteEspecial(t *testing.T) {
 	p1 := T_personal{}
-	p1.Operador = parse.MustParseUUID(UUIDoperador)
+	p1.Operador = formato.MustParseUUID(UUIDoperador)
 	p1.Nombre = "InsertRow"
 	p1.Codigo = "TestInsertUpdateDeleteExclude " + time.Now().Format("01-02-2006 15:04:05")
 	p1.Activo = true
@@ -253,7 +253,7 @@ func TestInsertUpdateDeleteEspecial(t *testing.T) {
 func TestUpdateNonExistant(t *testing.T) {
 	p1 := T_personal{}
 	p1.ID = UUIDnoexiste
-	p1.Operador = parse.MustParseUUID(UUIDoperador)
+	p1.Operador = formato.MustParseUUID(UUIDoperador)
 	p1.Nombre = "UpdateRow"
 	p1.Codigo = "TestUpdateNoExistant " + time.Now().Format("01-02-2006 15:04:05")
 	p1.Hash.Status = pgtype.Null

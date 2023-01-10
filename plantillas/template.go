@@ -33,7 +33,7 @@ import (
 
 	"github.com/beevik/etree"
 	"github.com/horus-es/go-util/errores"
-	"github.com/horus-es/go-util/parse"
+	"github.com/horus-es/go-util/formato"
 	"github.com/pkg/errors"
 	"github.com/vanng822/go-premailer/premailer"
 	"gopkg.in/gomail.v2"
@@ -46,7 +46,7 @@ import (
 //   - assets: ruta de imágenes u otros recursos (attributos src y href)
 //   - ff: formato de las fechas para las funciones DATETIME y DATE
 //   - fp: formato de los precios para la funcion PRICE
-func MergeXhtmlTemplate(name, xhtml string, datos any, assets string, ff parse.FormatoFecha, fp parse.FormatoPrecio) (string, error) {
+func MergeXhtmlTemplate(name, xhtml string, datos any, assets string, ff formato.Fecha, fp formato.Moneda) (string, error) {
 	gotmpl, err := thTemplate(name, xhtml, assets)
 	if err != nil {
 		return "", err
@@ -56,11 +56,11 @@ func MergeXhtmlTemplate(name, xhtml string, datos any, assets string, ff parse.F
 		"DATETIME": func(x any) string {
 			switch t := x.(type) {
 			case time.Time:
-				return parse.PrintFechaHora(t, ff)
+				return formato.PrintFechaHora(t, ff)
 			case string:
-				t2, err := parse.ParseFechaHora(t, ff)
+				t2, err := formato.ParseFechaHora(t, ff)
 				if err == nil {
-					return parse.PrintFechaHora(t2, ff)
+					return formato.PrintFechaHora(t2, ff)
 				}
 			}
 			errores.PanicIfTrue(true, "fecha %q no soportada", x)
@@ -69,11 +69,11 @@ func MergeXhtmlTemplate(name, xhtml string, datos any, assets string, ff parse.F
 		"DATE": func(x any) string {
 			switch t := x.(type) {
 			case time.Time:
-				return parse.PrintFecha(t, ff)
+				return formato.PrintFecha(t, ff)
 			case string:
-				t2, err := parse.ParseFechaHora(t, ff)
+				t2, err := formato.ParseFechaHora(t, ff)
 				if err == nil {
-					return parse.PrintFecha(t2, ff)
+					return formato.PrintFecha(t2, ff)
 				}
 			}
 			errores.PanicIfTrue(true, "fecha %q no soportada", x)
@@ -82,18 +82,18 @@ func MergeXhtmlTemplate(name, xhtml string, datos any, assets string, ff parse.F
 		"TIME": func(x any) string {
 			switch t := x.(type) {
 			case time.Time:
-				return parse.PrintHora(t, false)
+				return formato.PrintHora(t, false)
 			case string:
-				t2, err := parse.ParseFechaHora(t, ff)
+				t2, err := formato.ParseFechaHora(t, ff)
 				if err == nil {
-					return parse.PrintHora(t2, false)
+					return formato.PrintHora(t2, false)
 				}
 			}
 			errores.PanicIfTrue(true, "fecha %q no soportada", x)
 			return ""
 		},
 		"PRICE": func(f float64) string {
-			return parse.PrintPrecio(f, fp)
+			return formato.PrintPrecio(f, fp)
 		},
 		"BR": func(s string) template.HTML {
 			// Cambia los saltos de línea por <br/>
@@ -257,7 +257,7 @@ func selectSpaceAttr(tag *etree.Element, space string) []*etree.Attr {
 //   - adjuntos: ficheros a adjuntar
 //   - to,form,subject,bcc,replyto: parámetros MIME
 //   - host,port,username,password: parámtros SMTP. La contraseña debe ir codificada en base64.
-func SendXhtmlMail(name, xhtml string, datos any, assets string, ff parse.FormatoFecha, fp parse.FormatoPrecio, adjuntos []string,
+func SendXhtmlMail(name, xhtml string, datos any, assets string, ff formato.Fecha, fp formato.Moneda, adjuntos []string,
 	from, to, subject string, bcc, replyto []string,
 	host string, port int, username, password string) error {
 
@@ -325,7 +325,7 @@ func SendXhtmlMail(name, xhtml string, datos any, assets string, ff parse.Format
 //   - fp: formato de los precios para la funcion PRICE
 //   - out: fichero PDF de salida
 //   - opciones: opciones adicionales utilidad wkhtmltopdf (ver https://wkhtmltopdf.org/usage/wkhtmltopdf.txt)
-func GenerateXhtmlPdf(name, xhtml string, datos any, assets string, ff parse.FormatoFecha, fp parse.FormatoPrecio, out string, opciones ...string) error {
+func GenerateXhtmlPdf(name, xhtml string, datos any, assets string, ff formato.Fecha, fp formato.Moneda, out string, opciones ...string) error {
 	// Procesa la plantilla XHTML
 	body, err := MergeXhtmlTemplate(name, xhtml, datos, assets, ff, fp)
 	if err != nil {

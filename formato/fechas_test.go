@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func compruebaParseFechaHora(t *testing.T, s string, ff FormatoFecha, espera time.Time) {
+func compruebaParseFechaHora(t *testing.T, s string, ff Fecha, espera time.Time) {
 	obtiene, err := ParseFechaHora(s, ff)
 	assert.Nil(t, err)
 	assert.Equal(t, espera, obtiene)

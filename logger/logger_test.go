@@ -1,32 +1,19 @@
-package errores
+package logger
 
 import (
-	"errors"
-	"fmt"
 	"os"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
 )
 
-func TestRegistro(t *testing.T) {
+func ExampleLogger() {
 	logger := NewLogger("", true)
 	logger.Infof("Mensaje de %s", "información")
 	logger.Warnf("Mensaje de %s", "advertencia")
-	logger.Errorf("Mensaje de %s", "error")
-}
-
-func TestBadRequest(t *testing.T) {
-	logger := NewLogger("", true)
-	mensaje := "Mensaje para usuario"
-	causa := "Causa del error para depuración"
-	r := logger.BadHttpRequest(mensaje, errors.New(causa))
-	assert.Equal(t, r["error"], mensaje)
-	assert.Equal(t, r["causa"], causa)
-	r = logger.BadHttpRequest(mensaje, nil)
-	assert.Equal(t, r["error"], mensaje)
-	assert.Equal(t, r["causa"], nil)
+	logger.Errorf("Mensaje de %s", "error") // Este aparece por STDERR
+	// Output:
+	// INFO: Mensaje de información
+	// WARN: Mensaje de advertencia
 }
 
 func ExampleLogger_Infof() {
@@ -61,18 +48,7 @@ func ExampleLogger_Errorf() {
 	// Output:
 }
 
-func ExampleLogger_BadHttpRequest() {
-	logger := NewLogger("", true)
-	mensaje := "Mensaje para usuario"
-	causa := "Causa del error para depuración"
-	r := logger.BadHttpRequest(mensaje, errors.New(causa))
-	fmt.Println(r)
-	// Output:
-	// WARN: Mensaje para usuario: Causa del error para depuración
-	// map[causa:Causa del error para depuración error:Mensaje para usuario]
-}
-
-func TestLogger(t *testing.T) {
+func TestRotacion(t *testing.T) {
 	logger := NewLogger("testlog", true)
 	logger.Infof("Prueba 1 de logger: %s", "info")
 	logger.Warnf("Prueba 1 de logger: %s", "warn")

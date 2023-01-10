@@ -16,6 +16,6 @@ func ExamplePanicIfError() {
 func ExamplePanicIfTrue() {
 	z := 2 * 3
 	PanicIfTrue(z != 6, "Error en multiplicación: 2x3=%d", z)
-	fmt.Println(6)
+	fmt.Println(z)
 	// Output: 6
 }

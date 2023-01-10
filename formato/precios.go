@@ -8,16 +8,16 @@ import (
 )
 
 // https://en.wikipedia.org/wiki/ISO_4217
-type FormatoPrecio string
+type Moneda string
 
 const (
-	EUR FormatoPrecio = "EUR" // Euros
-	USD FormatoPrecio = "USD" // Dólares USA
-	COP FormatoPrecio = "COP" // Pesos colombianos
+	EUR Moneda = "EUR" // Euros
+	USD Moneda = "USD" // Dólares USA
+	COP Moneda = "COP" // Pesos colombianos
 )
 
 // Parsea un precio
-func ParsePrecio(p string, fp FormatoPrecio) (result float64, err error) {
+func ParsePrecio(p string, fp Moneda) (result float64, err error) {
 	s := strings.TrimSpace(p)
 	s = strings.TrimSuffix(s, "€")
 	s = strings.TrimPrefix(s, "€")
@@ -46,7 +46,7 @@ func ParsePrecio(p string, fp FormatoPrecio) (result float64, err error) {
 }
 
 // Imprime un precio
-func PrintPrecio(v float64, fp FormatoPrecio) string {
+func PrintPrecio(v float64, fp Moneda) string {
 	var result string
 	switch fp {
 	case EUR:
@@ -62,7 +62,7 @@ func PrintPrecio(v float64, fp FormatoPrecio) string {
 }
 
 // Redondea un precio con el número de decimales de la moneda
-func RedondeaPrecio(v float64, fp FormatoPrecio) float64 {
+func RedondeaPrecio(v float64, fp Moneda) float64 {
 	var result float64
 	switch fp {
 	case EUR, USD:

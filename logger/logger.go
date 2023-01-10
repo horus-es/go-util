@@ -1,5 +1,5 @@
 // Archivos de registro (Logger)
-package errores
+package logger
 
 import (
 	"fmt"
@@ -19,6 +19,8 @@ type Logger struct {
 	writer    *os.File
 	mutex     sync.Mutex
 }
+
+var defaultLogger *Logger // Logger por defecto
 
 // Crea un logger. Si file=="", le salida se producirá por consola.
 // A file se le añade el sufijo .log automáticamente.
@@ -43,7 +45,12 @@ func NewLogger(file string, debug bool) *Logger {
 	return &logger
 }
 
-// Escribe en el fichero de log
+// Inicializa el logger por defecto
+func InitLogger(file string, debug bool) {
+	defaultLogger = NewLogger(file, debug)
+}
+
+// Escribe en el fichero de log, rotándolo si es preciso.
 func (logger *Logger) writeFile(prefix, format string, v ...any) bool {
 	if logger == nil || logger.writer == nil {
 		return false
@@ -85,41 +92,58 @@ func writeLine(w io.Writer, prefix, format string, v ...any) bool {
 	}
 }
 
-// Registra un INFO (solo en modo DEBUG)
-func (logger *Logger) Infof(format string, v ...any) {
-	if logger != nil && !logger.debugging {
+// Registra un INFO (interno)
+func infof(log *Logger, format string, v ...any) {
+	if log != nil && !log.debugging {
 		return
 	}
 	prefix := "INFO: "
 	writeLine(os.Stdout, prefix, format, v...)
-	logger.writeFile(prefix, format, v...)
+	log.writeFile(prefix, format, v...)
+}
+
+// Registra un INFO (solo en modo DEBUG)
+func (logger *Logger) Infof(format string, v ...any) {
+	infof(logger, format, v...)
+}
+
+// Registra un INFO usando el logger por defecto (solo en modo DEBUG)
+func Infof(format string, v ...any) {
+	infof(defaultLogger, format, v...)
+}
+
+// Registra un WARN (interno)
+func warnf(log *Logger, format string, v ...any) {
+	prefix := "WARN: "
+	if !log.writeFile(prefix, format, v...) || log.debugging {
+		writeLine(os.Stdout, prefix, format, v...)
+	}
 }
 
 // Registra un WARN
 func (logger *Logger) Warnf(format string, v ...any) {
-	prefix := "WARN: "
-	if !logger.writeFile(prefix, format, v...) || logger.debugging {
-		writeLine(os.Stdout, prefix, format, v...)
+	warnf(logger, format, v...)
+}
+
+// Registra un WARN usando el logger por defecto
+func Warnf(format string, v ...any) {
+	warnf(defaultLogger, format, v...)
+}
+
+// Registra un ERROR (interno)
+func errorf(log *Logger, format string, v ...any) {
+	prefix := "ERROR: "
+	if !log.writeFile(prefix, format, v...) || log.debugging {
+		writeLine(os.Stderr, prefix, format, v...)
 	}
 }
 
 // Registra un ERROR
 func (logger *Logger) Errorf(format string, v ...any) {
-	prefix := "ERROR: "
-	if !logger.writeFile(prefix, format, v...) || logger.debugging {
-		writeLine(os.Stderr, prefix, format, v...)
-	}
+	errorf(logger, format, v...)
 }
 
-// Registra una solicitud HTTP incorrecta y devuelve un mensaje JSON de respuesta que incluye el mensaje de error y opcionalmente la causa
-func (logger *Logger) BadHttpRequest(msg string, causa any) map[string]any {
-	if causa == nil {
-		logger.Warnf("%s", msg)
-		return map[string]any{"error": msg}
-	}
-	logger.Warnf("%s: %v", msg, causa)
-	if logger == nil || logger.debugging {
-		return map[string]any{"error": msg, "causa": fmt.Sprint(causa)}
-	}
-	return map[string]any{"error": msg}
+// Registra un ERROR usando el logger por defecto
+func Errorf(format string, v ...any) {
+	errorf(defaultLogger, format, v...)
 }
