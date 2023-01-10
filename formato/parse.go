@@ -1,5 +1,5 @@
 // Funciones de conversión de fechas, precios, intervalos, números, uuids, lógicas y opciones a textos y viceversa
-package parse
+package formato
 
 import (
 	"fmt"
