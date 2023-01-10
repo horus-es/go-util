@@ -1,5 +1,5 @@
 // Middlewares para GIN-GONIC
-package util
+package middleware
 
 import (
 	"bytes"
