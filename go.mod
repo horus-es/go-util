@@ -1,4 +1,4 @@
-module horus-es/go-util
+module github.com/horus-es/go-util
 
 go 1.18
 

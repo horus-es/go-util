@@ -22,8 +22,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"horus-es/go-util/errores"
-	"horus-es/go-util/parse"
 	"html/template"
 	"net/url"
 	"os"
@@ -34,6 +32,8 @@ import (
 	"time"
 
 	"github.com/beevik/etree"
+	"github.com/horus-es/go-util/errores"
+	"github.com/horus-es/go-util/parse"
 	"github.com/pkg/errors"
 	"github.com/vanng822/go-premailer/premailer"
 	"gopkg.in/gomail.v2"

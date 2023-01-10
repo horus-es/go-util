@@ -2,11 +2,11 @@ package parse
 
 import (
 	"fmt"
-	"horus-es/go-util/errores"
 	"regexp"
 	"strings"
 	"time"
 
+	"github.com/horus-es/go-util/errores"
 	"github.com/jackc/pgtype"
 )
 

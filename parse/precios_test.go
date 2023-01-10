@@ -2,9 +2,9 @@ package parse
 
 import (
 	"fmt"
-	"horus-es/go-util/errores"
 	"testing"
 
+	"github.com/horus-es/go-util/errores"
 	"github.com/stretchr/testify/assert"
 )
 

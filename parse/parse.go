@@ -3,11 +3,11 @@ package parse
 
 import (
 	"fmt"
-	"horus-es/go-util/errores"
 	"math"
 	"strconv"
 	"strings"
 
+	"github.com/horus-es/go-util/errores"
 	"github.com/jackc/pgtype"
 )
 

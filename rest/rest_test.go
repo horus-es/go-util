@@ -2,8 +2,9 @@ package rest
 
 import (
 	"fmt"
-	"horus-es/go-util/errores"
 	"net/url"
+
+	"github.com/horus-es/go-util/errores"
 )
 
 func ExampleDoRestGet() {

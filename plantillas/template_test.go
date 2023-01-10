@@ -3,8 +3,6 @@ package plantillas
 import (
 	"bytes"
 	"hash/crc32"
-	"horus-es/go-util/errores"
-	"horus-es/go-util/parse"
 	"log"
 	"os"
 	"strings"
@@ -12,6 +10,8 @@ import (
 	"time"
 
 	"github.com/davrux/go-smtptester"
+	"github.com/horus-es/go-util/errores"
+	"github.com/horus-es/go-util/parse"
 	"github.com/stretchr/testify/assert"
 )
 

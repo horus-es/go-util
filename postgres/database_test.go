@@ -2,11 +2,11 @@ package postgres
 
 import (
 	"fmt"
-	"horus-es/go-util/parse"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/horus-es/go-util/parse"
 	"github.com/jackc/pgtype"
 	"github.com/stretchr/testify/assert"
 )

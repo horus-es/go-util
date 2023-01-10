@@ -4,8 +4,6 @@ package util
 import (
 	"bytes"
 	"errors"
-	"horus-es/go-util/errores"
-	"horus-es/go-util/postgres"
 	"io"
 	"net/http"
 	"net/http/httputil"
@@ -16,6 +14,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/horus-es/go-util/errores"
+	"github.com/horus-es/go-util/postgres"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
