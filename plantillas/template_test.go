@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/davrux/go-smtptester"
-	"github.com/horus-es/go-util/errores"
-	"github.com/horus-es/go-util/formato"
+	"github.com/horus-es/go-util/v2/errores"
+	"github.com/horus-es/go-util/v2/formato"
 	"github.com/stretchr/testify/assert"
 )
 

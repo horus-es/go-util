@@ -4,7 +4,7 @@ package ginhelper
 import (
 	"fmt"
 
-	"github.com/horus-es/go-util/logger"
+	"github.com/horus-es/go-util/v2/logger"
 )
 
 var ghLog *logger.Logger

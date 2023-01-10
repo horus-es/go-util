@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/horus-es/go-util/formato"
+	"github.com/horus-es/go-util/v2/formato"
 	"github.com/jackc/pgtype"
 	"github.com/stretchr/testify/assert"
 )

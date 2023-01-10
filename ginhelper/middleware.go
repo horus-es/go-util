@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/horus-es/go-util/postgres"
+	"github.com/horus-es/go-util/v2/postgres"
 )
 
 // Middleware para inicializar estado a no implementado

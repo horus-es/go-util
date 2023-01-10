@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/horus-es/go-util/errores"
+	"github.com/horus-es/go-util/v2/errores"
 )
 
 func ExampleDoRestGet() {

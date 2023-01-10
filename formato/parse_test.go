@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/horus-es/go-util/errores"
+	"github.com/horus-es/go-util/v2/errores"
 	"github.com/jackc/pgtype"
 	"github.com/stretchr/testify/assert"
 )
