@@ -7,21 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func ExampleMax() {
-	fmt.Println(Max(-2, 3, 1))
-	// Output: 3
-}
-
-func ExampleMin() {
-	fmt.Println(Min(3, -2, 3, 1))
-	// Output: -2
-}
-
-func ExampleTitle() {
-	fmt.Println(Title("hola mundo otra vEZ"))
-	// output: Hola Mundo Otra VEZ
-}
-
 func TestSqlIn(t *testing.T) {
 	obtiene := SqlIn("uno", "dos", "tres")
 	assert.Equal(t, " in ('uno','dos','tres')", obtiene)
