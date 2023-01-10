@@ -27,11 +27,11 @@ var dbPool *pgxpool.Pool
 var dbLog *logger.Logger
 var inTest bool
 
-// Conecta a la base de datos y establece el logger. Si el logger es nil, todos los mensajes se meustran por consola.
+// Conecta a la base de datos y establece el logger. Si el logger es nil, se usa el logger por defecto.
 func InitPool(connectString string, logger *logger.Logger) {
 	var err error
 	dbPool, err = pgxpool.Connect(context.Background(), connectString)
-	errores.PanicIfError(err, "Error conectando base de datos")
+	errores.PanicIfError(err, "Error conectando a postgres")
 	dbLog = logger
 }
 

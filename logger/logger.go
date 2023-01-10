@@ -51,30 +51,30 @@ func InitLogger(file string, debug bool) {
 }
 
 // Escribe en el fichero de log, rotándolo si es preciso.
-func (logger *Logger) writeFile(prefix, format string, v ...any) bool {
-	if logger == nil || logger.writer == nil {
+func writeFile(log *Logger, prefix, format string, v ...any) bool {
+	if log == nil || log.writer == nil {
 		return false
 	}
-	logger.mutex.Lock()
-	defer logger.mutex.Unlock()
+	log.mutex.Lock()
+	defer log.mutex.Unlock()
 	ahora := time.Now()
 	hoy := ahora.Format("20060102")
-	if logger.date != hoy {
-		logger.writer.Close()
-		f1 := logger.file + ".log"
-		f2 := logger.file + "-" + logger.date[6:8] + ".log"
+	if log.date != hoy {
+		log.writer.Close()
+		f1 := log.file + ".log"
+		f2 := log.file + "-" + log.date[6:8] + ".log"
 		err := os.Rename(f1, f2)
 		if err == nil {
-			logger.date = hoy
-			logger.writer, err = os.OpenFile(f1, os.O_CREATE|os.O_WRONLY, 0666)
+			log.date = hoy
+			log.writer, err = os.OpenFile(f1, os.O_CREATE|os.O_WRONLY, 0666)
 		}
 		if err != nil {
-			logger.writer = nil
+			log.writer = nil
 			return false
 		}
 	}
-	ok := writeLine(logger.writer, ahora.Format("2006-01-02 15:04:05 ")+prefix, format, v...)
-	logger.writer.Sync()
+	ok := writeLine(log.writer, ahora.Format("2006-01-02 15:04:05 ")+prefix, format, v...)
+	log.writer.Sync()
 	return ok
 }
 
@@ -99,12 +99,16 @@ func infof(log *Logger, format string, v ...any) {
 	}
 	prefix := "INFO: "
 	writeLine(os.Stdout, prefix, format, v...)
-	log.writeFile(prefix, format, v...)
+	writeFile(log, prefix, format, v...)
 }
 
 // Registra un INFO (solo en modo DEBUG)
 func (logger *Logger) Infof(format string, v ...any) {
-	infof(logger, format, v...)
+	if logger == nil {
+		infof(defaultLogger, format, v...)
+	} else {
+		infof(logger, format, v...)
+	}
 }
 
 // Registra un INFO usando el logger por defecto (solo en modo DEBUG)
@@ -115,14 +119,18 @@ func Infof(format string, v ...any) {
 // Registra un WARN (interno)
 func warnf(log *Logger, format string, v ...any) {
 	prefix := "WARN: "
-	if !log.writeFile(prefix, format, v...) || log.debugging {
+	if !writeFile(log, prefix, format, v...) || log.debugging {
 		writeLine(os.Stdout, prefix, format, v...)
 	}
 }
 
 // Registra un WARN
 func (logger *Logger) Warnf(format string, v ...any) {
-	warnf(logger, format, v...)
+	if logger == nil {
+		warnf(defaultLogger, format, v...)
+	} else {
+		warnf(logger, format, v...)
+	}
 }
 
 // Registra un WARN usando el logger por defecto
@@ -133,14 +141,18 @@ func Warnf(format string, v ...any) {
 // Registra un ERROR (interno)
 func errorf(log *Logger, format string, v ...any) {
 	prefix := "ERROR: "
-	if !log.writeFile(prefix, format, v...) || log.debugging {
+	if !writeFile(log, prefix, format, v...) || log.debugging {
 		writeLine(os.Stderr, prefix, format, v...)
 	}
 }
 
 // Registra un ERROR
 func (logger *Logger) Errorf(format string, v ...any) {
-	errorf(logger, format, v...)
+	if logger == nil {
+		errorf(defaultLogger, format, v...)
+	} else {
+		errorf(logger, format, v...)
+	}
 }
 
 // Registra un ERROR usando el logger por defecto

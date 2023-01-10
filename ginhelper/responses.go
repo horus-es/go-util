@@ -9,7 +9,7 @@ import (
 
 var ghLog *logger.Logger
 
-// Establece el logger. Si logger es nil, todos los mensajes se muestran en la consola.
+// Establece el logger. Si el logger es nil, se usa el logger por defecto.
 func InitGinHelper(logger *logger.Logger) {
 	ghLog = logger
 }
