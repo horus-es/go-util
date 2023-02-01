@@ -68,6 +68,7 @@ func GetOneRow(dst any, query string, params ...any) {
 	}
 	rows, err := dbPool.Query(context.Background(), query, params...)
 	errores.PanicIfError(err, "GetOneRow: %s", limpio)
+	defer rows.Close()
 	err = pgxscan.ScanOne(dst, rows)
 	errores.PanicIfError(err, "GetOneRow: %s", limpio)
 	dbLog.Infof(limpio)
@@ -83,6 +84,7 @@ func GetOneOrZeroRows(dst any, query string, params ...any) bool {
 	}
 	rows, err := dbPool.Query(context.Background(), query, params...)
 	errores.PanicIfError(err, "GetOneOrZeroRows: %s", limpio)
+	defer rows.Close()
 	err = pgxscan.ScanOne(dst, rows)
 	if pgxscan.NotFound(err) {
 		dbLog.Infof(limpio)

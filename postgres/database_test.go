@@ -108,7 +108,7 @@ func ExampleGetFirstRow() {
 	}
 	// Output:
 	// INFO: select codigo,activo from personal order by codigo
-	// Primer usuario hallado: "pablo"
+	// Primer usuario hallado: "NUEVO"
 	// INFO: select codigo,activo from personal where id='fe90b951-9999-9999-9999-999999999999' order by codigo
 	// Ningún usuario hallado.
 }
@@ -126,7 +126,7 @@ func ExampleGetOrderedRows() {
 	fmt.Printf("Primeros 3 usuarios hallados: %s\n", strings.Join(us, ", "))
 	// Output:
 	// INFO: select codigo from personal where operador='0cec7694-eb8d-4ab2-95bb-d5d733a3be94' order by codigo limit 3
-	// Primeros 3 usuarios hallados: pablo, palevi, secreto
+	// Primeros 3 usuarios hallados: NUEVO, pablo, palevi
 }
 
 func TestGetJoin(t *testing.T) {
