@@ -95,31 +95,6 @@ func TestGetOneOrZeroRowsPanicMany(t *testing.T) {
 	t.Error("Sin pánico con varias filas")
 }
 
-func ExampleGetFirstRow() {
-	u := struct {
-		Codigo string
-		Activo bool
-	}{}
-	if GetFirstRow(&u, "select codigo,activo from personal order by codigo") {
-		fmt.Printf("Primer usuario hallado: %q\n", u.Codigo)
-	}
-	if !GetFirstRow(&u, "select codigo,activo from personal where id=$1 order by codigo", UUIDnoexiste) {
-		fmt.Printf("Ningún usuario hallado.\n")
-	}
-	// Output:
-	// INFO: select codigo,activo from personal order by codigo
-	// Primer usuario hallado: "NUEVO"
-	// INFO: select codigo,activo from personal where id='fe90b951-9999-9999-9999-999999999999' order by codigo
-	// Ningún usuario hallado.
-}
-
-func TestGetFirstRowPanicOrderBy(t *testing.T) {
-	p := T_personal{}
-	defer func() { recover() }()
-	GetFirstRow(&p, "select * from personal")
-	t.Error("Sin pánico sin 'order by'")
-}
-
 func ExampleGetOrderedRows() {
 	us := []string{}
 	GetOrderedRows(&us, "select codigo from personal where operador=$1 order by codigo limit 3", UUIDoperador)

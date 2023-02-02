@@ -95,29 +95,6 @@ func GetOneOrZeroRows(dst any, query string, params ...any) bool {
 	return true
 }
 
-// Función de utilidad que devuelve la primera fila de una consulta (devuelve true).
-// Si no hay filas, devuelve false.
-// Panic si la query no contiene la cláusula "order by".
-func GetFirstRow(dst any, query string, params ...any) bool {
-	limpio := reemplaza(query, params...)
-	isOrdered := strings.Contains(strings.ToLower(limpio), " order by ")
-	errores.PanicIfTrue(!isOrdered, "GetFirstRow: Debe incluir la cláusula 'order by'")
-	if strings.HasPrefix(strings.ToLower(limpio), "select * from ") {
-		query = replaceAsterisk(query, dst)
-	}
-	rows, err := dbPool.Query(context.Background(), query, params...)
-	errores.PanicIfError(err, "GetFirstRow: %s", limpio)
-	defer rows.Close()
-	if !rows.Next() {
-		dbLog.Infof(limpio)
-		return false
-	}
-	err = pgxscan.ScanRow(dst, rows)
-	errores.PanicIfError(err, "GetFirstRow: %s", limpio)
-	dbLog.Infof(limpio)
-	return true
-}
-
 // Función de utilidad para consultas que pueden devolver varias filas.
 // Panic si la query no contiene un "order by".
 func GetOrderedRows(dst any, query string, params ...any) {
