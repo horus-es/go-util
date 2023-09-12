@@ -1,0 +1,5 @@
+logger/*.log
+plantillas/fichero.pdf
+plantillas/pagina.html
+plantillas/template_test_expect.txt
+plantillas/template_test_out.txt

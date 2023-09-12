@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/horus-es/go-util/v2/errores"
 	"github.com/horus-es/go-util/v2/formato"
 	"github.com/horus-es/go-util/v2/logger"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -268,7 +269,23 @@ func ExampleCommitTX() {
 	// INFO: CommitTX
 }
 
-func TestRollbackTX(t *testing.T) {
+func ExampleRollbackTX() {
+	defer func() { recover() }() // Capturamos panic
+	StartTX()
+	defer RollbackTX()
+	// Inicio del bloque protegido con transacción
+	logger.Infof("... órdenes SQL contenidas en la transacción ...")
+	errores.PanicIfTrue(true, "... algo produce un panic ...")
+	logger.Infof("... mas órdenes SQL ...")
+	// Fin del bloque protegido con transacción
+	CommitTX()
+	// Output:
+	// INFO: StartTX
+	// INFO: ... órdenes SQL contenidas en la transacción ...
+	// WARN: RollbackTX
+}
+
+func TestTX(t *testing.T) {
 	// Iniciamos transacción
 	StartTX()
 	// Cargamos un usuario
