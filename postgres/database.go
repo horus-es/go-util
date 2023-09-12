@@ -71,7 +71,7 @@ func RollbackTX() {
 }
 
 // Función de utilidad para consultas que devuelven exactamente una fila.
-// dst puede ser la direccion de una struct o de una variable simple
+// dst puede ser la direccion de una struct o de una variable simple.
 // Panic si la query devuelve mas de una fila o no devuelve ninguna fila.
 func GetOneRow(dst any, query string, params ...any) {
 	limpio := reemplaza(query, params...)
@@ -264,7 +264,7 @@ func InsertRow(src any, especiales ...string) string {
 	return result
 }
 
-// Actualiza una fila en una tabla cuyo nombre sea el del tipo de src (T_nombretabla) y que tenga una pk (id uuid)
+// Actualiza una fila en una tabla cuyo nombre sea el del tipo de src (T_nombretabla) y que tenga una pk (id uuid).
 // Especial contiene una lista de campos a incluir o excluir de la actualización:
 //
 //	campo => solo se actualiza este campo y otros explicitamente incluidos.
@@ -346,7 +346,7 @@ func UpdateRow(src any, especiales ...string) {
 	dbLog.Infof(limpio)
 }
 
-// Elimina una fila en una tabla cuya pk sea 'id uuid'
+// Elimina una fila en una tabla que tenga una pk (id uuid).
 // Panic si la fila no existe
 func DeleteRow(id string, table string) {
 	query := "delete from " + table + " where id=$1"
@@ -477,7 +477,7 @@ const (
 )
 
 // Determina el tipo de error SQL
-// https://www.postgresql.org/docs/13/errcodes-appendix.html
+// https://www.postgresql.org/docs/current/errcodes-appendix.html
 func GetErrorSQL(err error) (TipoErrorSQL, string) {
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) {
