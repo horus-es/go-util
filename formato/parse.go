@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/horus-es/go-util/v2/errores"
-	"github.com/jackc/pgtype"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // Parsea un numero, considerando que puede incluir separadores
@@ -110,10 +110,9 @@ func ParseOpcion(opcion string, admitidas ...string) (string, error) {
 // Parsea un objeto a UUID, los vacíos se consideran NULL
 func ParseUUID(uuid string) (result pgtype.UUID, err error) {
 	if uuid == "" {
-		result.Status = pgtype.Null
 		return
 	}
-	err = result.Set(uuid)
+	err = result.Scan(uuid)
 	return
 }
 
@@ -126,11 +125,8 @@ func MustParseUUID(uuid string) pgtype.UUID {
 
 // Imprime un UUID, los NULL se imprimen como vacíos
 func PrintUUID(uuid pgtype.UUID) string {
-	if uuid.Status == pgtype.Null {
+	if !uuid.Valid {
 		return ""
 	}
-	var result string
-	err := uuid.AssignTo(&result)
-	errores.PanicIfError(err)
-	return result
+	return fmt.Sprintf("%x-%x-%x-%x-%x", uuid.Bytes[0:4], uuid.Bytes[4:6], uuid.Bytes[6:8], uuid.Bytes[8:10], uuid.Bytes[10:16])
 }

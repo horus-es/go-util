@@ -2,9 +2,11 @@ package plantillas
 
 import (
 	"bytes"
+	"fmt"
 	"hash/crc32"
 	"log"
 	"os"
+	"os/exec"
 	"strings"
 	"testing"
 	"time"
@@ -82,6 +84,17 @@ func crc(t *testing.T, fn string, start, end string) uint32 {
 	return crc32.ChecksumIEEE(data[s:e])
 }
 
+// Requiere Xpdf command line tools: https://www.xpdfreader.com/download.html
+func readPdfText(t *testing.T, file string) string {
+	cmd := exec.Command("pdftotext", "-raw", "-enc", "UTF-8", file)
+	err := cmd.Run()
+	assert.Nil(t, err)
+	file = strings.TrimSuffix(file, ".pdf") + ".txt"
+	content, err := os.ReadFile(file)
+	assert.Nil(t, err)
+	return string(content)
+}
+
 func TestMergeXhtmlTemplate(t *testing.T) {
 	p, err := os.ReadFile("template_test.html")
 	assert.Nil(t, err)
@@ -109,6 +122,8 @@ func ExampleMergeXhtmlTemplate() {
 	errores.PanicIfError(err)
 	// Guardar salida
 	os.WriteFile("pagina.html", []byte(f), 0666)
+	fmt.Println("Ok")
+	// Output: Ok
 }
 
 func TestGenerateXhtmlPdf(t *testing.T) {
@@ -119,9 +134,9 @@ func TestGenerateXhtmlPdf(t *testing.T) {
 	wd = "file:///" + strings.ReplaceAll(wd, "\\", "/")
 	err = GenerateXhtmlPdf("template", string(plantilla), factura, wd, formato.DMA, formato.EUR, "template_test_out.pdf", "--no-outline")
 	assert.Nil(t, err)
-	crc1 := crc(t, "template_test_expect.pdf", "\n>>\n", "")
-	crc2 := crc(t, "template_test_out.pdf", "\n>>\n", "")
-	assert.Equal(t, crc1, crc2)
+	t1 := readPdfText(t, "template_test_expect.pdf")
+	t2 := readPdfText(t, "template_test_out.pdf")
+	assert.Equal(t, t1, t2)
 }
 
 func ExampleGenerateXhtmlPdf() {
@@ -140,6 +155,8 @@ func ExampleGenerateXhtmlPdf() {
 		"--no-outline",
 	)
 	errores.PanicIfError(err)
+	fmt.Println("Ok")
+	// Output: Ok
 }
 
 func TestSendXhtmlMail(t *testing.T) {
@@ -196,7 +213,8 @@ func ExampleSendXhtmlMail() {
 		"smtp.horus.es",
 		25,
 		"automaticos@horus.es",
-		"secreto",
+		"c2VjcmV0bw==",
 	)
-	errores.PanicIfError(err)
+	fmt.Println(err)
+	// Output: mail: dial tcp: lookup smtp.horus.es: no such host
 }

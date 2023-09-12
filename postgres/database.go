@@ -9,53 +9,65 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
-	"github.com/georgysavva/scany/dbscan"
-	"github.com/georgysavva/scany/pgxscan"
+	"github.com/georgysavva/scany/v2/dbscan"
+	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/horus-es/go-util/v2/errores"
 	"github.com/horus-es/go-util/v2/formato"
 	"github.com/horus-es/go-util/v2/logger"
 	"github.com/horus-es/go-util/v2/misc"
-	"github.com/jackc/pgconn"
-	"github.com/jackc/pgtype"
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+var dbCtx context.Context
 var dbPool *pgxpool.Pool
 var dbLog *logger.Logger
+var dbTxs = sync.Map{}
 var inTest bool
 
 // Conecta a la base de datos y establece el logger. Si el logger es nil, se usa el logger por defecto.
 func InitPool(connectString string, logger *logger.Logger) {
 	var err error
-	dbPool, err = pgxpool.Connect(context.Background(), connectString)
+	dbCtx = context.TODO()
+	dbPool, err = pgxpool.New(dbCtx, connectString)
 	errores.PanicIfError(err, "Error conectando a postgres")
 	dbLog = logger
 }
 
 // Comienza una transacción
-func StartTX() pgx.Tx {
-	tx, err := dbPool.Begin(context.Background())
+func StartTX() {
+	tx, err := dbPool.BeginTx(dbCtx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead})
 	errores.PanicIfError(err, "StartTX")
+	dbTxs.Store(misc.GetGID(), tx)
 	dbLog.Infof("StartTX")
-	return tx
+
 }
 
 // Finaliza una transacción
-func CommitTX(tx pgx.Tx) {
-	err := tx.Commit(context.Background())
+func CommitTX() {
+	tx, ok := dbTxs.LoadAndDelete(misc.GetGID())
+	if !ok {
+		return
+	}
+	err := tx.(pgx.Tx).Commit(dbCtx)
 	errores.PanicIfError(err, "CommitTX")
 	dbLog.Infof("CommitTX")
 }
 
 // Aborta una transacción
-func RollbackTX(tx pgx.Tx) {
-	err := tx.Rollback(context.Background())
-	if err == nil && dbLog != nil {
-		dbLog.Warnf("RollbackTX")
+func RollbackTX() {
+	tx, ok := dbTxs.LoadAndDelete(misc.GetGID())
+	if !ok {
+		return
 	}
+	err := tx.(pgx.Tx).Rollback(dbCtx)
+	errores.PanicIfError(err, "RollbackTX")
+	dbLog.Warnf("RollbackTX")
 }
 
 // Función de utilidad para consultas que devuelven exactamente una fila.
@@ -66,7 +78,14 @@ func GetOneRow(dst any, query string, params ...any) {
 	if strings.HasPrefix(strings.ToLower(limpio), "select * from ") {
 		query = replaceAsterisk(query, dst)
 	}
-	rows, err := dbPool.Query(context.Background(), query, params...)
+	var rows pgx.Rows
+	var err error
+	tx, ok := dbTxs.Load(misc.GetGID())
+	if ok {
+		rows, err = tx.(pgx.Tx).Query(dbCtx, query, params...)
+	} else {
+		rows, err = dbPool.Query(dbCtx, query, params...)
+	}
 	errores.PanicIfError(err, "GetOneRow: %s", limpio)
 	defer rows.Close()
 	err = pgxscan.ScanOne(dst, rows)
@@ -82,7 +101,14 @@ func GetOneOrZeroRows(dst any, query string, params ...any) bool {
 	if strings.HasPrefix(strings.ToLower(limpio), "select * from ") {
 		query = replaceAsterisk(query, dst)
 	}
-	rows, err := dbPool.Query(context.Background(), query, params...)
+	var rows pgx.Rows
+	var err error
+	tx, ok := dbTxs.Load(misc.GetGID())
+	if ok {
+		rows, err = tx.(pgx.Tx).Query(dbCtx, query, params...)
+	} else {
+		rows, err = dbPool.Query(dbCtx, query, params...)
+	}
 	errores.PanicIfError(err, "GetOneOrZeroRows: %s", limpio)
 	defer rows.Close()
 	err = pgxscan.ScanOne(dst, rows)
@@ -104,7 +130,7 @@ func GetOrderedRows(dst any, query string, params ...any) {
 	if strings.HasPrefix(strings.ToLower(limpio), "select * from ") {
 		query = replaceAsterisk(query, dst)
 	}
-	err := pgxscan.Select(context.Background(), dbPool, dst, query, params...)
+	err := pgxscan.Select(dbCtx, dbPool, dst, query, params...)
 	errores.PanicIfError(err, "GetOrderedRows: %s", limpio)
 	dbLog.Infof(limpio)
 }
@@ -224,7 +250,13 @@ func InsertRow(src any, especiales ...string) string {
 	}
 	query += ") returning id"
 	limpio := reemplaza(query, params...)
-	row := dbPool.QueryRow(context.Background(), query, params...)
+	var row pgx.Row
+	tx, ok := dbTxs.Load(misc.GetGID())
+	if ok {
+		row = tx.(pgx.Tx).QueryRow(dbCtx, query, params...)
+	} else {
+		row = dbPool.QueryRow(dbCtx, query, params...)
+	}
 	var result string
 	err := row.Scan(&result)
 	errores.PanicIfError(err, "InsertRow: %s", limpio)
@@ -299,7 +331,15 @@ func UpdateRow(src any, especiales ...string) {
 	errores.PanicIfTrue(id == nil, "UpdateRow: Falta el campo 'id'")
 	params[p] = id
 	limpio := reemplaza(query, params...)
-	tag, err := dbPool.Exec(context.Background(), query, params...)
+
+	var tag pgconn.CommandTag
+	var err error
+	tx, ok := dbTxs.Load(misc.GetGID())
+	if ok {
+		tag, err = tx.(pgx.Tx).Exec(dbCtx, query, params...)
+	} else {
+		tag, err = dbPool.Exec(dbCtx, query, params...)
+	}
 	errores.PanicIfError(err, "UpdateRow: %s", limpio)
 	errores.PanicIfTrue(tag.RowsAffected() == 0, "UpdateRow: Ninguna fila actualizada: %s", limpio)
 	errores.PanicIfTrue(tag.RowsAffected() >= 2, "UpdateRow: %d filas actualizadas: %s", tag.RowsAffected(), limpio)
@@ -315,7 +355,14 @@ func DeleteRow(id string, table string) {
 		// Truco para mantener el log invariante en los tests
 		limpio = reemplaza(query, "81c11fc2-0439-4ae5-baa4-3d40716bdce3")
 	}
-	tag, err := dbPool.Exec(context.Background(), query, id)
+	var tag pgconn.CommandTag
+	var err error
+	tx, ok := dbTxs.Load(misc.GetGID())
+	if ok {
+		tag, err = tx.(pgx.Tx).Exec(dbCtx, query, id)
+	} else {
+		tag, err = dbPool.Exec(dbCtx, query, id)
+	}
 	errores.PanicIfError(err, "DeleteRow: %s", limpio)
 	errores.PanicIfTrue(tag.RowsAffected() == 0, "DeleteRow: Ninguna fila eliminada: %s", limpio)
 	errores.PanicIfTrue(tag.RowsAffected() >= 2, "DeleteRow: %d filas eliminadas: %s", tag.RowsAffected(), limpio)
@@ -336,78 +383,54 @@ func reemplaza(query string, params ...any) string {
 		case []byte:
 			valor = misc.EscapeSQL(string(v))
 		case pgtype.UUID:
-			switch v.Status {
-			case pgtype.Null:
-				valor = "null"
-			case pgtype.Present:
+			if v.Valid {
 				valor = misc.EscapeSQL(formato.PrintUUID(v))
-			default:
-				valor = "undefined"
+			} else {
+				valor = "null"
 			}
 		case time.Time:
 			valor = misc.EscapeSQL(formato.PrintFechaHora(v, formato.ISO))
 		case pgtype.Date:
-			switch v.Status {
-			case pgtype.Null:
-				valor = "null"
-			case pgtype.Present:
+			if v.Valid {
 				valor = misc.EscapeSQL(formato.PrintDate(v, formato.ISO))
-			default:
-				valor = "undefined"
+			} else {
+				valor = "null"
 			}
 		case pgtype.Timestamp:
-			switch v.Status {
-			case pgtype.Null:
-				valor = "null"
-			case pgtype.Present:
+			if v.Valid {
 				valor = misc.EscapeSQL(formato.PrintTimestamp(v, formato.ISO))
-			default:
-				valor = "undefined"
+			} else {
+				valor = "null"
 			}
 		case pgtype.Time:
-			switch v.Status {
-			case pgtype.Null:
-				valor = "null"
-			case pgtype.Present:
+			if v.Valid {
 				valor = misc.EscapeSQL(formato.PrintTime(v, true))
-			default:
-				valor = "undefined"
+			} else {
+				valor = "null"
 			}
 		case pgtype.Interval:
-			switch v.Status {
-			case pgtype.Null:
-				valor = "null"
-			case pgtype.Present:
+			if v.Valid {
 				valor = misc.EscapeSQL(formato.PrintIntervalIso(v))
-			default:
-				valor = "undefined"
+			} else {
+				valor = "null"
 			}
 		case pgtype.Text:
-			switch v.Status {
-			case pgtype.Null:
-				valor = "null"
-			case pgtype.Present:
+			if v.Valid {
 				valor = misc.EscapeSQL(v.String)
-			default:
-				valor = "undefined"
+			} else {
+				valor = "null"
 			}
 		case pgtype.Float8:
-			switch v.Status {
-			case pgtype.Null:
+			if v.Valid {
+				valor = strconv.FormatFloat(v.Float64, 'g', 4, 64)
+			} else {
 				valor = "null"
-			case pgtype.Present:
-				valor = strconv.FormatFloat(v.Float, 'g', 4, 64)
-			default:
-				valor = "undefined"
 			}
 		case pgtype.Int2:
-			switch v.Status {
-			case pgtype.Null:
+			if v.Valid {
+				valor = strconv.Itoa(int(v.Int16))
+			} else {
 				valor = "null"
-			case pgtype.Present:
-				valor = strconv.Itoa(int(v.Int))
-			default:
-				valor = "undefined"
 			}
 		default:
 			valor = fmt.Sprintf("%v", v)
@@ -471,7 +494,7 @@ func GetErrorSQL(err error) (TipoErrorSQL, string) {
 
 // Obtiene una conexión del pool
 func AcquireConnection() (conn *pgxpool.Conn, err error) {
-	return dbPool.Acquire(context.Background())
+	return dbPool.Acquire(dbCtx)
 }
 
 // Devuelve una conexión al pool

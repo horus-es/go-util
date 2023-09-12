@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jackc/pgtype"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 var reDuration = regexp.MustCompile(`^\s*([0-9]+)\s*([hms])[^0-9]*$`)
@@ -36,7 +36,6 @@ var reInterval = regexp.MustCompile(`^\s*([0-9]+)\s*([yamwsd])[^0-9]*$`)
 // Parsea una duración a pgtype.Interval. Soporta A años, M meses, S semanas o D dias.
 func ParseIntervalAMSD(s string) (result pgtype.Interval, err error) {
 	if strings.TrimSpace(s) == "" {
-		result.Status = pgtype.Null
 		return
 	}
 	partes := reInterval.FindStringSubmatch(strings.ToLower(s))
@@ -55,14 +54,13 @@ func ParseIntervalAMSD(s string) (result pgtype.Interval, err error) {
 	case "d":
 		result.Days = int32(n)
 	}
-	result.Status = pgtype.Present
+	result.Valid = true
 	return
 }
 
 // Parsea una duración a pgtype.Interval. Soporta H horas, M minutos o S segundos.
 func ParseIntervalHMS(s string) (result pgtype.Interval, err error) {
 	if strings.TrimSpace(s) == "" {
-		result.Status = pgtype.Null
 		return
 	}
 	partes := reDuration.FindStringSubmatch(strings.ToLower(s))
@@ -79,7 +77,7 @@ func ParseIntervalHMS(s string) (result pgtype.Interval, err error) {
 	case "s":
 		result.Microseconds = int64(n) * 1000000
 	}
-	result.Status = pgtype.Present
+	result.Valid = true
 	return
 }
 
@@ -108,7 +106,7 @@ func PrintDuracionIso(z time.Duration) string {
 
 // Imprime una duración en formato A años, M meses, S semanas, D dias, H horas, M minutos, S segundos.
 func PrintInterval(z pgtype.Interval) string {
-	if z.Status != pgtype.Present {
+	if !z.Valid {
 		return ""
 	}
 	partes := []string{}
@@ -130,7 +128,7 @@ func PrintInterval(z pgtype.Interval) string {
 
 // Imprime una duración en formato ISO8601, util en órdenes SQL
 func PrintIntervalIso(z pgtype.Interval) string {
-	if z.Status != pgtype.Present {
+	if !z.Valid {
 		return ""
 	}
 	result := "P"

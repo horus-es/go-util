@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/horus-es/go-util/v2/errores"
-	"github.com/jackc/pgtype"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -81,7 +81,7 @@ func TestInterval(t *testing.T) {
 	assert.Nil(t, err)
 	d, err = ParseIntervalAMSD("  ")
 	assert.Nil(t, err)
-	assert.Equal(t, pgtype.Null, d.Status)
+	assert.False(t, d.Valid)
 	d, err = ParseIntervalHMS("33 horas")
 	assert.Equal(t, "33h", PrintInterval(d))
 	assert.Equal(t, "PT118800S", PrintIntervalIso(d))
@@ -96,7 +96,7 @@ func TestInterval(t *testing.T) {
 	assert.Nil(t, err)
 	d, err = ParseIntervalHMS("  ")
 	assert.Nil(t, err)
-	assert.Equal(t, pgtype.Null, d.Status)
+	assert.False(t, d.Valid)
 	_, err = ParseIntervalAMSD("1m2m")
 	assert.NotNil(t, err)
 	_, err = ParseIntervalHMS("1d")
@@ -105,10 +105,10 @@ func TestInterval(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Equal(t, "", PrintInterval(pgtype.Interval{}))
 	assert.Equal(t, "", PrintIntervalIso(pgtype.Interval{}))
-	assert.Equal(t, "", PrintInterval(pgtype.Interval{Status: pgtype.Present}))
-	assert.Equal(t, "", PrintIntervalIso(pgtype.Interval{Status: pgtype.Present}))
-	assert.Equal(t, "1m", PrintInterval(pgtype.Interval{Microseconds: 60000000, Status: pgtype.Present}))
-	assert.Equal(t, "PT60S", PrintIntervalIso(pgtype.Interval{Microseconds: 60000000, Status: pgtype.Present}))
+	assert.Equal(t, "", PrintInterval(pgtype.Interval{Valid: true}))
+	assert.Equal(t, "", PrintIntervalIso(pgtype.Interval{Valid: true}))
+	assert.Equal(t, "1m", PrintInterval(pgtype.Interval{Microseconds: 60000000, Valid: true}))
+	assert.Equal(t, "PT60S", PrintIntervalIso(pgtype.Interval{Microseconds: 60000000, Valid: true}))
 }
 
 func ExampleParseIntervalAMSD() {

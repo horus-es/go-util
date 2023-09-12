@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/horus-es/go-util/v2/errores"
-	"github.com/jackc/pgtype"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // https://en.wikipedia.org/wiki/Date_format_by_country
@@ -128,13 +128,12 @@ func MustParseHora(s string) time.Time {
 // Parsea una fecha+hora a pgtype.Timestamp. Mismas consideraciones que ParseFechaHora. Los vacios se consideran null.
 func ParseTimestamp(s string, ff Fecha) (result pgtype.Timestamp, err error) {
 	if s == "" {
-		result.Status = pgtype.Null
 		return
 	}
 	fh, err := ParseFechaHora(s, ff)
 	if err == nil {
 		result.Time = fh
-		result.Status = pgtype.Present
+		result.Valid = true
 	}
 	return
 }
@@ -142,13 +141,12 @@ func ParseTimestamp(s string, ff Fecha) (result pgtype.Timestamp, err error) {
 // Parsea una fecha a pgtype.Date. Mismas consideraciones que ParseFechaHora. Los vacios se consideran null.
 func ParseDate(s string, ff Fecha) (result pgtype.Date, err error) {
 	if s == "" {
-		result.Status = pgtype.Null
 		return
 	}
 	fh, err := ParseFechaHora(s, ff)
 	if err == nil {
 		result.Time = fh
-		result.Status = pgtype.Present
+		result.Valid = true
 	}
 	return
 }
@@ -156,14 +154,13 @@ func ParseDate(s string, ff Fecha) (result pgtype.Date, err error) {
 // Parsea una hora a pgtype.Time. Mismas consideraciones que ParseFechaHora. Los vacios se consideran null.
 func ParseTime(s string) (result pgtype.Time, err error) {
 	if s == "" {
-		result.Status = pgtype.Null
 		return
 	}
 	fh, err := ParseHora(s)
 	if err == nil {
 		medianoche := time.Date(fh.Year(), fh.Month(), fh.Day(), 0, 0, 0, 0, fh.Location())
 		result.Microseconds = fh.Sub(medianoche).Microseconds()
-		result.Status = pgtype.Present
+		result.Valid = true
 	}
 	return
 }
@@ -205,7 +202,7 @@ func PrintHora(fh time.Time, secs bool) string {
 
 // Imprime un pgtype.Timestamp
 func PrintTimestamp(fh pgtype.Timestamp, ff Fecha) string {
-	if fh.Status != pgtype.Present {
+	if !fh.Valid {
 		return ""
 	}
 	return PrintFechaHora(fh.Time, ff)
@@ -213,7 +210,7 @@ func PrintTimestamp(fh pgtype.Timestamp, ff Fecha) string {
 
 // Imprime un pgtype.Date
 func PrintDate(fh pgtype.Date, ff Fecha) string {
-	if fh.Status != pgtype.Present {
+	if !fh.Valid {
 		return ""
 	}
 	return PrintFecha(fh.Time, ff)
@@ -221,7 +218,7 @@ func PrintDate(fh pgtype.Date, ff Fecha) string {
 
 // Imprime un pgtype.Time
 func PrintTime(fh pgtype.Time, secs bool) string {
-	if fh.Status != pgtype.Present {
+	if !fh.Valid {
 		return ""
 	}
 	f := time.Date(2000, 01, 01, 0, 0, 0, int(fh.Microseconds)*1000, time.UTC)

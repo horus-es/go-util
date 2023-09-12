@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/horus-es/go-util/v2/errores"
-	"github.com/jackc/pgtype"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -111,7 +110,7 @@ func TestParseUUID(t *testing.T) {
 	assert.Equal(t, strings.ToLower(suuid), PrintUUID(uuid))
 	uuid, err = ParseUUID("")
 	assert.Nil(t, err)
-	assert.Equal(t, pgtype.Null, uuid.Status)
+	assert.False(t, uuid.Valid)
 	assert.Equal(t, "", PrintUUID(uuid))
 	suuid = "error"
 	_, err = ParseUUID(suuid)

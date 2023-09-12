@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/horus-es/go-util/v2/errores"
-	"github.com/jackc/pgtype"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -124,11 +123,11 @@ func TestTimestamp(t *testing.T) {
 	iso := PrintFechaHora(fecha, ISO)
 	obtiene, err := ParseTimestamp("", ISO)
 	assert.Nil(t, err)
-	assert.Equal(t, pgtype.Null, obtiene.Status)
+	assert.False(t, obtiene.Valid)
 	assert.Equal(t, "", PrintTimestamp(obtiene, ISO))
 	obtiene, err = ParseTimestamp(iso, ISO)
 	assert.Nil(t, err)
-	assert.Equal(t, pgtype.Present, obtiene.Status)
+	assert.True(t, obtiene.Valid)
 	assert.Equal(t, fecha, obtiene.Time)
 	assert.Equal(t, iso, PrintTimestamp(obtiene, ISO))
 }
@@ -153,11 +152,11 @@ func TestDate(t *testing.T) {
 	iso := PrintFecha(fecha, ISO)
 	obtiene, err := ParseDate("", ISO)
 	assert.Nil(t, err)
-	assert.Equal(t, pgtype.Null, obtiene.Status)
+	assert.False(t, obtiene.Valid)
 	assert.Equal(t, "", PrintDate(obtiene, ISO))
 	obtiene, err = ParseDate(iso, ISO)
 	assert.Nil(t, err)
-	assert.Equal(t, pgtype.Present, obtiene.Status)
+	assert.True(t, obtiene.Valid)
 	assert.Equal(t, dia, obtiene.Time)
 	assert.Equal(t, iso, PrintDate(obtiene, ISO))
 }
@@ -181,12 +180,12 @@ func TestTime(t *testing.T) {
 	hora := PrintHora(fecha, false)
 	obtiene, err := ParseTime("")
 	assert.Nil(t, err)
-	assert.Equal(t, pgtype.Null, obtiene.Status)
+	assert.False(t, obtiene.Valid)
 	assert.Equal(t, "", PrintTime(obtiene, false))
 	usec := int64((fecha.Hour()*3600 + fecha.Minute()*60) * 1000000)
 	obtiene, err = ParseTime(hora)
 	assert.Nil(t, err)
-	assert.Equal(t, pgtype.Present, obtiene.Status)
+	assert.True(t, obtiene.Valid)
 	assert.Equal(t, usec, obtiene.Microseconds)
 	assert.Equal(t, hora, PrintTime(obtiene, false))
 }

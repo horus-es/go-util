@@ -294,6 +294,8 @@ func SendXhtmlMail(name, xhtml string, datos any, assets string, ff formato.Fech
 
 	// ficheros adjuntos
 	for _, f := range adjuntos {
+		_, err = os.Stat(f)
+		errores.PanicIfError(err)
 		m.Attach(f)
 	}
 

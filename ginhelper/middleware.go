@@ -120,12 +120,12 @@ func MiddlewareLogger(debug bool) gin.HandlerFunc {
 // Middleware de gestión de transacciones
 func MiddlewareTransaction() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		tx := postgres.StartTX()
-		defer postgres.RollbackTX(tx)
+		postgres.StartTX()
+		defer postgres.RollbackTX()
 		c.Next()
 		statusCode := c.Writer.Status()
 		if statusCode >= 200 && statusCode <= 299 {
-			postgres.CommitTX(tx)
+			postgres.CommitTX()
 		}
 	}
 }

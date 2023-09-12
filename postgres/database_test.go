@@ -1,13 +1,13 @@
 package postgres
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/horus-es/go-util/v2/formato"
-	"github.com/jackc/pgtype"
+	"github.com/horus-es/go-util/v2/logger"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -44,10 +44,10 @@ func ExampleGetOneRow() {
 		Activo bool
 	}{}
 	GetOneRow(&u, "select codigo,activo from personal where id=$1", UUIDempleado)
-	fmt.Println(u)
+	logger.Infof("%v", u)
 	// Output:
 	// INFO: select codigo,activo from personal where id='fe90b961-0646-4f8e-a698-d3a153abf7d2'
-	// {pablo true}
+	// INFO: {pablo true}
 }
 
 func TestGetOneRowSummary(t *testing.T) {
@@ -76,16 +76,16 @@ func ExampleGetOneOrZeroRows() {
 		Activo bool
 	}{}
 	if GetOneOrZeroRows(&u, "select codigo,activo from personal where id=$1", UUIDempleado) {
-		fmt.Printf("Hallado usuario: %q\n", u.Codigo)
+		logger.Infof("Hallado usuario: %q\n", u.Codigo)
 	}
 	if !GetOneOrZeroRows(&u, "select codigo,activo from personal where id=$1", UUIDnoexiste) {
-		fmt.Printf("Usuario no hallado.\n")
+		logger.Infof("Usuario no hallado.\n")
 	}
 	// Output:
 	// INFO: select codigo,activo from personal where id='fe90b961-0646-4f8e-a698-d3a153abf7d2'
-	// Hallado usuario: "pablo"
+	// INFO: Hallado usuario: "pablo"
 	// INFO: select codigo,activo from personal where id='fe90b951-9999-9999-9999-999999999999'
-	// Usuario no hallado.
+	// INFO: Usuario no hallado.
 }
 
 func TestGetOneOrZeroRowsPanicMany(t *testing.T) {
@@ -98,10 +98,10 @@ func TestGetOneOrZeroRowsPanicMany(t *testing.T) {
 func ExampleGetOrderedRows() {
 	us := []string{}
 	GetOrderedRows(&us, "select codigo from personal where operador=$1 order by codigo limit 3", UUIDoperador)
-	fmt.Printf("Primeros 3 usuarios hallados: %s\n", strings.Join(us, ", "))
+	logger.Infof("Primeros 3 usuarios hallados: %s\n", strings.Join(us, ", "))
 	// Output:
 	// INFO: select codigo from personal where operador='0cec7694-eb8d-4ab2-95bb-d5d733a3be94' order by codigo limit 3
-	// Primeros 3 usuarios hallados: NUEVO, pablo, palevi
+	// INFO: Primeros 3 usuarios hallados: pablo, palevi, prueba
 }
 
 func TestGetJoin(t *testing.T) {
@@ -132,7 +132,7 @@ func TestInsertUpdateDelete(t *testing.T) {
 	p1.Operador = formato.MustParseUUID(UUIDoperador)
 	p1.Nombre = "InsertRow"
 	p1.Codigo = "TestInsertUpdateDelete " + time.Now().Format("01-02-2006 15:04:05")
-	p1.Hash.Status = pgtype.Present
+	p1.Hash.Valid = true
 	p1.ID = InsertRow(p1)
 	p2 := T_personal{}
 	GetOneRow(&p2, "select * from personal where id=$1", p1.ID)
@@ -150,49 +150,49 @@ func TestInsertUpdateDelete(t *testing.T) {
 func ExampleInsertRow() {
 	u := T_personal{}
 	u.Operador, _ = formato.ParseUUID(UUIDoperador)
-	u.Codigo = "Test"
+	u.Codigo = "TestInsert"
 	u.Nombre = "Usuario de prueba"
 	u.Activo = true
 	u.ID = InsertRow(u, "hash='zecreto2023'")
-	fmt.Println("Una fila insertada")
+	logger.Infof("Una fila insertada")
 	DeleteRow(u.ID, "personal")
-	fmt.Println("Una fila eliminada")
+	logger.Infof("Una fila eliminada")
 	// Output:
-	// INFO: insert into personal (operador,codigo,nombre,hash,activo,administrador) values ('0cec7694-eb8d-4ab2-95bb-d5d733a3be94','Test','Usuario de prueba','zecreto2023',true,false) returning id
-	// Una fila insertada
+	// INFO: insert into personal (operador,codigo,nombre,hash,activo,administrador) values ('0cec7694-eb8d-4ab2-95bb-d5d733a3be94','TestInsert','Usuario de prueba','zecreto2023',true,false) returning id
+	// INFO: Una fila insertada
 	// INFO: delete from personal where id='81c11fc2-0439-4ae5-baa4-3d40716bdce3'
-	// Una fila eliminada
+	// INFO: Una fila eliminada
 }
 
 func ExampleDeleteRow() {
 	u := T_personal{}
 	u.Operador, _ = formato.ParseUUID(UUIDoperador)
-	u.Codigo = "Test"
+	u.Codigo = "TestDelete"
 	u.Nombre = "Usuario de prueba"
 	u.Activo = true
 	u.ID = InsertRow(u, "hash='zecreto2023'")
-	fmt.Println("Una fila insertada")
+	logger.Infof("Una fila insertada")
 	DeleteRow(u.ID, "personal")
-	fmt.Println("Una fila eliminada")
+	logger.Infof("Una fila eliminada")
 	// Output:
-	// INFO: insert into personal (operador,codigo,nombre,hash,activo,administrador) values ('0cec7694-eb8d-4ab2-95bb-d5d733a3be94','Test','Usuario de prueba','zecreto2023',true,false) returning id
-	// Una fila insertada
+	// INFO: insert into personal (operador,codigo,nombre,hash,activo,administrador) values ('0cec7694-eb8d-4ab2-95bb-d5d733a3be94','TestDelete','Usuario de prueba','zecreto2023',true,false) returning id
+	// INFO: Una fila insertada
 	// INFO: delete from personal where id='81c11fc2-0439-4ae5-baa4-3d40716bdce3'
-	// Una fila eliminada
+	// INFO: Una fila eliminada
 }
 
 func ExampleUpdateRow() {
 	u := T_personal{}
 	GetOneRow(&u, "select * from personal where id=$1", UUIDempleado)
-	fmt.Println("Usuario cargado")
+	logger.Infof("Usuario cargado")
 	u.Codigo = "pablo"
 	UpdateRow(u, "codigo")
-	fmt.Println("Nombre actualizado")
+	logger.Infof("Nombre actualizado")
 	// Output:
 	// INFO: select * from personal where id='fe90b961-0646-4f8e-a698-d3a153abf7d2'
-	// Usuario cargado
+	// INFO: Usuario cargado
 	// INFO: update personal set codigo='pablo' where id='fe90b961-0646-4f8e-a698-d3a153abf7d2'
-	// Nombre actualizado
+	// INFO: Nombre actualizado
 }
 
 func TestInsertUpdateDeleteEspecial(t *testing.T) {
@@ -203,7 +203,7 @@ func TestInsertUpdateDeleteEspecial(t *testing.T) {
 	p1.Activo = true
 	p1.ID = InsertRow(p1, "-hash", "activo=false")
 	p1.Activo = false
-	p1.Hash.Status = pgtype.Present
+	p1.Hash.Valid = true
 	p2 := T_personal{}
 	GetOneRow(&p2, "select * from personal where id=$1", p1.ID)
 	assert.Equal(t, p1, p2, "Insert falló")
@@ -231,7 +231,6 @@ func TestUpdateNonExistant(t *testing.T) {
 	p1.Operador = formato.MustParseUUID(UUIDoperador)
 	p1.Nombre = "UpdateRow"
 	p1.Codigo = "TestUpdateNoExistant " + time.Now().Format("01-02-2006 15:04:05")
-	p1.Hash.Status = pgtype.Null
 	defer func() { recover() }()
 	UpdateRow(p1)
 	t.Error("Sin pánico no existe")
@@ -244,31 +243,44 @@ func TestDeleteNonExistant(t *testing.T) {
 }
 
 func ExampleStartTX() {
-	tx := StartTX()
-	defer RollbackTX(tx)
-	// ... órdenes SQL contenidas en la transacción ...
-	CommitTX(tx)
+	StartTX()
+	defer RollbackTX()
+	// Inicio del bloque protegido con transacción
+	logger.Infof("... órdenes SQL contenidas en la transacción ...")
+	// Fin del bloque protegido con transacción
+	CommitTX()
 	// Output:
 	// INFO: StartTX
+	// INFO: ... órdenes SQL contenidas en la transacción ...
 	// INFO: CommitTX
 }
 
 func ExampleCommitTX() {
-	tx := StartTX()
-	defer RollbackTX(tx)
-	// ... órdenes SQL contenidas en la transacción ...
-	CommitTX(tx)
+	StartTX()
+	defer RollbackTX()
+	// Inicio del bloque protegido con transacción
+	logger.Infof("... órdenes SQL contenidas en la transacción ...")
+	// Fin del bloque protegido con transacción
+	CommitTX()
 	// Output:
 	// INFO: StartTX
+	// INFO: ... órdenes SQL contenidas en la transacción ...
 	// INFO: CommitTX
 }
 
-func ExampleRollbackTX() {
-	tx := StartTX()
-	defer RollbackTX(tx)
-	// ... órdenes SQL contenidas en la transacción ...
-	CommitTX(tx)
-	// Output:
-	// INFO: StartTX
-	// INFO: CommitTX
+func TestRollbackTX(t *testing.T) {
+	// Iniciamos transacción
+	StartTX()
+	// Cargamos un usuario
+	u := T_personal{}
+	GetOneRow(&u, "select * from personal where id=$1", UUIDempleado)
+	códigoOriginal := u.Codigo
+	// Actualizamos la fila
+	u.Codigo = "Nombre " + formato.PrintFechaHora(time.Now(), formato.ISO)
+	UpdateRow(u, "codigo")
+	// Deshacemos transacción
+	RollbackTX()
+	// Comprobamos si se ha modificado la fila
+	GetOneRow(&u, "select * from personal where id=$1", UUIDempleado)
+	assert.Equal(t, códigoOriginal, u.Codigo)
 }

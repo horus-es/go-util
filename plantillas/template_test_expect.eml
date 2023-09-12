@@ -69,7 +69,7 @@ background-color: #222 !important
 text-shadow: none !important
 }
 }
-":root" {
+:root {
 color-scheme: light dark !important;
 supported-color-schemes: light dark !important
 }</style></head>
