@@ -1,3 +1,4 @@
+// Deprecated: usar github.com/horus-es/go-util/v2
 module github.com/horus-es/go-util
 
 go 1.18
