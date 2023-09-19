@@ -11,7 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-// Parsea un numero, considerando que puede incluir separadores
+// Parsea un número, considerando que puede incluir separadores
 func ParseNumero(v, sepDecimal string) (result float64, err error) {
 	s := strings.ReplaceAll(v, " ", "")
 	n := strings.LastIndexAny(s, ".,")
@@ -22,7 +22,7 @@ func ParseNumero(v, sepDecimal string) (result float64, err error) {
 		s = strings.ReplaceAll(s, ",", "")
 	} else {
 		s = strings.ReplaceAll(s, ".", "")
-		s = strings.Replace(s, sepDecimal, ".", 1)
+		s = strings.ReplaceAll(s, sepDecimal, ".")
 	}
 	result, err = strconv.ParseFloat(s, 64)
 	if err != nil {

@@ -53,7 +53,7 @@ func PrintPrecio(v float64, fp Moneda) string {
 	var result string
 	switch fp {
 	case EUR:
-		result = PrintNumero(v, 2, ",", ".") + "€"
+		result = PrintNumero(v, 2, ",", ".") + " €"
 	case USD:
 		result = "$" + PrintNumero(v, 2, ".", ",")
 	case COP, MXN:

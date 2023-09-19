@@ -34,19 +34,20 @@ func ExampleParsePrecio() {
 }
 
 func TestPrintPrecio(t *testing.T) {
-	assert.Equal(t, "12.345,68€", PrintPrecio(12345.6789, EUR), EUR)
+	assert.Equal(t, "12.345,68 €", PrintPrecio(12345.6789, EUR), EUR)
 	assert.Equal(t, "$12,345.68", PrintPrecio(12345.6789, USD), USD)
 	assert.Equal(t, "$12.346", PrintPrecio(12345.6789, COP), COP)
-	assert.Equal(t, "-12.345,68€", PrintPrecio(-12345.6789, EUR), EUR)
-	assert.Equal(t, "345,68€", PrintPrecio(345.6789, EUR), EUR)
-	assert.Equal(t, "-345,68€", PrintPrecio(-345.6789, EUR), EUR)
-	assert.Equal(t, "-123.345,68€", PrintPrecio(-123345.6789, EUR), EUR)
+	assert.Equal(t, "$12.346", PrintPrecio(12345.6789, MXN), MXN)
+	assert.Equal(t, "-12.345,68 €", PrintPrecio(-12345.6789, EUR), EUR)
+	assert.Equal(t, "345,68 €", PrintPrecio(345.6789, EUR), EUR)
+	assert.Equal(t, "-345,68 €", PrintPrecio(-345.6789, EUR), EUR)
+	assert.Equal(t, "-123.345,68 €", PrintPrecio(-123345.6789, EUR), EUR)
 	assert.Equal(t, "123345.678900", PrintPrecio(123345.6789, "OTRO"), "OTRO")
 }
 
 func ExamplePrintPrecio() {
 	fmt.Println(PrintPrecio(12345.6789, EUR))
-	// Output: 12.345,68€
+	// Output: 12.345,68 €
 }
 
 func TestRedondeaPrecio(t *testing.T) {
