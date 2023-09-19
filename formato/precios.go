@@ -14,6 +14,7 @@ const (
 	EUR Moneda = "EUR" // Euros
 	USD Moneda = "USD" // Dólares USA
 	COP Moneda = "COP" // Pesos colombianos
+	MXN Moneda = "MXN" // Pesos mexicanos
 )
 
 // Parsea un precio
@@ -29,13 +30,15 @@ func ParsePrecio(p string, fp Moneda) (result float64, err error) {
 	s = strings.TrimPrefix(s, string(USD))
 	s = strings.TrimSuffix(s, string(COP))
 	s = strings.TrimPrefix(s, string(COP))
+	s = strings.TrimSuffix(s, string(MXN))
+	s = strings.TrimPrefix(s, string(MXN))
 	switch fp {
 	case EUR:
 		result, err = ParseNumero(s, ",")
 	case USD:
 		result, err = ParseNumero(s, ".")
-	case COP:
-		result, err = ParseNumero(s, ".")
+	case COP, MXN:
+		result, err = ParseNumero(s, ",")
 	default:
 		result, err = strconv.ParseFloat(s, 64)
 	}
@@ -53,7 +56,7 @@ func PrintPrecio(v float64, fp Moneda) string {
 		result = PrintNumero(v, 2, ",", ".") + "€"
 	case USD:
 		result = "$" + PrintNumero(v, 2, ".", ",")
-	case COP:
+	case COP, MXN:
 		result = "$" + PrintNumero(v, 0, ",", ".")
 	default:
 		result = fmt.Sprintf("%f", v)
@@ -67,7 +70,7 @@ func RedondeaPrecio(v float64, fp Moneda) float64 {
 	switch fp {
 	case EUR, USD:
 		result = 100
-	case COP:
+	case COP, MXN:
 		result = 1
 	default:
 		result = 1000000
