@@ -102,7 +102,7 @@ func ExampleGetOrderedRows() {
 	logger.Infof("Primeros 3 usuarios hallados: %s\n", strings.Join(us, ", "))
 	// Output:
 	// INFO: select codigo from personal where operador='0cec7694-eb8d-4ab2-95bb-d5d733a3be94' order by codigo limit 3
-	// INFO: Primeros 3 usuarios hallados: pablo, palevi, prueba
+	// INFO: Primeros 3 usuarios hallados: dadiz, nuevo, pablo
 }
 
 func TestGetJoin(t *testing.T) {
