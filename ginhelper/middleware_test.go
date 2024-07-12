@@ -4,15 +4,13 @@ import (
 	"bytes"
 	"net/http"
 	"net/http/httptest"
-	"testing"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/horus-es/go-util/v2/ginhelper"
-	"github.com/stretchr/testify/assert"
 )
 
-func setupRouter() *gin.Engine {
+func Example() {
 	// Modo producción
 	gin.SetMode(gin.ReleaseMode)
 	// Crea el router
@@ -26,36 +24,32 @@ func setupRouter() *gin.Engine {
 	corsCfg.AllowAllOrigins = true
 	corsCfg.AddAllowHeaders("Authorization")
 	router.Use(cors.New(corsCfg))
-	// Middleware no implementado
+	// Middleware no implementado y debugLogger
 	router.Use(ginhelper.MiddlewareNotImplemented(), ginhelper.MiddlewareLogger(true))
-	// Rutas de prueba
+
+	// Rutas
 	router.GET("/ping", func(c *gin.Context) {
 		c.String(200, "pong")
 	})
 	router.POST("/json", func(c *gin.Context) {
-		c.PureJSON(201, gin.H{})
+		c.String(201, `{"response":"Sorry, the market was closed ..."}`)
 	})
 	router.POST("/multipart", func(c *gin.Context) {
 		c.PureJSON(201, gin.H{})
 	})
-	return router
-}
 
-func TestMiddlewares(t *testing.T) {
-	router := setupRouter()
-
+	// Solicitud Ping/Pong
 	req, _ := http.NewRequest("GET", "/ping", nil)
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
-	assert.Equal(t, "pong", w.Body.String())
 
-	req, _ = http.NewRequest("POST", "/json", bytes.NewBufferString(`{"title":"Buy cheese and bread for breakfast."}`))
+	// Solicitud JSON
+	req, _ = http.NewRequest("POST", "/json", bytes.NewBufferString(`{"request":"Buy cheese and bread for breakfast."}`))
 	req.Header.Set("Content-Type", "application/json")
 	w = httptest.NewRecorder()
 	router.ServeHTTP(w, req)
-	assert.Equal(t, 201, w.Code)
 
+	// Solicitud multipart/form-data
 	body := `-----------------------------9051914041544843365972754266
 Content-Disposition: form-data; name="text"
 
@@ -78,6 +72,22 @@ Content-Type: text/html
 	req.Header.Set("Content-Type", "multipart/form-data; boundary=---------------------------9051914041544843365972754266")
 	w = httptest.NewRecorder()
 	router.ServeHTTP(w, req)
-	assert.Equal(t, 201, w.Code)
+
+	// Output:
+	// INFO: GET /ping
+	// INFO: HTTP 200 OK - 0ms
+	// INFO: pong
+	// INFO: ==================================================
+	// INFO: POST /json
+	// INFO: {"request":"Buy cheese and bread for breakfast."}
+	// INFO: HTTP 201 Created - 0ms
+	// INFO: {"response":"Sorry, the market was closed ..."}
+	// INFO: ==================================================
+	// INFO: POST /multipart
+	// INFO: Content-Type: multipart/form-data
+	// INFO: Content-Length: 538
+	// INFO: HTTP 201 Created - 0ms
+	// INFO: {}
+	// INFO: ==================================================
 
 }
