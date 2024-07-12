@@ -74,14 +74,20 @@ func debugLogger(c *gin.Context) {
 	path, _ = url.PathUnescape(path)
 	path = strings.ReplaceAll(path, " ", "+")
 	ghLog.Infof("%s %s", method, path)
-	if c.Request.ContentLength != 0 {
-		// Registramos solicitud duplicando reader
+	if c.Request.ContentLength > 0 {
+		// Duplicamos reader
 		buffer, _ := io.ReadAll(c.Request.Body)
 		c.Request.Body = io.NopCloser(bytes.NewBuffer(buffer))
-		if len(buffer) < 3000 {
+		// Registramos solicitud
+		ct, _, _ := strings.Cut(c.Request.Header.Get("Content-Type"), ";")
+		isTxt := ct == "application/json" || ct == "application/xml" || strings.HasPrefix(ct, "text/")
+		if isTxt {
 			ghLog.Infof(string(buffer))
 		} else {
-			ghLog.Infof(string(buffer[:3000]) + "···")
+			if len(ct) > 0 {
+				ghLog.Infof("Content-Type: %s", ct)
+			}
+			ghLog.Infof("Content-Length: %d", c.Request.ContentLength)
 		}
 	}
 	// Duplicamos writer
@@ -96,11 +102,12 @@ func debugLogger(c *gin.Context) {
 	statusText := http.StatusText(statusCode)
 	ghLog.Infof("HTTP %d %s - %dms", statusCode, statusText, latency)
 	// Registramos respuesta
-	ct := c.Writer.Header().Get("Content-Type")
-	if strings.HasPrefix(ct, "application/json") && blw.body.Len() > 0 {
+	ct, _, _ := strings.Cut(c.Writer.Header().Get("Content-Type"), ";")
+	isTxt := ct == "application/json" || ct == "application/xml" || strings.HasPrefix(ct, "text/")
+	if isTxt {
 		ghLog.Infof(blw.body.String())
 	} else {
-		if ct != "" {
+		if len(ct) > 0 {
 			ghLog.Infof("Content-Type: %s", ct)
 		}
 		ghLog.Infof("Content-Length: %d", blw.body.Len())
