@@ -59,3 +59,20 @@ func ExampleDoRestPost() {
 	fmt.Println(response["data"])
 	// Output: {"Uno":"1","Dos":"2","Tres":"3"}
 }
+
+func ExampleDoRestPut() {
+	// Servicio REST publico de prueba que devuelve lo mismo que se le envía
+	host := "https://httpbin.org"
+	endpoint := "anything"
+	type tEstructura struct {
+		Uno  string
+		Dos  string
+		Tres string
+	}
+	request := tEstructura{Uno: "1", Dos: "2", Tres: "3"}
+	response, code, err := DoRestPut[map[string]any](host, endpoint, request)
+	errores.PanicIfError(err, "Error de red")
+	errores.PanicIfTrue(code < 200 || code > 299, "Recibido código de respuesta http: %d", code)
+	fmt.Println(response["data"])
+	// Output: {"Uno":"1","Dos":"2","Tres":"3"}
+}

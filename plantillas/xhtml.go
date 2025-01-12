@@ -10,7 +10,7 @@ Las plantillas soportan la sintaxis estándar de GO y además los siguientes att
 
 Se soportan las funciones de formato DATETIME, DATE, TIME, PRICE y BR.
 
-Ejemplo de plantillla en https://github.com/horus-es/go-util/blob/main/plantillas/template_test.html
+Ejemplo de plantillla en https://github.com/horus-es/go-util/blob/main/plantillas/plantilla.html
 
 Ejemplos de plantillas preparadas para mailing en https://postmarkapp.com/transactional-email-templates
 
@@ -51,7 +51,6 @@ func MergeXhtmlTemplate(name, xhtml string, datos any, assets string, ff formato
 	if err != nil {
 		return "", err
 	}
-	//os.WriteFile("template_test_golang.html", []byte(gotmpl), 0666)
 	var funciones = template.FuncMap{
 		"DATETIME": func(x any) string {
 			switch t := x.(type) {

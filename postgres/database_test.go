@@ -48,7 +48,7 @@ func ExampleGetOneRow() {
 	logger.Infof("%v", u)
 	// Output:
 	// INFO: select codigo,activo from personal where id='fe90b961-0646-4f8e-a698-d3a153abf7d2'
-	// INFO: {pablo true}
+	// INFO: {pablo7 true}
 }
 
 func TestGetOneRowSummary(t *testing.T) {
@@ -84,7 +84,7 @@ func ExampleGetOneOrZeroRows() {
 	}
 	// Output:
 	// INFO: select codigo,activo from personal where id='fe90b961-0646-4f8e-a698-d3a153abf7d2'
-	// INFO: Hallado usuario: "pablo"
+	// INFO: Hallado usuario: "pablo7"
 	// INFO: select codigo,activo from personal where id='fe90b951-9999-9999-9999-999999999999'
 	// INFO: Usuario no hallado.
 }
@@ -98,19 +98,18 @@ func TestGetOneOrZeroRowsPanicMany(t *testing.T) {
 
 func ExampleGetOrderedRows() {
 	us := []string{}
-	GetOrderedRows(&us, "select codigo from personal where operador=$1 order by codigo limit 3", UUIDoperador)
+	GetOrderedRows(&us, "select codigo from personal where operador=$1 and codigo>'dad' order by codigo limit 3", UUIDoperador)
 	logger.Infof("Primeros 3 usuarios hallados: %s\n", strings.Join(us, ", "))
 	// Output:
-	// INFO: select codigo from personal where operador='0cec7694-eb8d-4ab2-95bb-d5d733a3be94' order by codigo limit 3
-	// INFO: Primeros 3 usuarios hallados: dadiz, nuevo, pablo
+	// INFO: select codigo from personal where operador='0cec7694-eb8d-4ab2-95bb-d5d733a3be94' and codigo>'dad' order by codigo limit 3
+	// INFO: Primeros 3 usuarios hallados: dadiz, emple, emple100E
 }
 
 func TestGetJoin(t *testing.T) {
 	type t_operador struct {
-		Id          string
-		ZonaHoraria string
-		Razon       string
-		Idioma      string
+		Id     string
+		Razon  string
+		Idioma string
 	}
 	type t_datos struct {
 		Personal T_personal
@@ -186,13 +185,13 @@ func ExampleUpdateRow() {
 	u := T_personal{}
 	GetOneRow(&u, "select * from personal where id=$1", UUIDempleado)
 	logger.Infof("Usuario cargado")
-	u.Codigo = "pablo"
+	u.Codigo = "pablo7"
 	UpdateRow(u, "codigo")
 	logger.Infof("Nombre actualizado")
 	// Output:
 	// INFO: select * from personal where id='fe90b961-0646-4f8e-a698-d3a153abf7d2'
 	// INFO: Usuario cargado
-	// INFO: update personal set codigo='pablo' where id='fe90b961-0646-4f8e-a698-d3a153abf7d2'
+	// INFO: update personal set codigo='pablo7' where id='fe90b961-0646-4f8e-a698-d3a153abf7d2'
 	// INFO: Nombre actualizado
 }
 

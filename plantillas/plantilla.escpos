@@ -1,0 +1,55 @@
+{c}{img acme.png}
+{whc}C.C SEXTA AVENIDA
+{i}Saint Croix Holding Immobilier Socimi S.A.
+{s}Glorieta Cuatro Caminos, 6 - 7 - 4º, 28020 , Madrid
+{swh}CIF:{{.Issuer.VatID}}
+{}
+{{if .Recipient}}
+FACTURA Nro. {{.ID}}
+Cliente: {{.Recipient.VatID}}
+{{end}}
+{{if .Stay}}
+Fecha de entrada: {{DATETIME .Stay.EntryDate}}
+Fecha de pago   : {{DATETIME .Transaction.Date}}
+Estancia        : {{.Stay.Duration}}
+{{if .Stay.Plate -}}
+Matricula       : {{.Stay.Plate}}
+{{- end}}
+{{if .Stay.Ticket -}}
+Ticket número   : {{.Stay.Ticket}}
+{{- end}}
+Precio estancia : {{PRICE .Stay.Price}}
+{{end}}
+{{range $line := .Lines}}
+{{$line.Service}}: {{PRICE $line.Price}}
+{{end}}
+
+{{if not .Recipient -}}
+Fac. simplific. : {{.ID}}
+{{- end}}
+Base imponible     : {{PRICE .Base}}
+I.V.A. (21%)       : {{PRICE .Vat}}
+Total              : {o}{{PRICE .Total}}{}
+
+Medio de pago: {i}{{.Transaction.Method}}{}
+
+CUFE: {{.Additional.CUFE}}
+-------------------------------------
+{partial-cut}
+{wh}Códigos de barras:{}
+{bc-height 100}{bc-modulo 3}
+
+{code128 123456}
+{bc-hri both}{code128a {{.ID}}}
+{bc-hri below}{code128b 123456}
+{code128c 123456}
+{itf 123456}
+{upc-a 12345678901}
+{upc-e 0123456}
+{ean-13 123456789012}
+{ean-8 1234567}
+{bc-hri above}{code39 123456}
+{code93 123456}
+{codabar 123456}
+{qr-ecc L}{qr-modulo 3}{qr {{.Additional.CUFE}}}
+{partial-cut}

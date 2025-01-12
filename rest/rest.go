@@ -65,3 +65,38 @@ func DoRestPost[T any](host, endpoint string, request any) (response T, code int
 	}
 	return
 }
+
+func DoRestPut[T any](host, endpoint string, request any) (response T, code int, err error) {
+	fullURL, err := url.JoinPath(host, endpoint)
+	if err != nil {
+		return
+	}
+	requestBytes, err := json.Marshal(request)
+	if err != nil {
+		return
+	}
+	req, err := http.NewRequest(http.MethodPut, fullURL, bytes.NewReader(requestBytes))
+	if err != nil {
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+	client := &http.Client{}
+	httpResponse, err := client.Do(req)
+	if err != nil {
+		return
+	}
+	defer httpResponse.Body.Close()
+	code = httpResponse.StatusCode
+	if code >= 500 {
+		return
+	}
+	body, err := io.ReadAll(httpResponse.Body)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return
+	}
+	return
+}

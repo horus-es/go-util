@@ -1,0 +1,37 @@
+C.C SEXTA AVENIDA
+Saint Croix Holding Immobilier Socimi S.A.
+Glorieta Cuatro Caminos, 6 - 7 - 4º, 28020 , Madrid
+CIF:A78022555
+FACTURA Nro. A000000123
+Cliente: 32774555K
+Fecha de entrada: 02/04/2022 12:45
+Fecha de pago : 02/04/2022 15:03
+Estancia : 148 min
+Matricula : 1708FVS
+Ticket número : 1234-ABCD
+Precio estancia : 0,00 €
+Estancia 23/08/2022 12:43 (37 min): 3,0
+0 €
+Lavado integral vehiculo: 5,96 €
+Base imponible : 12,45 €
+I.V.A. (21%) : 2,61 €
+Total : 15,06 €
+Medio de pago: VISA 1234
+CUFE: dd83bc58ab454dd7b90dce6fe61da574e20d2
+4b79aa340b38fc1d25567fc69baf50b5e366528413e
+a67fbc15599ec0e5
+-------------------------------------
+Códigos de barras:
+A000000123
+A000000123
+123456
+123456
+123456
+12345678901
+0123456
+123456789012
+1234567
+123456
+123456
+a123456a
+

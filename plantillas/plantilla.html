@@ -487,7 +487,7 @@
                           <td valign="top" width="100%">
                             <h1>FACTURA</h1>
                             <span th:text="Número:&nbsp;{{.ID}}">Número: A0000123</span><br/>
-                            <span th:text='Fecha: {{DATE .IssueDate}}'>Fecha: 25/06/2022</span>
+                            <span th:text="Fecha: {{DATE .IssueDate}}">Fecha: 25/06/2022</span>
                           </td>
                           <td valign="top" th:with=".Recipient" style="white-space: nowrap;">
                             <h3>Destinatario:</h3>
@@ -503,7 +503,7 @@
                             <table class="purchase_content" width="100%" cellpadding="0" cellspacing="0">
                               <tr th:each=".Lines">
                                 <td width="80%" class="purchase_item"><span class="f-fallback" th:text="{{.Service}}">Estancia 17 minutos</span></td>
-                                <td class="align-right purchase_item" width="20%"><span class="f-fallback" th:text='{{PRICE .Price}}'>4.45</span></td>
+                                <td class="align-right purchase_item" width="20%"><span class="f-fallback" th:text="{{PRICE .Price}}">4.45</span></td>
                               </tr>
                               <tr th:remove="all">
                                 <td width="80%" class="purchase_item"><span class="f-fallback">Oferta lavado integral</span></td>
@@ -515,15 +515,15 @@
                               </tr>
                               <tr th:if="gt (len .Lines) 1">
                                 <td width="80%" class="purchase_footer" valign="middle"><p class="f-fallback purchase_total purchase_total--label">Subtotal</p></td>
-                                <td width="20%" class="purchase_footer" valign="middle"><p class="f-fallback purchase_total" th:text='{{PRICE .Subtotal}}'>16.45 EUR</p></td>
+                                <td width="20%" class="purchase_footer" valign="middle"><p class="f-fallback purchase_total" th:text="{{PRICE .Base}}">16.45 EUR</p></td>
                               </tr>
                               <tr>
-                                <td width="80%" class="purchase_footer" valign="middle"><p class="f-fallback purchase_total purchase_total--label" th:text='IVA ({{.VatRate}}%)'>IVA (21%)</p></td>
-                                <td width="20%" class="purchase_footer" valign="middle"><p class="f-fallback purchase_total" th:text='{{PRICE .Vat}}'>3.45 EUR</p></td>
+                                <td width="80%" class="purchase_footer" valign="middle"><p class="f-fallback purchase_total purchase_total--label" th:text="IVA ({{.VatRate}}%)">IVA (21%)</p></td>
+                                <td width="20%" class="purchase_footer" valign="middle"><p class="f-fallback purchase_total" th:text="{{PRICE .Vat}}">3.45 EUR</p></td>
                               </tr>
                               <tr>
                                 <td width="80%" class="purchase_footer" valign="middle"><p class="f-fallback purchase_total purchase_total--label">Total</p></td>
-                                <td width="20%" class="purchase_footer" valign="middle"><p class="f-fallback purchase_total" th:text='{{PRICE .Total}}'>19.90 EUR</p></td>
+                                <td width="20%" class="purchase_footer" valign="middle"><p class="f-fallback purchase_total" th:text="{{PRICE .Total}}">19.90 EUR</p></td>
                               </tr>
                             </table>
                           </td>

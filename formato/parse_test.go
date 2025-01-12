@@ -43,7 +43,7 @@ func compruebaParseLogica(t *testing.T, espera bool, valor string) {
 		assert.NotNil(t, err)
 		return
 	}
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, espera, obtiene)
 }
 
@@ -77,7 +77,7 @@ func compruebaParseOpcion(t *testing.T, espera string, opcion string, admitidas 
 		assert.NotNil(t, err)
 		return
 	}
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, espera, obtiene)
 }
 
@@ -106,10 +106,10 @@ func ExampleParseOpcion() {
 func TestParseUUID(t *testing.T) {
 	suuid := "8D2C5C10-62D6-4B90-b4Af-8C006883C648"
 	uuid, err := ParseUUID(suuid)
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, strings.ToLower(suuid), PrintUUID(uuid))
 	uuid, err = ParseUUID("")
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	assert.False(t, uuid.Valid)
 	assert.Equal(t, "", PrintUUID(uuid))
 	suuid = "error"
