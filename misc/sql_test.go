@@ -1,31 +1,32 @@
-package misc
+package misc_test
 
 import (
 	"fmt"
 	"testing"
 
+	"github.com/horus-es/go-util/v2/misc"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSqlIn(t *testing.T) {
-	obtiene := SqlIn("uno", "dos", "tres")
+	obtiene := misc.SqlIn("uno", "dos", "tres")
 	assert.Equal(t, " in ('uno','dos','tres')", obtiene)
-	obtiene = SqlIn("cuatro")
+	obtiene = misc.SqlIn("cuatro")
 	assert.Equal(t, " = 'cuatro'", obtiene)
-	obtiene = SqlIn()
+	obtiene = misc.SqlIn()
 	assert.Equal(t, " is null", obtiene)
 }
 
 func ExampleSqlIn() {
 	codigos := []string{"cero", "uno", "dos", "tres"}
-	sql := `select * from tabla where codigo` + SqlIn(codigos[1:]...)
+	sql := `select * from tabla where codigo` + misc.SqlIn(codigos[1:]...)
 	fmt.Println(sql)
 	// Output: select * from tabla where codigo in ('uno','dos','tres')
 
 }
 
 func ExampleEscapeSQL() {
-	sql := `select * from tabla where nombre=` + EscapeSQL("O'Brian")
+	sql := `select * from tabla where nombre=` + misc.EscapeSQL("O'Brian")
 	fmt.Println(sql)
 	// Output: select * from tabla where nombre='O''Brian'
 }

@@ -1,4 +1,4 @@
-package plantillas
+package plantillas_test
 
 import (
 	"fmt"
@@ -8,13 +8,14 @@ import (
 
 	"github.com/horus-es/go-util/v2/errores"
 	"github.com/horus-es/go-util/v2/formato"
+	"github.com/horus-es/go-util/v2/plantillas"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestMergeEscPosTemplate(t *testing.T) {
 	p, err := os.ReadFile("plantilla.escpos")
 	assert.NoError(t, err)
-	f, err := MergeEscPosTemplate("plantilla.escpos", string(p), factura, "", formato.DMA, formato.EUR)
+	f, err := plantillas.MergeEscPosTemplate("plantilla.escpos", string(p), factura, "", formato.DMA, formato.EUR)
 	assert.NoError(t, err)
 	os.WriteFile("escpos_test_out.escpos", []byte(f), 0666)
 	//os.WriteFile("escpos_test_expect.escpos", []byte(f), 0666)
@@ -28,7 +29,7 @@ func ExampleMergeEscPosTemplate() {
 	plantilla, err := os.ReadFile("plantilla.escpos")
 	errores.PanicIfError(err)
 	// Fusionar plantilla con estructura factura
-	f, err := MergeEscPosTemplate(
+	f, err := plantillas.MergeEscPosTemplate(
 		"escpos",
 		string(plantilla),
 		factura,
@@ -46,9 +47,9 @@ func ExampleMergeEscPosTemplate() {
 func TestGenerateEscPos(t *testing.T) {
 	p, err := os.ReadFile("plantilla.escpos")
 	assert.NoError(t, err)
-	f, err := MergeEscPosTemplate("plantilla.escpos", string(p), factura, "", formato.DMA, formato.EUR)
+	f, err := plantillas.MergeEscPosTemplate("plantilla.escpos", string(p), factura, "", formato.DMA, formato.EUR)
 	assert.NoError(t, err)
-	escpos, err := GenerateEscPos(f)
+	escpos, err := plantillas.GenerateEscPos(f)
 	assert.NoError(t, err)
 	//os.WriteFile("escpos_test_expect.prn", escpos, 0644)
 	os.WriteFile("escpos_test_out.prn", escpos, 0644)
@@ -62,7 +63,7 @@ func ExampleGenerateEscPos() {
 	plantilla, err := os.ReadFile("plantilla.escpos")
 	errores.PanicIfError(err)
 	// Fusionar plantilla con estructura factura
-	f, err := MergeEscPosTemplate(
+	f, err := plantillas.MergeEscPosTemplate(
 		"escpos",
 		string(plantilla),
 		factura,
@@ -72,7 +73,7 @@ func ExampleGenerateEscPos() {
 	)
 	errores.PanicIfError(err)
 	// Convertir la plantilla fusionada a fichero esc/pos binario
-	g, err := GenerateEscPos(f)
+	g, err := plantillas.GenerateEscPos(f)
 	errores.PanicIfError(err)
 	// Guardar salida binaria (o enviar a impresora)
 	os.WriteFile("recibo.prn", []byte(g), 0666)
@@ -86,7 +87,7 @@ func TestGenerateEscPosPdf(t *testing.T) {
 	wd, err := os.Getwd()
 	assert.NoError(t, err)
 	wd = "file:///" + strings.ReplaceAll(wd, "\\", "/")
-	err = GenerateEscPosPdf("template", string(plantilla), factura, wd, formato.DMA, formato.EUR, "escpos_test_out.pdf", 80)
+	err = plantillas.GenerateEscPosPdf("template", string(plantilla), factura, wd, formato.DMA, formato.EUR, "escpos_test_out.pdf", 80)
 	assert.NoError(t, err)
 	t1 := readPdfText(t, "escpos_test_expect.pdf")
 	t2 := readPdfText(t, "escpos_test_out.pdf")
@@ -98,7 +99,7 @@ func ExampleGenerateEscPosPdf() {
 	plantilla, err := os.ReadFile("plantilla.escpos")
 	errores.PanicIfError(err)
 	// Genera fichero PDF
-	err = GenerateEscPosPdf(
+	err = plantillas.GenerateEscPosPdf(
 		"pdf",
 		string(plantilla),
 		factura,

@@ -1,140 +1,141 @@
-package formato
+package formato_test
 
 import (
 	"fmt"
 	"testing"
 
 	"github.com/horus-es/go-util/v2/errores"
+	"github.com/horus-es/go-util/v2/formato"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestDuracion(t *testing.T) {
-	d, err := ParseDuracion("48h")
-	assert.Equal(t, "48h", PrintDuracion(d))
-	assert.Equal(t, "PT172800S", PrintDuracionIso(d))
+	d, err := formato.ParseDuracion("48h")
+	assert.Equal(t, "48h", formato.PrintDuracion(d))
+	assert.Equal(t, "PT172800S", formato.PrintDuracionIso(d))
 	assert.NoError(t, err)
-	d, err = ParseDuracion("30m")
-	assert.Equal(t, "30m", PrintDuracion(d))
-	assert.Equal(t, "PT1800S", PrintDuracionIso(d))
+	d, err = formato.ParseDuracion("30m")
+	assert.Equal(t, "30m", formato.PrintDuracion(d))
+	assert.Equal(t, "PT1800S", formato.PrintDuracionIso(d))
 	assert.NoError(t, err)
-	d, err = ParseDuracion("120s")
-	assert.Equal(t, "2m", PrintDuracion(d))
-	assert.Equal(t, "PT120S", PrintDuracionIso(d))
+	d, err = formato.ParseDuracion("120s")
+	assert.Equal(t, "2m", formato.PrintDuracion(d))
+	assert.Equal(t, "PT120S", formato.PrintDuracionIso(d))
 	assert.NoError(t, err)
-	d, err = ParseDuracion("  120M   ")
-	assert.Equal(t, "2h", PrintDuracion(d))
+	d, err = formato.ParseDuracion("  120M   ")
+	assert.Equal(t, "2h", formato.PrintDuracion(d))
 	assert.NoError(t, err)
-	d, err = ParseDuracion("121s")
-	assert.Equal(t, "121s", PrintDuracion(d))
+	d, err = formato.ParseDuracion("121s")
+	assert.Equal(t, "121s", formato.PrintDuracion(d))
 	assert.NoError(t, err)
-	d, err = ParseDuracion("0s")
-	assert.Equal(t, "", PrintDuracion(d))
+	d, err = formato.ParseDuracion("0s")
+	assert.Equal(t, "", formato.PrintDuracion(d))
 	assert.NoError(t, err)
-	_, err = ParseDuracion("59M01S")
+	_, err = formato.ParseDuracion("59M01S")
 	assert.NotNil(t, err)
-	_, err = ParseDuracion("59m01z")
+	_, err = formato.ParseDuracion("59m01z")
 	assert.NotNil(t, err)
-	_, err = ParseDuracion("00")
+	_, err = formato.ParseDuracion("00")
 	assert.NotNil(t, err)
-	_, err = ParseDuracion("  ")
+	_, err = formato.ParseDuracion("  ")
 	assert.NotNil(t, err)
 }
 
 func ExamplePrintDuracion() {
-	d, err := ParseDuracion("48h")
+	d, err := formato.ParseDuracion("48h")
 	errores.PanicIfError(err)
-	fmt.Println(PrintDuracion(d))
+	fmt.Println(formato.PrintDuracion(d))
 	// Output: 48h
 }
 
 func ExamplePrintDuracionIso() {
-	d, err := ParseDuracion("48h")
+	d, err := formato.ParseDuracion("48h")
 	errores.PanicIfError(err)
-	fmt.Println(PrintDuracionIso(d))
+	fmt.Println(formato.PrintDuracionIso(d))
 	// Output: PT172800S
 }
 
 func ExampleParseDuracion() {
-	d, err := ParseDuracion("48h")
+	d, err := formato.ParseDuracion("48h")
 	errores.PanicIfError(err)
-	fmt.Println(PrintDuracion(d))
+	fmt.Println(formato.PrintDuracion(d))
 	// Output: 48h
 }
 
 func TestInterval(t *testing.T) {
-	d, err := ParseIntervalAMSD("48d")
-	assert.Equal(t, "48d", PrintInterval(d))
-	assert.Equal(t, "P48D", PrintIntervalIso(d))
+	d, err := formato.ParseIntervalAMSD("48d")
+	assert.Equal(t, "48d", formato.PrintInterval(d))
+	assert.Equal(t, "P48D", formato.PrintIntervalIso(d))
 	assert.NoError(t, err)
-	d, err = ParseIntervalAMSD("3 meses")
-	assert.Equal(t, "3m", PrintInterval(d))
-	assert.Equal(t, "P3M", PrintIntervalIso(d))
+	d, err = formato.ParseIntervalAMSD("3 meses")
+	assert.Equal(t, "3m", formato.PrintInterval(d))
+	assert.Equal(t, "P3M", formato.PrintIntervalIso(d))
 	assert.NoError(t, err)
-	d, err = ParseIntervalAMSD("2 semanas")
-	assert.Equal(t, "14d", PrintInterval(d))
-	assert.Equal(t, "P14D", PrintIntervalIso(d))
+	d, err = formato.ParseIntervalAMSD("2 semanas")
+	assert.Equal(t, "14d", formato.PrintInterval(d))
+	assert.Equal(t, "P14D", formato.PrintIntervalIso(d))
 	assert.NoError(t, err)
-	d, err = ParseIntervalAMSD("1año")
-	assert.Equal(t, "12m", PrintInterval(d))
-	assert.Equal(t, "P12M", PrintIntervalIso(d))
+	d, err = formato.ParseIntervalAMSD("1año")
+	assert.Equal(t, "12m", formato.PrintInterval(d))
+	assert.Equal(t, "P12M", formato.PrintIntervalIso(d))
 	assert.NoError(t, err)
-	d, err = ParseIntervalAMSD("  ")
-	assert.NoError(t, err)
-	assert.False(t, d.Valid)
-	d, err = ParseIntervalHMS("33 horas")
-	assert.Equal(t, "33h", PrintInterval(d))
-	assert.Equal(t, "PT118800S", PrintIntervalIso(d))
-	assert.NoError(t, err)
-	d, err = ParseIntervalHMS("61 minutos")
-	assert.Equal(t, "61m", PrintInterval(d))
-	assert.Equal(t, "PT3660S", PrintIntervalIso(d))
-	assert.NoError(t, err)
-	d, err = ParseIntervalHMS("61 segundos")
-	assert.Equal(t, "61s", PrintInterval(d))
-	assert.Equal(t, "PT61S", PrintIntervalIso(d))
-	assert.NoError(t, err)
-	d, err = ParseIntervalHMS("  ")
+	d, err = formato.ParseIntervalAMSD("  ")
 	assert.NoError(t, err)
 	assert.False(t, d.Valid)
-	_, err = ParseIntervalAMSD("1m2m")
+	d, err = formato.ParseIntervalHMS("33 horas")
+	assert.Equal(t, "33h", formato.PrintInterval(d))
+	assert.Equal(t, "PT118800S", formato.PrintIntervalIso(d))
+	assert.NoError(t, err)
+	d, err = formato.ParseIntervalHMS("61 minutos")
+	assert.Equal(t, "61m", formato.PrintInterval(d))
+	assert.Equal(t, "PT3660S", formato.PrintIntervalIso(d))
+	assert.NoError(t, err)
+	d, err = formato.ParseIntervalHMS("61 segundos")
+	assert.Equal(t, "61s", formato.PrintInterval(d))
+	assert.Equal(t, "PT61S", formato.PrintIntervalIso(d))
+	assert.NoError(t, err)
+	d, err = formato.ParseIntervalHMS("  ")
+	assert.NoError(t, err)
+	assert.False(t, d.Valid)
+	_, err = formato.ParseIntervalAMSD("1m2m")
 	assert.NotNil(t, err)
-	_, err = ParseIntervalHMS("1d")
+	_, err = formato.ParseIntervalHMS("1d")
 	assert.NotNil(t, err)
-	_, err = ParseIntervalAMSD("1h")
+	_, err = formato.ParseIntervalAMSD("1h")
 	assert.NotNil(t, err)
-	assert.Equal(t, "", PrintInterval(pgtype.Interval{}))
-	assert.Equal(t, "", PrintIntervalIso(pgtype.Interval{}))
-	assert.Equal(t, "", PrintInterval(pgtype.Interval{Valid: true}))
-	assert.Equal(t, "", PrintIntervalIso(pgtype.Interval{Valid: true}))
-	assert.Equal(t, "1m", PrintInterval(pgtype.Interval{Microseconds: 60000000, Valid: true}))
-	assert.Equal(t, "PT60S", PrintIntervalIso(pgtype.Interval{Microseconds: 60000000, Valid: true}))
+	assert.Equal(t, "", formato.PrintInterval(pgtype.Interval{}))
+	assert.Equal(t, "", formato.PrintIntervalIso(pgtype.Interval{}))
+	assert.Equal(t, "", formato.PrintInterval(pgtype.Interval{Valid: true}))
+	assert.Equal(t, "", formato.PrintIntervalIso(pgtype.Interval{Valid: true}))
+	assert.Equal(t, "1m", formato.PrintInterval(pgtype.Interval{Microseconds: 60000000, Valid: true}))
+	assert.Equal(t, "PT60S", formato.PrintIntervalIso(pgtype.Interval{Microseconds: 60000000, Valid: true}))
 }
 
 func ExampleParseIntervalAMSD() {
-	i, err := ParseIntervalAMSD("30d")
+	i, err := formato.ParseIntervalAMSD("30d")
 	errores.PanicIfError(err)
-	fmt.Println(PrintInterval(i))
+	fmt.Println(formato.PrintInterval(i))
 	// Output: 30d
 }
 
 func ExampleParseIntervalHMS() {
-	i, err := ParseIntervalHMS("48h")
+	i, err := formato.ParseIntervalHMS("48h")
 	errores.PanicIfError(err)
-	fmt.Println(PrintInterval(i))
+	fmt.Println(formato.PrintInterval(i))
 	// Output: 48h
 }
 
 func ExamplePrintInterval() {
-	i, err := ParseIntervalAMSD("30d")
+	i, err := formato.ParseIntervalAMSD("30d")
 	errores.PanicIfError(err)
-	fmt.Println(PrintInterval(i))
+	fmt.Println(formato.PrintInterval(i))
 	// Output: 30d
 }
 
 func ExamplePrintIntervalIso() {
-	i, err := ParseIntervalAMSD("30d")
+	i, err := formato.ParseIntervalAMSD("30d")
 	errores.PanicIfError(err)
-	fmt.Println(PrintIntervalIso(i))
+	fmt.Println(formato.PrintIntervalIso(i))
 	// Output: P30D
 }

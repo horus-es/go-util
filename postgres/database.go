@@ -37,6 +37,7 @@ func InitPool(connectString string, logger *logger.Logger) {
 	dbPool, err = pgxpool.New(dbCtx, connectString)
 	errores.PanicIfError(err, "Error conectando a postgres")
 	dbLog = logger
+	inTest = strings.Contains(connectString, "application_name=_TEST_")
 }
 
 // Comienza una transacción

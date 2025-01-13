@@ -1,4 +1,4 @@
-package formato
+package formato_test
 
 import (
 	"fmt"
@@ -6,21 +6,22 @@ import (
 	"testing"
 
 	"github.com/horus-es/go-util/v2/errores"
+	"github.com/horus-es/go-util/v2/formato"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestPrintNumero(t *testing.T) {
-	assert.Equal(t, "12 345,68", PrintNumero(12345.6789, 2, ",", " "))
-	assert.Equal(t, "-12 300", PrintNumero(-12345.6789, -2, ",", " "))
-	assert.Equal(t, "123 456 790", PrintNumero(123456789, -1, ",", " "))
-	assert.Equal(t, "1.234.567.890,100", PrintNumero(1234567890.1, 3, ",", "."))
-	assert.Equal(t, "34.567.890,100", PrintNumero(34567890.1, 3, ",", "."))
+	assert.Equal(t, "12 345,68", formato.PrintNumero(12345.6789, 2, ",", " "))
+	assert.Equal(t, "-12 300", formato.PrintNumero(-12345.6789, -2, ",", " "))
+	assert.Equal(t, "123 456 790", formato.PrintNumero(123456789, -1, ",", " "))
+	assert.Equal(t, "1.234.567.890,100", formato.PrintNumero(1234567890.1, 3, ",", "."))
+	assert.Equal(t, "34.567.890,100", formato.PrintNumero(34567890.1, 3, ",", "."))
 }
 
 func ExamplePrintNumero() {
-	fmt.Println(PrintNumero(12345.6789, 2, ",", "."))
-	fmt.Println(PrintNumero(12345.6789, 0, ",", "."))
-	fmt.Println(PrintNumero(12345.6789, -2, ",", "."))
+	fmt.Println(formato.PrintNumero(12345.6789, 2, ",", "."))
+	fmt.Println(formato.PrintNumero(12345.6789, 0, ",", "."))
+	fmt.Println(formato.PrintNumero(12345.6789, -2, ",", "."))
 	// Output:
 	// 12.345,68
 	// 12.346
@@ -28,9 +29,9 @@ func ExamplePrintNumero() {
 }
 
 func ExampleParseNumero() {
-	fmt.Println(PrintNumero(12345.6789, 2, ",", "."))
-	fmt.Println(PrintNumero(12345.6789, 0, ",", "."))
-	fmt.Println(PrintNumero(12345.6789, -2, ",", "."))
+	fmt.Println(formato.PrintNumero(12345.6789, 2, ",", "."))
+	fmt.Println(formato.PrintNumero(12345.6789, 0, ",", "."))
+	fmt.Println(formato.PrintNumero(12345.6789, -2, ",", "."))
 	// Output:
 	// 12.345,68
 	// 12.346
@@ -38,7 +39,7 @@ func ExampleParseNumero() {
 }
 
 func compruebaParseLogica(t *testing.T, espera bool, valor string) {
-	obtiene, err := ParseLogica(valor)
+	obtiene, err := formato.ParseLogica(valor)
 	if valor == "--FAIL--" {
 		assert.NotNil(t, err)
 		return
@@ -57,13 +58,13 @@ func TestParseLogica(t *testing.T) {
 }
 
 func ExampleParseLogica() {
-	f, err := ParseLogica("Si")
+	f, err := formato.ParseLogica("Si")
 	errores.PanicIfError(err)
 	fmt.Println(f)
-	f, err = ParseLogica("F")
+	f, err = formato.ParseLogica("F")
 	errores.PanicIfError(err)
 	fmt.Println(f)
-	_, err = ParseLogica("ZERO")
+	_, err = formato.ParseLogica("ZERO")
 	fmt.Println(err)
 	// Output:
 	// true
@@ -72,7 +73,7 @@ func ExampleParseLogica() {
 }
 
 func compruebaParseOpcion(t *testing.T, espera string, opcion string, admitidas ...string) {
-	obtiene, err := ParseOpcion(opcion, admitidas...)
+	obtiene, err := formato.ParseOpcion(opcion, admitidas...)
 	if espera == "--FAIL--" {
 		assert.NotNil(t, err)
 		return
@@ -89,13 +90,13 @@ func TestParseOpciones(t *testing.T) {
 }
 
 func ExampleParseOpcion() {
-	opt, err := ParseOpcion("tres", "Uno", "Dos", "Tres")
+	opt, err := formato.ParseOpcion("tres", "Uno", "Dos", "Tres")
 	errores.PanicIfError(err)
 	fmt.Println(opt)
-	opt, err = ParseOpcion("tres", "Uno->1", "Dos->2", "Tres->3")
+	opt, err = formato.ParseOpcion("tres", "Uno->1", "Dos->2", "Tres->3")
 	errores.PanicIfError(err)
 	fmt.Println(opt)
-	_, err = ParseOpcion("cuatro", "Uno", "Dos", "Tres")
+	_, err = formato.ParseOpcion("cuatro", "Uno", "Dos", "Tres")
 	fmt.Println(err)
 	// Output:
 	// Tres
@@ -105,34 +106,34 @@ func ExampleParseOpcion() {
 
 func TestParseUUID(t *testing.T) {
 	suuid := "8D2C5C10-62D6-4B90-b4Af-8C006883C648"
-	uuid, err := ParseUUID(suuid)
+	uuid, err := formato.ParseUUID(suuid)
 	assert.NoError(t, err)
-	assert.Equal(t, strings.ToLower(suuid), PrintUUID(uuid))
-	uuid, err = ParseUUID("")
+	assert.Equal(t, strings.ToLower(suuid), formato.PrintUUID(uuid))
+	uuid, err = formato.ParseUUID("")
 	assert.NoError(t, err)
 	assert.False(t, uuid.Valid)
-	assert.Equal(t, "", PrintUUID(uuid))
+	assert.Equal(t, "", formato.PrintUUID(uuid))
 	suuid = "error"
-	_, err = ParseUUID(suuid)
+	_, err = formato.ParseUUID(suuid)
 	assert.NotNil(t, err)
 }
 
 func ExampleParseUUID() {
-	uuid, err := ParseUUID("b55e7cec-7126-4a19-8ab1-86481ead2803")
+	uuid, err := formato.ParseUUID("b55e7cec-7126-4a19-8ab1-86481ead2803")
 	errores.PanicIfError(err)
-	fmt.Println(PrintUUID(uuid))
+	fmt.Println(formato.PrintUUID(uuid))
 	// Output: b55e7cec-7126-4a19-8ab1-86481ead2803
 }
 
 func ExampleMustParseUUID() {
-	uuid := MustParseUUID("7e2a8034-c319-4dfa-a846-e2c176aba2e4")
-	fmt.Println(PrintUUID(uuid))
+	uuid := formato.MustParseUUID("7e2a8034-c319-4dfa-a846-e2c176aba2e4")
+	fmt.Println(formato.PrintUUID(uuid))
 	// Output: 7e2a8034-c319-4dfa-a846-e2c176aba2e4
 }
 
 func ExamplePrintUUID() {
-	uuid, err := ParseUUID("7ca4d9eb-9b81-4aae-86d9-682d73f4138f")
+	uuid, err := formato.ParseUUID("7ca4d9eb-9b81-4aae-86d9-682d73f4138f")
 	errores.PanicIfError(err)
-	fmt.Println(PrintUUID(uuid))
+	fmt.Println(formato.PrintUUID(uuid))
 	// Output: 7ca4d9eb-9b81-4aae-86d9-682d73f4138f
 }

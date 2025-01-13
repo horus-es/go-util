@@ -1,4 +1,4 @@
-package plantillas
+package plantillas_test
 
 // Datos y funciones auxiliares para los tests
 

@@ -1,10 +1,11 @@
-package rest
+package rest_test
 
 import (
 	"fmt"
 	"net/url"
 
 	"github.com/horus-es/go-util/v2/errores"
+	"github.com/horus-es/go-util/v2/rest"
 )
 
 func ExampleDoRestGet() {
@@ -28,7 +29,7 @@ func ExampleDoRestGet() {
 		}
 		HolidayType string
 	}
-	festivos, code, err := DoRestGet[tFestivos](host, endpoint, params)
+	festivos, code, err := rest.DoRestGet[tFestivos](host, endpoint, params)
 	errores.PanicIfError(err, "Error de red")
 	errores.PanicIfTrue(code < 200 || code > 299, "Recibido código de respuesta http: %d", code)
 final:
@@ -53,7 +54,7 @@ func ExampleDoRestPost() {
 		Tres string
 	}
 	request := tEstructura{Uno: "1", Dos: "2", Tres: "3"}
-	response, code, err := DoRestPost[map[string]any](host, endpoint, request)
+	response, code, err := rest.DoRestPost[map[string]any](host, endpoint, request)
 	errores.PanicIfError(err, "Error de red")
 	errores.PanicIfTrue(code < 200 || code > 299, "Recibido código de respuesta http: %d", code)
 	fmt.Println(response["data"])
@@ -70,7 +71,7 @@ func ExampleDoRestPut() {
 		Tres string
 	}
 	request := tEstructura{Uno: "1", Dos: "2", Tres: "3"}
-	response, code, err := DoRestPut[map[string]any](host, endpoint, request)
+	response, code, err := rest.DoRestPut[map[string]any](host, endpoint, request)
 	errores.PanicIfError(err, "Error de red")
 	errores.PanicIfTrue(code < 200 || code > 299, "Recibido código de respuesta http: %d", code)
 	fmt.Println(response["data"])
