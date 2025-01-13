@@ -1,7 +1,8 @@
 // Funciones para generar códigos de barras 1D en formato SVG.
-// Se han seguido las mismas reglas de generación que se usan
-// en ESC/POS (GS k, ver https://download4.epson.biz/sec_pubs/pos/reference_en/escpos/gs_lk.html)
-
+/*
+Se han seguido las mismas reglas de generación que usan las impresoras
+ESC/POS en el comando GS k, consultar https://download4.epson.biz/sec_pubs/pos/reference_en/escpos/gs_lk.html
+*/
 package barcode
 
 import (
@@ -58,22 +59,22 @@ func GetBarcodeSVG(code string, kind KIND, w, h int, color string, hri HRI, inli
 	svg += fmt.Sprintf("<svg width=\"%d\" height=\"%d\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\">\n", modulos*w, h)
 	svg += fmt.Sprintf("\t<g fill=\"%s\" stroke=\"none\">\n", color)
 	x := 5 * w
+	y := 0
+	bh := h
+	switch hri {
+	case Above:
+		y = 14
+		bh = h - 14
+	case Below:
+		bh = h - 14
+	case Both:
+		y = 14
+		bh = h - 28
+	}
 	negro := true
 	for _, r := range barcodeArray {
 		bw := int(r-48) * w
 		if negro {
-			y := 0
-			bh := h
-			switch hri {
-			case Above:
-				y = 14
-				bh = bh - 14
-			case Below:
-				bh = bh - 14
-			case Both:
-				y = 14
-				bh = bh - 28
-			}
 			svg += fmt.Sprintf("\t\t<rect x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" />\n", x, y, bw, bh)
 		}
 		x += bw
@@ -81,11 +82,11 @@ func GetBarcodeSVG(code string, kind KIND, w, h int, color string, hri HRI, inli
 	}
 	if hri == Above || hri == Both {
 		y := 2
-		svg += fmt.Sprintf("\t <text x=\"%d\" text-anchor=\"middle\" dominant-baseline=\"hanging\" y=\"%d\" fill=\"%s\" font-size=\"12px\">%s</text>\n", modulos*w/2, y, color, code)
+		svg += fmt.Sprintf("\t<text x=\"%d\" text-anchor=\"middle\" dominant-baseline=\"hanging\" y=\"%d\" fill=\"%s\" font-size=\"12px\">%s</text>\n", modulos*w/2, y, color, code)
 	}
 	if hri == Below || hri == Both {
 		y := h - 14
-		svg += fmt.Sprintf("\t <text x=\"%d\" text-anchor=\"middle\" dominant-baseline=\"hanging\" y=\"%d\" fill=\"%s\" font-size=\"12px\">%s</text>\n", modulos*w/2, y, color, code)
+		svg += fmt.Sprintf("\t<text x=\"%d\" text-anchor=\"middle\" dominant-baseline=\"hanging\" y=\"%d\" fill=\"%s\" font-size=\"12px\">%s</text>\n", modulos*w/2, y, color, code)
 	}
 	svg += "\t</g>\n</svg>\n"
 	return svg, nil
@@ -94,8 +95,6 @@ func GetBarcodeSVG(code string, kind KIND, w, h int, color string, hri HRI, inli
 // Genera la secuencia de módulos de las barras de código:
 //   - code: código a representar
 //   - kind: tipo de código de barras
-//
-// p.e. GetBarcodeBARS("123456", C128C) = 2112321122321311233311211321312331112
 func GetBarcodeBARS(code string, kind KIND) (string, error) {
 	switch kind {
 	case C39:

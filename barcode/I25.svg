@@ -21,6 +21,6 @@
 		<rect x="98" y="0" width="2" height="86" />
 		<rect x="102" y="0" width="4" height="86" />
 		<rect x="108" y="0" width="2" height="86" />
-	 <text x="60" text-anchor="middle" dominant-baseline="hanging" y="86" fill="#000" font-size="12px">123456</text>
+	<text x="60" text-anchor="middle" dominant-baseline="hanging" y="86" fill="#000" font-size="12px">123456</text>
 	</g>
 </svg>

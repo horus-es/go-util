@@ -36,6 +36,6 @@
 		<rect x="360" y="14" width="9" height="86" />
 		<rect x="372" y="14" width="3" height="86" />
 		<rect x="378" y="14" width="6" height="86" />
-	 <text x="199" text-anchor="middle" dominant-baseline="hanging" y="2" fill="#000" font-size="12px">1234abcd</text>
+	<text x="199" text-anchor="middle" dominant-baseline="hanging" y="2" fill="#000" font-size="12px">1234abcd</text>
 	</g>
 </svg>

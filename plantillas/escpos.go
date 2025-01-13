@@ -1,50 +1,51 @@
-// Funciones para procesar plantillas y convertirlas en esc/pos binario, HTML, PDF o EMAIL
-// En las plantillas escpos se sustituyen los siguientes comandos entre {} por las correspondientes secuencias de escape esc/pos:
-//
-// Estilos {whsbuioxlrc}, cada letra es opcional y significan:
-//   - w - doble ancho
-//   - h - doble alto
-//   - s - pequeño
-//   - b - negrita
-//   - u - subrayado
-//   - i - itálica
-//   - o - blanco sobre negro
-//   - x - arriba-abajo
-//   - l - izquierda
-//   - r - derecha
-//   - c - centrado
-//
-// Control de la impresora:
-//   - {reset}
-//   - {full-cut}
-//   - {partial-cut}
-//   - {form-feed}
-//
-// Códigos de barras:
-//   - {bc-heigth 162}: altura del código de barras (1-255)
-//   - {bc-modulo 3}: módulo del código de barras (2-6)
-//   - {bc-hri none}: muestra el texto bajo el código de barras (none/above/below/both) (siempre se imprime debajo en html/pdf)
-//   - {code128 123456}:
-//   - {code128a 123456}
-//   - {code128b 123456}
-//   - {code128c 123456}
-//   - {itf 123456}
-//   - {upc-a 123456}
-//   - {upc-e 123456}
-//   - {ean-13 123456}
-//   - {ean-8 123456}
-//   - {code39 123456}
-//   - {code93 123456}
-//   - {codabar 123456} (se imprime como code128 en html/pdf)
-//
-// Códigos QR
-//   - {qr-ecc L}: ECC del código QR (L|M|Q|H)
-//   - {qr-modulo 3}: módulo del código QR (1-16)
-//   - {qr https://devel.horus.es}
-//
-// Imágenes:
-//   - {logo.png}: fichero en formato png
+// Funciones para procesar plantillas y convertirlas en esc/pos binario o en PDF
+/*
+En las plantillas escpos se sustituyen los siguientes comandos entre {} por las correspondientes secuencias de escape esc/pos:
 
+Estilos {whsbuioxlrc}, cada letra es opcional y significan:
+  - w - doble ancho
+  - h - doble alto
+  - s - pequeño
+  - b - negrita
+  - u - subrayado
+  - i - itálica
+  - o - blanco sobre negro
+  - x - arriba-abajo
+  - l - izquierda
+  - r - derecha
+  - c - centrado
+
+Control de la impresora:
+  - {reset}
+  - {full-cut}
+  - {partial-cut}
+  - {form-feed}
+
+Códigos de barras:
+  - {bc-heigth 162}: altura del código de barras (1-255)
+  - {bc-modulo 3}: módulo del código de barras (2-6)
+  - {bc-hri none}: muestra el texto bajo el código de barras (none/above/below/both) (siempre se imprime debajo en html/pdf)
+  - {code128 123456}:
+  - {code128a 123456}
+  - {code128b 123456}
+  - {code128c 123456}
+  - {itf 123456}
+  - {upc-a 123456}
+  - {upc-e 123456}
+  - {ean-13 123456}
+  - {ean-8 123456}
+  - {code39 123456}
+  - {code93 123456}
+  - {codabar 123456} (se imprime como code128 en html/pdf)
+
+Códigos QR
+  - {qr-ecc L}: ECC del código QR (L|M|Q|H)
+  - {qr-modulo 3}: módulo del código QR (1-16)
+  - {qr https://devel.horus.es}
+
+Imágenes:
+  - {logo.png}: fichero en formato png
+*/
 package plantillas
 
 import (
