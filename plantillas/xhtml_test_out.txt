@@ -1,17 +1,0 @@
-FACTURA
-Número: A000000123
-Fecha: 02/04/2022
-Destinatario:
-Ernesto Pérez
-CIF: 32774555K
-Calle Los Lirios, 44
-28220 - Getafe
-Estancia 23/08/2022 12:43 (37 min) 3,00 €
-Lavado integral vehiculo 5,96 €
-Subtotal 12,45 €
-IVA (21%) 2,61 €
-Total 15,06 €
-Garajes Pérez S.L. A78022555
-Calle del Pez, 4, 1º Izda
-28220 - Majadahonda
-
