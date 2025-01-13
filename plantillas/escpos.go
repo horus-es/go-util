@@ -166,7 +166,12 @@ var reQrEscPos = regexp.MustCompile("{qr ([^{}]+)}")
 var reImgEscPos = regexp.MustCompile("{img ([^{}]+)}")
 
 const (
+	TAB = byte(0x09)
+	LF  = byte(0x0a)
+	CR  = byte(0x0d)
+	FF  = byte(0x0c)
 	ESC = byte(0x1b)
+	FS  = byte(0x1c)
 	GS  = byte(0x1d)
 )
 
@@ -322,7 +327,7 @@ func processEscPosControls(escpos []byte) []byte {
 	result := reResetEscPos.ReplaceAll(escpos, []byte{ESC, '@'})         // ESC @
 	result = reFullCutEscPos.ReplaceAll(result, []byte{GS, 'V', '0'})    // GS V 0
 	result = rePartialCutEscPos.ReplaceAll(result, []byte{GS, 'V', '1'}) // GS V 1
-	result = reFormFeedEscPos.ReplaceAll(result, []byte{0x0c})           // FF
+	result = reFormFeedEscPos.ReplaceAll(result, []byte{FF})             // FF
 	return result
 }
 
@@ -437,7 +442,7 @@ func processEscPosQR(escpos []byte) []byte {
 		submatches := reQrModuloEscPos.FindSubmatch(match)
 		m := bytesToByte(submatches[1])
 		if m >= 1 && m <= 16 {
-			return []byte{GS, '(', 'k', 0x03, 0x00, '1', 67, m} // GS ( k ... 1 67 modulo
+			return []byte{GS, '(', 'k', 3, 0, '1', 67, m} // GS ( k ... 1 67 modulo
 		}
 		return match
 	})
@@ -446,13 +451,13 @@ func processEscPosQR(escpos []byte) []byte {
 		ecc := string(submatches[1])
 		switch ecc {
 		case "L":
-			return []byte{GS, '(', 'k', 0x03, 0x00, '1', 69, '0'} // GS ( k ... 1 69 0
+			return []byte{GS, '(', 'k', 3, 0, '1', 69, '0'} // GS ( k ... 1 69 0
 		case "M":
-			return []byte{GS, '(', 'k', 0x03, 0x00, '1', 69, '1'} // GS ( k ... 1 69 1
+			return []byte{GS, '(', 'k', 3, 0, '1', 69, '1'} // GS ( k ... 1 69 1
 		case "Q":
-			return []byte{GS, '(', 'k', 0x03, 0x00, '1', 69, '2'} // GS ( k ... 1 69 2
+			return []byte{GS, '(', 'k', 3, 0, '1', 69, '2'} // GS ( k ... 1 69 2
 		case "H":
-			return []byte{GS, '(', 'k', 0x03, 0x00, '1', 69, '3'} // GS ( k ... 1 69 3
+			return []byte{GS, '(', 'k', 3, 0, '1', 69, '3'} // GS ( k ... 1 69 3
 		default:
 			return match
 		}
@@ -466,9 +471,9 @@ func processEscPosQR(escpos []byte) []byte {
 		}
 		var pL byte = byte(p % 256)
 		var pH byte = byte(p / 256)
-		datos := []byte{GS, '(', 'k', pL, pH, '1', 80, '0'}           // GS ( k ... 1 80 0
-		datos = append(datos, codigo...)                              // codigo
-		datos = append(datos, GS, '(', 'k', 0x03, 0x00, '1', 81, '0') // GS ( k ... 1 81 0
+		datos := []byte{GS, '(', 'k', pL, pH, '1', 80, '0'}     // GS ( k ... 1 80 0
+		datos = append(datos, codigo...)                        // codigo
+		datos = append(datos, GS, '(', 'k', 3, 0, '1', 81, '0') // GS ( k ... 1 81 0
 		return datos
 	})
 	return result
@@ -498,7 +503,7 @@ func processEscPosImg(escpos []byte) []byte {
 			yH := byte(height >> 8)
 			datos = append(datos, '0', 112, '0', 1, 1, '1', xL, xH, yL, yH) // 0 112 ...
 			datos = append(datos, raster...)                                // raster
-			datos = append(datos, GS, '(', 'L', 0x02, 0x00, '0', '2')       // GS ( L ... 0 2
+			datos = append(datos, GS, '(', 'L', 2, 0, '0', '2')             // GS ( L ... 0 2
 			return datos
 		}
 		return match
@@ -510,7 +515,7 @@ func processEscPosImg(escpos []byte) []byte {
 func bytesToByte(array []byte) byte {
 	n, err := strconv.Atoi(string(array))
 	if err != nil || n > 255 || n < 1 {
-		return 0x00
+		return 0
 	}
 	return byte(n)
 }
@@ -535,7 +540,7 @@ func bytesInRange(codigo []byte, rangos [][]byte, conjunto ...byte) bool {
 	return true
 }
 
-// "Rasteriza" una imagen, usando umbral como punto de corte
+// "Rasteriza" una imagen
 func rasterize(file string) (data []byte, width, height int, err error) {
 	// Cargar la imagen
 	f, err := os.Open(file)
@@ -762,35 +767,35 @@ func addEscPosHTML(html io.Writer, escpos []byte) {
 
 	for i := 0; i < len(escpos); i++ {
 		switch escpos[i] {
-		case 0x0A: // LF (nueva línea)
+		case LF: // Nueva línea
 			flushBuffer()
 			writeToHtml("\n")
 			col = 0
 
-		case 0x0D: // CR
+		case CR: // Retorno de carro
 			// ignoramos
 
-		case 0x0C: // FF (Fin de etiqueta)
+		case FF: // Fin de etiqueta
 			flushBuffer()
 			if inLabel {
 				inLabel = false
 				io.WriteString(html, "</escpos>\n")
 			}
 
-		case 0x09: // Tabulaciones (convertir en espacios, 8 posiciones)
+		case TAB: // Tabulaciones (convertir en espacios cada 8 posiciones)
 			for col%8 != 0 {
-				textBuffer.WriteByte(0x20)
+				textBuffer.WriteByte(' ')
 				col++
 			}
 
-		case 0x1B: // ESC
+		case ESC:
 			if i+1 < len(escpos) {
 				var next byte
 				if i+2 < len(escpos) {
 					next = escpos[i+2]
 				}
 				switch escpos[i+1] {
-				case 0x40: // ESC @ (reset)
+				case '@': // ESC @ (reset)
 					flushBuffer()
 					isBold = false
 					isUnderline = false
@@ -811,7 +816,7 @@ func addEscPosHTML(html io.Writer, escpos []byte) {
 					currentClass = alignment
 					col = 0
 					i += 1
-				case 0x21: // ESC ! (tamaño de fuente, negrita, subrrayado)
+				case '!': // ESC ! (tamaño de fuente, negrita, subrrayado)
 					flushBuffer()
 					isSmall = (next & 0x01) > 0
 					isBold = (next & 0x08) > 0
@@ -819,34 +824,34 @@ func addEscPosHTML(html io.Writer, escpos []byte) {
 					isDoubleX = (next & 0x20) > 0
 					isUnderline = (next & 0x80) > 0
 					i += 2
-				case 0x2D: // ESC - (subrayado)
+				case '-': // ESC - (subrayado)
 					flushBuffer()
-					isUnderline = next == 0x01 || next == 0x02 || next == 0x31 || next == 0x32
+					isUnderline = next == 1 || next == 2 || next == '1' || next == '2'
 					i += 2
-				case 0x7B: // ESC { (arriba/abajo)
+				case '{': // ESC { (arriba/abajo)
 					flushBuffer()
 					isUpsideDown = next%2 == 1
 					i += 2
-				case 0x34: // ESC 4 (itálico)
+				case '4': // ESC 4 (itálico)
 					flushBuffer()
 					isItalics = next%2 == 1
 					i += 2
-				case 0x45: // ESC E (negrita)
+				case 'E': // ESC E (negrita)
 					flushBuffer()
 					isBold = next%2 == 1
 					i += 2
-				case 0x61: // ESC a (alineación)
+				case 'a': // ESC a (alineación)
 					flushBuffer()
 					switch next {
-					case 0x00, 0x30:
+					case 0, '0':
 						alignment = "left"
-					case 0x01, 0x31:
+					case 1, '1':
 						alignment = "center"
-					case 0x02, 0x32:
+					case 2, '2':
 						alignment = "right"
 					}
 					i += 2
-				case 0x64: // ESC d (n saltos de línea)
+				case 'd': // ESC d (n saltos de línea)
 					flushBuffer()
 					for next > 0 {
 						writeToHtml("\n")
@@ -854,56 +859,56 @@ func addEscPosHTML(html io.Writer, escpos []byte) {
 					}
 					col = 0
 					i += 2
-				case 0x69, 0x6D: // ESC i/m (corte total/parcial)
+				case 'i', 'm': // ESC i/m (corte total/parcial)
 					flushBuffer()
 					if inLabel {
 						inLabel = false
 						io.WriteString(html, "</escpos>\n")
 					}
 					i += 2
-				case 0x70: // ESC p (pulso)
+				case 'p': // ESC p (pulso)
 					i += 4
-				case 0x74: // ESC t (página de código) 16=WIN1252
+				case 't': // ESC t (página de código) 16=WIN1252
 					i += 2
 				}
 			}
 
-		case 0x1D: // GS
+		case GS:
 			if i+1 < len(escpos) {
 				var next byte
 				if i+2 < len(escpos) {
 					next = escpos[i+2]
 				}
 				switch escpos[i+1] {
-				case 0x42: // GS B (blanco sobre negro)
+				case 'B': // GS B (blanco sobre negro)
 					flushBuffer()
 					isReverse = next%2 == 1
 					i += 2
-				case 0x56: // GS V (corte total/parcial)
+				case 'V': // GS V (corte total/parcial)
 					flushBuffer()
 					if inLabel {
 						inLabel = false
 						io.WriteString(html, "</escpos>\n")
 					}
-					if next == 0x00 || next == 0x01 || next == 0x30 || next == 0x31 {
+					if next == 0 || next == 1 || next == '0' || next == '1' {
 						i += 2
 					} else {
 						i += 3
 					}
-				case 0x28:
+				case '(':
 					// GS (L (bitmap <64k)
-					if next == 0x4C && i+4 < len(escpos) {
+					if next == 'L' && i+4 < len(escpos) {
 						z := int(escpos[i+3]) + int(escpos[i+4])*256
 						i += 4
-						if z > 10 && escpos[i+1] == 0x30 && escpos[i+2] == 112 {
+						if z > 10 && escpos[i+1] == '0' && escpos[i+2] == 112 {
 							// store raster image
 							img = decodeRastrerImage(&escpos, i, z)
 						}
-						if z > 10 && escpos[i+1] == 0x30 && escpos[i+2] == 113 {
+						if z > 10 && escpos[i+1] == '0' && escpos[i+2] == 113 {
 							// TODO: store column image
 							//img = decodeColumnImage(&escpos, i, z)
 						}
-						if z == 2 && escpos[i+1] == 0x30 && (escpos[i+2] == 2 || escpos[i+2] == '2') {
+						if z == 2 && escpos[i+1] == '0' && (escpos[i+2] == 2 || escpos[i+2] == '2') {
 							// print image
 							flushBuffer()
 							writeToHtml(encodeImage(img, alignment))
@@ -911,20 +916,20 @@ func addEscPosHTML(html io.Writer, escpos []byte) {
 						i += z
 					}
 					// GS (k (2d barcode)
-					if next == 0x6B && i+4 < len(escpos) {
+					if next == 'k' && i+4 < len(escpos) {
 						z := int(escpos[i+3]) + int(escpos[i+4])*256
 						i += 4
 						// QR
-						if z == 3 && escpos[i+1] == 0x31 && escpos[i+2] == 0x43 {
+						if z == 3 && escpos[i+1] == '1' && escpos[i+2] == 67 {
 							qrModulo = int(escpos[i+3])
 						}
-						if z == 3 && escpos[i+1] == 0x31 && escpos[i+2] == 0x45 {
+						if z == 3 && escpos[i+1] == '1' && escpos[i+2] == 69 {
 							qrECC = int(escpos[i+3])
 						}
-						if z > 3 && escpos[i+1] == 0x31 && escpos[i+2] == 0x50 && escpos[i+3] == 0x30 {
+						if z > 3 && escpos[i+1] == '1' && escpos[i+2] == 80 && escpos[i+3] == '0' {
 							qrData = escpos[i+4 : i+z+1]
 						}
-						if z == 3 && escpos[i+1] == 0x31 && escpos[i+2] == 0x51 && escpos[i+3] == 0x30 {
+						if z == 3 && escpos[i+1] == '1' && escpos[i+2] == 81 && escpos[i+3] == '0' {
 							qr, err := go_qr.EncodeBinary(qrData, go_qr.Ecc(qrECC-48))
 							if err == nil {
 								var buf bytes.Buffer
@@ -956,39 +961,39 @@ func addEscPosHTML(html io.Writer, escpos []byte) {
 						}
 						i += z
 					}
-				case 0x38: // GS 8L (bitmap >64k)
-					if next == 0x4C && i+6 < len(escpos) {
+				case '8': // GS 8L (bitmap >64k)
+					if next == 'L' && i+6 < len(escpos) {
 						z := int(escpos[i+3]) + int(escpos[i+4])*256 + int(escpos[i+5])*65536 + int(escpos[i+6])*16777216
 						i += 6
-						if z > 10 && escpos[i+1] == 0x30 && escpos[i+2] == 112 {
+						if z > 10 && escpos[i+1] == '0' && escpos[i+2] == 112 {
 							// store raster image
 							img = decodeRastrerImage(&escpos, i, z)
 						}
-						if z > 10 && escpos[i+1] == 0x30 && escpos[i+2] == 113 {
+						if z > 10 && escpos[i+1] == '0' && escpos[i+2] == 113 {
 							// TODO: store column image
 							//img = decodeColumnImage(&escpos, i, z)
 						}
 						i += z
 					}
-				case 0x68: // GS h (barcode height)
+				case 'h': // GS h (barcode height)
 					bcHeight = int(next)
 					i += 2
-				case 0x77: // GS w (barcode width)
+				case 'w': // GS w (barcode width)
 					bcWidth = int(next)
 					i += 2
-				case 0x48: // GS H (barcode show)
+				case 'H': // GS H (barcode show)
 					switch next {
-					case 0x00, 0x30:
+					case 0, '0':
 						bcHRI = barcode.None
-					case 0x01, 0x31:
+					case 1, '1':
 						bcHRI = barcode.Above
-					case 0x02, 0x32:
+					case 2, '2':
 						bcHRI = barcode.Below
-					case 0x03, 0x33:
+					case 3, '3':
 						bcHRI = barcode.Both
 					}
 					i += 2
-				case 0x6B: // GS k (print barcode)
+				case 'k': // GS k (print barcode)
 					z := 0
 					if next <= 6 {
 						i += 2
@@ -1012,10 +1017,10 @@ func addEscPosHTML(html io.Writer, escpos []byte) {
 				}
 			}
 
-		case 0x1C: // FS
+		case FS:
 			if i+1 < len(escpos) {
 				switch escpos[i+1] {
-				case 0x2E: // Cancel Kanji character mode
+				case '.': // Cancel Kanji character mode
 					i++
 				}
 			}
