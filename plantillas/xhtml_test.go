@@ -41,9 +41,9 @@ func ExampleMergeXhtmlTemplate() {
 	)
 	errores.PanicIfError(err)
 	// Guardar salida
-	os.WriteFile("pagina.html", []byte(f), 0666)
-	fmt.Println("Ok")
-	// Output: Ok
+	os.WriteFile("factura.html", []byte(f), 0666)
+	fmt.Println("Generado fichero factura.html")
+	// Output: Generado fichero factura.html
 }
 
 func TestGenerateXhtmlPdf(t *testing.T) {
@@ -71,12 +71,12 @@ func ExampleGenerateXhtmlPdf() {
 		"file:///assets",
 		formato.DMA,
 		formato.EUR,
-		"fichero.pdf",
+		"factura.pdf",
 		"--no-outline",
 	)
 	errores.PanicIfError(err)
-	fmt.Println("Ok")
-	// Output: Ok
+	fmt.Println("Generado fichero factura.pdf")
+	// Output: Generado fichero factura.pdf
 }
 
 func TestSendXhtmlMail(t *testing.T) {

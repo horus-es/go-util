@@ -45,6 +45,10 @@ Códigos QR
 
 Imágenes:
   - {logo.png}: fichero en formato png
+
+Se soportan las funciones de formato DATETIME, DATE, TIME y PRICE.
+
+Ejemplo de plantillla en https://github.com/horus-es/go-util/blob/main/plantillas/plantilla.escpos
 */
 package plantillas
 
@@ -587,22 +591,6 @@ func rasterize(file string) (data []byte, width, height int, err error) {
 	return
 }
 
-// Envia un correo a partir de una plantilla *.escpos. Parámetros:
-//   - name: nombre arbitrario para la plantilla que aparece en los mensajes de error
-//   - xhtml: plantilla en formato XHTML
-//   - datos: estructura de datos para fusionar con la plantilla
-//   - assets: URL de imágenes u otros recursos (attributos src y href). Debe ser una ruta públicamente accesible por internet.
-//   - ff: formato de las fechas para las funciones DATETIME y DATE
-//   - fp: formato de los precios para la funcion PRICE
-//   - adjuntos: ficheros a adjuntar
-//   - to,form,subject,bcc,replyto: parámetros MIME
-//   - host,port,username,password: parámtros SMTP. La contraseña debe ir codificada en base64.
-func SendEscPosMail(name, xhtml string, datos any, assets string, ff formato.Fecha, fp formato.Moneda, adjuntos []string,
-	from, to, subject string, bcc, replyto []string,
-	host string, port int, username, password string) error {
-	return nil
-}
-
 // Genera un fichero PDF a partir de una plantilla *.escpos. Parámetros:
 //   - name: nombre arbitrario para la plantilla que aparece en los mensajes de error.
 //   - escpos: plantilla escpos, ver cabecera de este fichero
@@ -614,7 +602,7 @@ func SendEscPosMail(name, xhtml string, datos any, assets string, ff formato.Fec
 //   - width: ancho del papel en mm
 //   - opciones: opciones adicionales utilidad wkhtmltopdf (ver https://wkhtmltopdf.org/usage/wkhtmltopdf.txt)
 func GenerateEscPosPdf(name, escpos string, datos any, assets string, ff formato.Fecha, fp formato.Moneda, out string, width int, opciones ...string) error {
-	// Procesa la plantilla XHTML
+	// Procesa la plantilla escpos
 	escpos, err := MergeEscPosTemplate(name, escpos, datos, assets, ff, fp)
 	if err != nil {
 		return err
@@ -630,7 +618,6 @@ func GenerateEscPosPdf(name, escpos string, datos any, assets string, ff formato
 		return errors.Wrap(err, name)
 	}
 	defer os.Remove(tmp.Name())
-	fmt.Println(tmp.Name())
 
 	// Documento html
 	tmp.WriteString("<!DOCTYPE html>\n")
