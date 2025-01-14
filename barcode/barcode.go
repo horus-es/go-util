@@ -56,21 +56,21 @@ func GetBarcodeSVG(code string, kind KIND, w, h int, color string, hri HRI, inli
 	for _, r := range barcodeArray {
 		modulos += int(r) - 48
 	}
-	svg += fmt.Sprintf("<svg width=\"%d\" height=\"%d\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\">\n", modulos*w, h)
-	svg += fmt.Sprintf("\t<g fill=\"%s\" stroke=\"none\">\n", color)
 	x := 5 * w
 	y := 0
 	bh := h
 	switch hri {
 	case Above:
 		y = 14
-		bh = h - 14
+		h += 14
 	case Below:
-		bh = h - 14
+		h += 14
 	case Both:
 		y = 14
-		bh = h - 28
+		h += 28
 	}
+	svg += fmt.Sprintf("<svg width=\"%d\" height=\"%d\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\">\n", modulos*w, h)
+	svg += fmt.Sprintf("\t<g fill=\"%s\" stroke=\"none\">\n", color)
 	negro := true
 	for _, r := range barcodeArray {
 		bw := int(r-48) * w

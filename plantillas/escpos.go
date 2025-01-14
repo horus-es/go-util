@@ -76,6 +76,8 @@ import (
 	"github.com/horus-es/go-util/v2/formato"
 	go_qr "github.com/piglig/go-qr"
 	"github.com/pkg/errors"
+	"golang.org/x/text/encoding/charmap"
+	"golang.org/x/text/transform"
 )
 
 // Fusiona una plantilla esc/pos con un struct o map de datos.
@@ -151,19 +153,19 @@ func MergeEscPosTemplate(name, escpos string, datos any, assets string, ff forma
 }
 
 // Expresiones regulares esc/pos
-var reEstilosEscPos = regexp.MustCompile("{[whsbuioxlrc]*}")
-var reResetEscPos = regexp.MustCompile("{reset}")
-var reFullCutEscPos = regexp.MustCompile("{full-cut}")
-var rePartialCutEscPos = regexp.MustCompile("{partial-cut}")
-var reFormFeedEscPos = regexp.MustCompile("{form-feed}")
-var reBcHeightEscPos = regexp.MustCompile("{bc-height ([0-9]+)}")
-var reBcModuloEscPos = regexp.MustCompile("{bc-modulo ([0-9]+)}")
-var reBcHriEscPos = regexp.MustCompile("{bc-hri (none|above|below|both)}")
-var reQrModuloEscPos = regexp.MustCompile("{qr-modulo ([0-9]+)}")
-var reQrEccEscPos = regexp.MustCompile("{qr-ecc (L|M|Q|H)}")
-var reBarcodeEscPos = regexp.MustCompile("{(code128|code128a|code128b|code128c|itf|upc-a|upc-e|ean-13|ean-8|code39|code93|codabar) ([^{}]+)}")
-var reQrEscPos = regexp.MustCompile("{qr ([^{}]+)}")
-var reImgEscPos = regexp.MustCompile("{img ([^{}]+)}")
+var reEstilosEscPos = regexp.MustCompile(`{[whsbuioxlrc]*}`)
+var reResetEscPos = regexp.MustCompile(`{reset}`)
+var reFullCutEscPos = regexp.MustCompile(`{full-cut}`)
+var rePartialCutEscPos = regexp.MustCompile(`{partial-cut}`)
+var reFormFeedEscPos = regexp.MustCompile(`{form-feed}`)
+var reBcHeightEscPos = regexp.MustCompile(`{bc-height ([0-9]+)}`)
+var reBcModuloEscPos = regexp.MustCompile(`{bc-modulo ([0-9]+)}`)
+var reBcHriEscPos = regexp.MustCompile(`{bc-hri (none|above|below|both)}`)
+var reQrModuloEscPos = regexp.MustCompile(`{qr-modulo ([0-9]+)}`)
+var reQrEccEscPos = regexp.MustCompile(`{qr-ecc (L|M|Q|H)}`)
+var reBarcodeEscPos = regexp.MustCompile(`{(code128|code128a|code128b|code128c|itf|upc-a|upc-e|ean-13|ean-8|code39|code93|codabar) ([^{}]+)}`)
+var reQrEscPos = regexp.MustCompile(`{qr ([^{}]+)}`)
+var reImgEscPos = regexp.MustCompile(`{img ([^{}]+)}`)
 
 const (
 	TAB = byte(0x09)
@@ -178,28 +180,41 @@ const (
 // Genera un []byte esc/pos (binario) a partir de una plantilla *.escpos.
 func GenerateEscPos(escpos string) (bin []byte, err error) {
 
+	// Convertimos a windows-1252
+	var buf bytes.Buffer
+	writer := transform.NewWriter(&buf, charmap.Windows1252.NewEncoder())
+	_, err = writer.Write([]byte(escpos))
+	if err != nil {
+		return
+	}
+	err = writer.Close()
+	if err != nil {
+		return
+	}
+	bin = buf.Bytes()
+
 	// Quitamos CR
-	result := bytes.ReplaceAll([]byte(escpos), []byte{'\r'}, nil)
+	bin = bytes.ReplaceAll(bin, []byte{'\r'}, nil)
 
 	// Quitamos espacios iniciales y finales
-	result = bytes.TrimSpace(result)
+	bin = bytes.TrimSpace(bin)
 
 	// Procesamos estilos
-	result = processEscPosStyles(result)
+	bin = processEscPosStyles(bin)
 
 	// Procesamos códigos de control
-	result = processEscPosControls(result)
+	bin = processEscPosControls(bin)
 
 	// Procesamos códigos de barras
-	result = processEscPosBarcodes(result)
+	bin = processEscPosBarcodes(bin)
 
 	// Procesamos códigos QR
-	result = processEscPosQR(result)
+	bin = processEscPosQR(bin)
 
 	// Procesamos imágenes
-	result = processEscPosImg(result)
+	bin = processEscPosImg(bin)
 
-	return result, nil
+	return
 }
 
 // Procesa los estilos esc/pos
@@ -248,7 +263,7 @@ func processEscPosStyles(escpos []byte) []byte {
 			case 'l', 'c', 'r':
 				nuevo.alignment = letra
 			default:
-				errores.PanicIfTrue(true, "estino '%c' no soportado", letra)
+				errores.PanicIfTrue(true, "estilo %c no soportado", letra)
 			}
 		}
 		if estado.isDoubleX != nuevo.isDoubleX || estado.isDoubleY != nuevo.isDoubleY || estado.isSmall != nuevo.isSmall || estado.isBold != nuevo.isBold || estado.isUnderline != nuevo.isUnderline {
@@ -629,7 +644,7 @@ func GenerateEscPosPdf(name, escpos string, datos any, assets string, ff formato
 	tmp.WriteString("<html>\n")
 	tmp.WriteString("<head>\n")
 	tmp.WriteString("<title>Recibo</title>\n")
-	tmp.WriteString("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n")
+	tmp.WriteString("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=Windows-1252\" />\n")
 	tmp.WriteString("<style>\n")
 	//tmp.WriteString("div { display: flex; flex-wrap: wrap; }\n")
 	//tmp.WriteString("body { background-color:#fafafa; }\n")
@@ -935,7 +950,7 @@ func addEscPosHTML(html io.Writer, escpos []byte) {
 								var buf bytes.Buffer
 								err = qr.WriteAsSVG(go_qr.NewQrCodeImgConfig(1, 3, go_qr.WithOptimalSVG()), &buf, "#FFFFFF", "#000000")
 								if err == nil {
-									n := qr.GetSize() * qrModulo
+									n := qr.GetSize() * qrModulo * 2 / 3
 									doc := etree.NewDocument()
 									doc.ReadFromBytes(buf.Bytes())
 									// eliminamos las cabeceras xml

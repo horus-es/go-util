@@ -31,6 +31,9 @@ Medio de pago: {i}VISA 1234{}
 
 CUFE: dd83bc58ab454dd7b90dce6fe61da574e20d24b79aa340b38fc1d25567fc69baf50b5e366528413ea67fbc15599ec0e5
 -------------------------------------
+
+
+
 {partial-cut}
 {wh}Códigos de barras:{}
 {bc-height 100}{bc-modulo 3}
@@ -48,4 +51,7 @@ CUFE: dd83bc58ab454dd7b90dce6fe61da574e20d24b79aa340b38fc1d25567fc69baf50b5e3665
 {code93 123456}
 {codabar 123456}
 {qr-ecc L}{qr-modulo 3}{qr dd83bc58ab454dd7b90dce6fe61da574e20d24b79aa340b38fc1d25567fc69baf50b5e366528413ea67fbc15599ec0e5}
+
+
+
 {partial-cut}

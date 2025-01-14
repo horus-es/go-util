@@ -17,7 +17,8 @@ func TestMergeEscPosTemplate(t *testing.T) {
 	assert.NoError(t, err)
 	f, err := plantillas.MergeEscPosTemplate("plantilla.escpos", string(p), factura, "", formato.DMA, formato.EUR)
 	assert.NoError(t, err)
-	os.WriteFile("escpos_test_out.escpos", []byte(f), 0666)
+	err = os.WriteFile("escpos_test_out.escpos", []byte(f), 0666)
+	assert.NoError(t, err)
 	//os.WriteFile("escpos_test_expect.escpos", []byte(f), 0666)
 	crc1 := crc(t, "escpos_test_expect.escpos", "", "")
 	crc2 := crc(t, "escpos_test_out.escpos", "", "")
@@ -51,11 +52,12 @@ func TestGenerateEscPos(t *testing.T) {
 	assert.NoError(t, err)
 	escpos, err := plantillas.GenerateEscPos(f)
 	assert.NoError(t, err)
-	//os.WriteFile("escpos_test_expect.prn", escpos, 0644)
-	os.WriteFile("escpos_test_out.prn", escpos, 0644)
-	expect, err := os.ReadFile("escpos_test_expect.prn")
+	err = os.WriteFile("escpos_test_out.prn", escpos, 0644)
 	assert.NoError(t, err)
-	assert.Equal(t, expect, escpos)
+	//os.WriteFile("escpos_test_expect.prn", escpos, 0644)
+	crc1 := crc(t, "escpos_test_expect.prn", "", "")
+	crc2 := crc(t, "escpos_test_out.prn", "", "")
+	assert.Equal(t, crc1, crc2)
 }
 
 func ExampleGenerateEscPos() {

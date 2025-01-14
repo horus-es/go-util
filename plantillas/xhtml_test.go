@@ -20,7 +20,8 @@ func TestMergeXhtmlTemplate(t *testing.T) {
 	assert.NoError(t, err)
 	f, err := plantillas.MergeXhtmlTemplate("plantilla.html", string(p), factura, "", formato.DMA, formato.EUR)
 	assert.NoError(t, err)
-	os.WriteFile("xhtml_test_out.html", []byte(f), 0666)
+	err = os.WriteFile("xhtml_test_out.html", []byte(f), 0666)
+	assert.NoError(t, err)
 	//os.WriteFile("xhtml_test_expect.html", []byte(f), 0666)
 	crc1 := crc(t, "xhtml_test_expect.html", "", "")
 	crc2 := crc(t, "xhtml_test_out.html", "", "")
@@ -107,7 +108,8 @@ func TestSendXhtmlMail(t *testing.T) {
 	if !ok {
 		t.Fatal("Correo no transmitido")
 	}
-	os.WriteFile("xhtml_test_out.eml", eml.Data, 0666)
+	err = os.WriteFile("xhtml_test_out.eml", eml.Data, 0666)
+	assert.NoError(t, err)
 	//os.WriteFile("xhtml_test_expect.eml", eml.Data, 0666)
 	crc1 := crc(t, "xhtml_test_expect.eml", "<!DOCTYPE ", "</html>")
 	crc2 := crc(t, "xhtml_test_out.eml", "<!DOCTYPE ", "</html>")

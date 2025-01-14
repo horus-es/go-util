@@ -35,6 +35,9 @@ Medio de pago: {i}{{.Transaction.Method}}{}
 
 CUFE: {{.Additional.CUFE}}
 -------------------------------------
+
+
+
 {partial-cut}
 {wh}Códigos de barras:{}
 {bc-height 100}{bc-modulo 3}
@@ -52,4 +55,7 @@ CUFE: {{.Additional.CUFE}}
 {code93 123456}
 {codabar 123456}
 {qr-ecc L}{qr-modulo 3}{qr {{.Additional.CUFE}}}
+
+
+
 {partial-cut}
