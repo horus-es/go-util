@@ -1,37 +1,37 @@
 <?xml version="1.0" standalone="no" ?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg width="210" height="114" version="1.1" xmlns="http://www.w3.org/2000/svg">
+<svg width="210.00000" height="116.00000" version="1.1" xmlns="http://www.w3.org/2000/svg">
 	<g fill="#000" stroke="none">
-		<rect x="10" y="0" width="2" height="100" />
-		<rect x="14" y="0" width="2" height="100" />
-		<rect x="20" y="0" width="2" height="100" />
-		<rect x="26" y="0" width="4" height="100" />
-		<rect x="32" y="0" width="8" height="100" />
-		<rect x="42" y="0" width="2" height="100" />
-		<rect x="48" y="0" width="6" height="100" />
-		<rect x="56" y="0" width="2" height="100" />
-		<rect x="60" y="0" width="4" height="100" />
-		<rect x="70" y="0" width="2" height="100" />
-		<rect x="80" y="0" width="2" height="100" />
-		<rect x="84" y="0" width="2" height="100" />
-		<rect x="90" y="0" width="2" height="100" />
-		<rect x="98" y="0" width="2" height="100" />
-		<rect x="102" y="0" width="2" height="100" />
-		<rect x="106" y="0" width="2" height="100" />
-		<rect x="110" y="0" width="2" height="100" />
-		<rect x="116" y="0" width="2" height="100" />
-		<rect x="124" y="0" width="6" height="100" />
-		<rect x="132" y="0" width="2" height="100" />
-		<rect x="138" y="0" width="6" height="100" />
-		<rect x="148" y="0" width="2" height="100" />
-		<rect x="152" y="0" width="4" height="100" />
-		<rect x="160" y="0" width="4" height="100" />
-		<rect x="166" y="0" width="4" height="100" />
-		<rect x="172" y="0" width="4" height="100" />
-		<rect x="180" y="0" width="2" height="100" />
-		<rect x="186" y="0" width="2" height="100" />
-		<rect x="194" y="0" width="2" height="100" />
-		<rect x="198" y="0" width="2" height="100" />
-	<text x="105" text-anchor="middle" dominant-baseline="hanging" y="100" fill="#000" font-size="12px">1234567890128</text>
+		<rect x="10.00000" y="0.00000" width="2.00000" height="100.00000" />
+		<rect x="14.00000" y="0.00000" width="2.00000" height="100.00000" />
+		<rect x="20.00000" y="0.00000" width="2.00000" height="100.00000" />
+		<rect x="26.00000" y="0.00000" width="4.00000" height="100.00000" />
+		<rect x="32.00000" y="0.00000" width="8.00000" height="100.00000" />
+		<rect x="42.00000" y="0.00000" width="2.00000" height="100.00000" />
+		<rect x="48.00000" y="0.00000" width="6.00000" height="100.00000" />
+		<rect x="56.00000" y="0.00000" width="2.00000" height="100.00000" />
+		<rect x="60.00000" y="0.00000" width="4.00000" height="100.00000" />
+		<rect x="70.00000" y="0.00000" width="2.00000" height="100.00000" />
+		<rect x="80.00000" y="0.00000" width="2.00000" height="100.00000" />
+		<rect x="84.00000" y="0.00000" width="2.00000" height="100.00000" />
+		<rect x="90.00000" y="0.00000" width="2.00000" height="100.00000" />
+		<rect x="98.00000" y="0.00000" width="2.00000" height="100.00000" />
+		<rect x="102.00000" y="0.00000" width="2.00000" height="100.00000" />
+		<rect x="106.00000" y="0.00000" width="2.00000" height="100.00000" />
+		<rect x="110.00000" y="0.00000" width="2.00000" height="100.00000" />
+		<rect x="116.00000" y="0.00000" width="2.00000" height="100.00000" />
+		<rect x="124.00000" y="0.00000" width="6.00000" height="100.00000" />
+		<rect x="132.00000" y="0.00000" width="2.00000" height="100.00000" />
+		<rect x="138.00000" y="0.00000" width="6.00000" height="100.00000" />
+		<rect x="148.00000" y="0.00000" width="2.00000" height="100.00000" />
+		<rect x="152.00000" y="0.00000" width="4.00000" height="100.00000" />
+		<rect x="160.00000" y="0.00000" width="4.00000" height="100.00000" />
+		<rect x="166.00000" y="0.00000" width="4.00000" height="100.00000" />
+		<rect x="172.00000" y="0.00000" width="4.00000" height="100.00000" />
+		<rect x="180.00000" y="0.00000" width="2.00000" height="100.00000" />
+		<rect x="186.00000" y="0.00000" width="2.00000" height="100.00000" />
+		<rect x="194.00000" y="0.00000" width="2.00000" height="100.00000" />
+		<rect x="198.00000" y="0.00000" width="2.00000" height="100.00000" />
+	<text x="105.00000" text-anchor="middle" dominant-baseline="hanging" y="102.00000" fill="#000" font-size="15px">1234567890128</text>
 	</g>
 </svg>

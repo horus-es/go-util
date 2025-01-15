@@ -39,10 +39,10 @@ CUFE: dd83bc58ab454dd7b90dce6fe61da574e20d24b79aa340b38fc1d25567fc69baf50b5e3665
 {bc-height 100}{bc-modulo 3}
 
 {code128 123456}
-{bc-hri both}{code128a A000000123}
-{bc-hri below}{code128b 123456}
+{code128a A000000123}
+{bc-hri both}{code128b 123456}
 {code128c 123456}
-{itf 123456}
+{bc-hri below}{itf 123456}
 {upc-a 12345678901}
 {upc-e 0123456}
 {ean-13 123456789012}

@@ -19,28 +19,28 @@ func ExampleGetBarcodeSVG() {
 	// Output:
 	// <?xml version="1.0" standalone="no" ?>
 	// <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-	// <svg width="156" height="114" version="1.1" xmlns="http://www.w3.org/2000/svg">
+	// <svg width="156.00000" height="116.00000" version="1.1" xmlns="http://www.w3.org/2000/svg">
 	// 	<g fill="#000" stroke="none">
-	// 		<rect x="10" y="0" width="4" height="100" />
-	// 		<rect x="16" y="0" width="2" height="100" />
-	// 		<rect x="22" y="0" width="6" height="100" />
-	// 		<rect x="32" y="0" width="2" height="100" />
-	// 		<rect x="36" y="0" width="4" height="100" />
-	// 		<rect x="44" y="0" width="6" height="100" />
-	// 		<rect x="54" y="0" width="2" height="100" />
-	// 		<rect x="62" y="0" width="2" height="100" />
-	// 		<rect x="66" y="0" width="4" height="100" />
-	// 		<rect x="76" y="0" width="6" height="100" />
-	// 		<rect x="88" y="0" width="2" height="100" />
-	// 		<rect x="92" y="0" width="4" height="100" />
-	// 		<rect x="98" y="0" width="2" height="100" />
-	// 		<rect x="106" y="0" width="4" height="100" />
-	// 		<rect x="112" y="0" width="6" height="100" />
-	// 		<rect x="120" y="0" width="4" height="100" />
-	// 		<rect x="130" y="0" width="6" height="100" />
-	// 		<rect x="138" y="0" width="2" height="100" />
-	// 		<rect x="142" y="0" width="4" height="100" />
-	// 	<text x="78" text-anchor="middle" dominant-baseline="hanging" y="100" fill="#000" font-size="12px">123456</text>
+	// 		<rect x="10.00000" y="0.00000" width="4.00000" height="100.00000" />
+	// 		<rect x="16.00000" y="0.00000" width="2.00000" height="100.00000" />
+	// 		<rect x="22.00000" y="0.00000" width="6.00000" height="100.00000" />
+	// 		<rect x="32.00000" y="0.00000" width="2.00000" height="100.00000" />
+	// 		<rect x="36.00000" y="0.00000" width="4.00000" height="100.00000" />
+	// 		<rect x="44.00000" y="0.00000" width="6.00000" height="100.00000" />
+	// 		<rect x="54.00000" y="0.00000" width="2.00000" height="100.00000" />
+	// 		<rect x="62.00000" y="0.00000" width="2.00000" height="100.00000" />
+	// 		<rect x="66.00000" y="0.00000" width="4.00000" height="100.00000" />
+	// 		<rect x="76.00000" y="0.00000" width="6.00000" height="100.00000" />
+	// 		<rect x="88.00000" y="0.00000" width="2.00000" height="100.00000" />
+	// 		<rect x="92.00000" y="0.00000" width="4.00000" height="100.00000" />
+	// 		<rect x="98.00000" y="0.00000" width="2.00000" height="100.00000" />
+	// 		<rect x="106.00000" y="0.00000" width="4.00000" height="100.00000" />
+	// 		<rect x="112.00000" y="0.00000" width="6.00000" height="100.00000" />
+	// 		<rect x="120.00000" y="0.00000" width="4.00000" height="100.00000" />
+	// 		<rect x="130.00000" y="0.00000" width="6.00000" height="100.00000" />
+	// 		<rect x="138.00000" y="0.00000" width="2.00000" height="100.00000" />
+	// 		<rect x="142.00000" y="0.00000" width="4.00000" height="100.00000" />
+	// 	<text x="78.00000" text-anchor="middle" dominant-baseline="hanging" y="102.00000" fill="#000" font-size="15px">123456</text>
 	// 	</g>
 	// </svg>
 }

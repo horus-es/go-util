@@ -1,44 +1,44 @@
 <?xml version="1.0" standalone="no" ?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg width="238" height="114" version="1.1" xmlns="http://www.w3.org/2000/svg">
+<svg width="238.00000" height="116.00000" version="1.1" xmlns="http://www.w3.org/2000/svg">
 	<g fill="#000" stroke="none">
-		<rect x="10" y="14" width="2" height="100" />
-		<rect x="14" y="14" width="2" height="100" />
-		<rect x="18" y="14" width="8" height="100" />
-		<rect x="28" y="14" width="2" height="100" />
-		<rect x="32" y="14" width="2" height="100" />
-		<rect x="38" y="14" width="2" height="100" />
-		<rect x="46" y="14" width="2" height="100" />
-		<rect x="50" y="14" width="2" height="100" />
-		<rect x="58" y="14" width="2" height="100" />
-		<rect x="64" y="14" width="2" height="100" />
-		<rect x="68" y="14" width="2" height="100" />
-		<rect x="78" y="14" width="2" height="100" />
-		<rect x="82" y="14" width="2" height="100" />
-		<rect x="88" y="14" width="2" height="100" />
-		<rect x="92" y="14" width="2" height="100" />
-		<rect x="100" y="14" width="4" height="100" />
-		<rect x="106" y="14" width="2" height="100" />
-		<rect x="110" y="14" width="2" height="100" />
-		<rect x="118" y="14" width="4" height="100" />
-		<rect x="124" y="14" width="2" height="100" />
-		<rect x="130" y="14" width="2" height="100" />
-		<rect x="136" y="14" width="4" height="100" />
-		<rect x="142" y="14" width="2" height="100" />
-		<rect x="150" y="14" width="2" height="100" />
-		<rect x="154" y="14" width="4" height="100" />
-		<rect x="162" y="14" width="2" height="100" />
-		<rect x="166" y="14" width="2" height="100" />
-		<rect x="172" y="14" width="4" height="100" />
-		<rect x="178" y="14" width="2" height="100" />
-		<rect x="184" y="14" width="4" height="100" />
-		<rect x="190" y="14" width="2" height="100" />
-		<rect x="198" y="14" width="4" height="100" />
-		<rect x="204" y="14" width="2" height="100" />
-		<rect x="208" y="14" width="2" height="100" />
-		<rect x="212" y="14" width="2" height="100" />
-		<rect x="216" y="14" width="8" height="100" />
-		<rect x="226" y="14" width="2" height="100" />
-	<text x="119" text-anchor="middle" dominant-baseline="hanging" y="2" fill="#000" font-size="12px">1234ABCD</text>
+		<rect x="10.00000" y="16.00000" width="2.00000" height="100.00000" />
+		<rect x="14.00000" y="16.00000" width="2.00000" height="100.00000" />
+		<rect x="18.00000" y="16.00000" width="8.00000" height="100.00000" />
+		<rect x="28.00000" y="16.00000" width="2.00000" height="100.00000" />
+		<rect x="32.00000" y="16.00000" width="2.00000" height="100.00000" />
+		<rect x="38.00000" y="16.00000" width="2.00000" height="100.00000" />
+		<rect x="46.00000" y="16.00000" width="2.00000" height="100.00000" />
+		<rect x="50.00000" y="16.00000" width="2.00000" height="100.00000" />
+		<rect x="58.00000" y="16.00000" width="2.00000" height="100.00000" />
+		<rect x="64.00000" y="16.00000" width="2.00000" height="100.00000" />
+		<rect x="68.00000" y="16.00000" width="2.00000" height="100.00000" />
+		<rect x="78.00000" y="16.00000" width="2.00000" height="100.00000" />
+		<rect x="82.00000" y="16.00000" width="2.00000" height="100.00000" />
+		<rect x="88.00000" y="16.00000" width="2.00000" height="100.00000" />
+		<rect x="92.00000" y="16.00000" width="2.00000" height="100.00000" />
+		<rect x="100.00000" y="16.00000" width="4.00000" height="100.00000" />
+		<rect x="106.00000" y="16.00000" width="2.00000" height="100.00000" />
+		<rect x="110.00000" y="16.00000" width="2.00000" height="100.00000" />
+		<rect x="118.00000" y="16.00000" width="4.00000" height="100.00000" />
+		<rect x="124.00000" y="16.00000" width="2.00000" height="100.00000" />
+		<rect x="130.00000" y="16.00000" width="2.00000" height="100.00000" />
+		<rect x="136.00000" y="16.00000" width="4.00000" height="100.00000" />
+		<rect x="142.00000" y="16.00000" width="2.00000" height="100.00000" />
+		<rect x="150.00000" y="16.00000" width="2.00000" height="100.00000" />
+		<rect x="154.00000" y="16.00000" width="4.00000" height="100.00000" />
+		<rect x="162.00000" y="16.00000" width="2.00000" height="100.00000" />
+		<rect x="166.00000" y="16.00000" width="2.00000" height="100.00000" />
+		<rect x="172.00000" y="16.00000" width="4.00000" height="100.00000" />
+		<rect x="178.00000" y="16.00000" width="2.00000" height="100.00000" />
+		<rect x="184.00000" y="16.00000" width="4.00000" height="100.00000" />
+		<rect x="190.00000" y="16.00000" width="2.00000" height="100.00000" />
+		<rect x="198.00000" y="16.00000" width="4.00000" height="100.00000" />
+		<rect x="204.00000" y="16.00000" width="2.00000" height="100.00000" />
+		<rect x="208.00000" y="16.00000" width="2.00000" height="100.00000" />
+		<rect x="212.00000" y="16.00000" width="2.00000" height="100.00000" />
+		<rect x="216.00000" y="16.00000" width="8.00000" height="100.00000" />
+		<rect x="226.00000" y="16.00000" width="2.00000" height="100.00000" />
+	<text x="119.00000" text-anchor="middle" dominant-baseline="hanging" y="1.00000" fill="#000" font-size="15px">1234ABCD</text>
 	</g>
 </svg>

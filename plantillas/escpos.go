@@ -181,23 +181,13 @@ const (
 func GenerateEscPos(escpos string) (bin []byte, err error) {
 
 	// Convertimos a windows-1252
-	var buf bytes.Buffer
-	writer := transform.NewWriter(&buf, charmap.Windows1252.NewEncoder())
-	_, err = writer.Write([]byte(escpos))
-	if err != nil {
-		return
-	}
-	err = writer.Close()
-	if err != nil {
-		return
-	}
-	bin = buf.Bytes()
-
-	// Quitamos CR
-	bin = bytes.ReplaceAll(bin, []byte{'\r'}, nil)
+	bin = win1252(escpos)
 
 	// Quitamos espacios iniciales y finales
 	bin = bytes.TrimSpace(bin)
+
+	// Quitamos CRs
+	bin = bytes.ReplaceAll(bin, []byte{'\r'}, nil)
 
 	// Procesamos estilos
 	bin = processEscPosStyles(bin)
@@ -214,6 +204,19 @@ func GenerateEscPos(escpos string) (bin []byte, err error) {
 	// Procesamos imágenes
 	bin = processEscPosImg(bin)
 
+	return
+}
+
+func win1252(escpos string) (bin []byte) {
+	bin = []byte(escpos)
+	var buf bytes.Buffer
+	writer := transform.NewWriter(&buf, charmap.Windows1252.NewEncoder())
+	_, err := writer.Write(bin)
+	if err != nil {
+		return
+	}
+	defer writer.Close()
+	bin = append([]byte{ESC, 't', 16}, buf.Bytes()...)
 	return
 }
 
@@ -266,6 +269,19 @@ func processEscPosStyles(escpos []byte) []byte {
 				errores.PanicIfTrue(true, "estilo %c no soportado", letra)
 			}
 		}
+		if estado.alignment != nuevo.alignment { // debe ser lo primero de la línea!
+			// ESC a
+			result.WriteByte(ESC)
+			result.WriteByte('a')
+			switch nuevo.alignment {
+			case 'l':
+				result.WriteByte('0') // left
+			case 'c':
+				result.WriteByte('1') // center
+			case 'r':
+				result.WriteByte('2') // right
+			}
+		}
 		if estado.isDoubleX != nuevo.isDoubleX || estado.isDoubleY != nuevo.isDoubleY || estado.isSmall != nuevo.isSmall || estado.isBold != nuevo.isBold || estado.isUnderline != nuevo.isUnderline {
 			// ESC !
 			result.WriteByte(ESC)
@@ -316,19 +332,6 @@ func processEscPosStyles(escpos []byte) []byte {
 				result.WriteByte('1')
 			} else {
 				result.WriteByte('0')
-			}
-		}
-		if estado.alignment != nuevo.alignment {
-			// ESC a
-			result.WriteByte(ESC)
-			result.WriteByte('a')
-			switch nuevo.alignment {
-			case 'l':
-				result.WriteByte('0') // left
-			case 'c':
-				result.WriteByte('1') // center
-			case 'r':
-				result.WriteByte('2') // right
 			}
 		}
 		estado = nuevo
@@ -945,34 +948,8 @@ func addEscPosHTML(html io.Writer, escpos []byte) {
 							qrData = escpos[i+4 : i+z+1]
 						}
 						if z == 3 && escpos[i+1] == '1' && escpos[i+2] == 81 && escpos[i+3] == '0' {
-							qr, err := go_qr.EncodeBinary(qrData, go_qr.Ecc(qrECC-48))
-							if err == nil {
-								var buf bytes.Buffer
-								err = qr.WriteAsSVG(go_qr.NewQrCodeImgConfig(1, 3, go_qr.WithOptimalSVG()), &buf, "#FFFFFF", "#000000")
-								if err == nil {
-									n := qr.GetSize() * qrModulo * 2 / 3
-									doc := etree.NewDocument()
-									doc.ReadFromBytes(buf.Bytes())
-									// eliminamos las cabeceras xml
-									for _, t := range doc.Child {
-										if p, ok := t.(*etree.ProcInst); ok {
-											doc.RemoveChild(p)
-										}
-										if p, ok := t.(*etree.Directive); ok {
-											doc.RemoveChild(p)
-										}
-									}
-									svg := doc.Root()
-									svg.CreateAttr("width", strconv.Itoa(n))
-									svg.CreateAttr("height", strconv.Itoa(n))
-									doc.Indent(2)
-									s, err := doc.WriteToString()
-									if err == nil {
-										flushBuffer()
-										writeToHtml(s)
-									}
-								}
-							}
+							flushBuffer()
+							writeToHtml(imprimeQR(qrData, qrModulo, qrECC))
 						}
 						i += z
 					}
@@ -1129,6 +1106,39 @@ func imprimeBC(codigo string, bcKind byte, bcWidth, bcHeight int, hri barcode.HR
 		tipo = barcode.C128 // Tipos GS1 los pasamos a C128
 	}
 
-	svg, _ := barcode.GetBarcodeSVG(codigo, tipo, bcWidth/2, bcHeight/2, "#000", hri, true)
+	svg, _ := barcode.GetBarcodeSVG(codigo, tipo, float64(bcWidth)*3/5, float64(bcHeight)/2, "#000", hri, true)
 	return svg
+}
+
+func imprimeQR(qrData []byte, qrModulo, qrECC int) string {
+	qr, err := go_qr.EncodeBinary(qrData, go_qr.Ecc(qrECC-48))
+	if err != nil {
+		return ""
+	}
+	var buf bytes.Buffer
+	err = qr.WriteAsSVG(go_qr.NewQrCodeImgConfig(1, 3, go_qr.WithOptimalSVG()), &buf, "#FFFFFF", "#000000")
+	if err != nil {
+		return ""
+	}
+	n := qr.GetSize() * qrModulo * 7 / 10
+	doc := etree.NewDocument()
+	doc.ReadFromBytes(buf.Bytes())
+	// eliminamos las cabeceras xml
+	for _, t := range doc.Child {
+		if p, ok := t.(*etree.ProcInst); ok {
+			doc.RemoveChild(p)
+		}
+		if p, ok := t.(*etree.Directive); ok {
+			doc.RemoveChild(p)
+		}
+	}
+	svg := doc.Root()
+	svg.CreateAttr("width", strconv.Itoa(n))
+	svg.CreateAttr("height", strconv.Itoa(n))
+	doc.Indent(2)
+	s, err := doc.WriteToString()
+	if err != nil {
+		return ""
+	}
+	return s
 }

@@ -42,7 +42,7 @@ const (
 //   - h: altura del código, incluye texto HRI
 //   - hri: posición del texto HRI
 //   - inline: suprime cabeceras SVG para embeber en HTML
-func GetBarcodeSVG(code string, kind KIND, w, h int, color string, hri HRI, inline bool) (string, error) {
+func GetBarcodeSVG(code string, kind KIND, w, h float64, color string, hri HRI, inline bool) (string, error) {
 	barcodeArray, err := GetBarcodeBARS(code, kind)
 	if err != nil {
 		return "", err
@@ -57,36 +57,36 @@ func GetBarcodeSVG(code string, kind KIND, w, h int, color string, hri HRI, inli
 		modulos += int(r) - 48
 	}
 	x := 5 * w
-	y := 0
+	y := 0.0
 	bh := h
 	switch hri {
 	case Above:
-		y = 14
-		h += 14
+		y = 16
+		h += 16
 	case Below:
-		h += 14
+		h += 16
 	case Both:
-		y = 14
-		h += 28
+		y = 16
+		h += 32
 	}
-	svg += fmt.Sprintf("<svg width=\"%d\" height=\"%d\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\">\n", modulos*w, h)
+	svg += fmt.Sprintf("<svg width=\"%.5f\" height=\"%.5f\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\">\n", float64(modulos)*w, h)
 	svg += fmt.Sprintf("\t<g fill=\"%s\" stroke=\"none\">\n", color)
 	negro := true
 	for _, r := range barcodeArray {
-		bw := int(r-48) * w
+		bw := float64(r-48) * w
 		if negro {
-			svg += fmt.Sprintf("\t\t<rect x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" />\n", x, y, bw, bh)
+			svg += fmt.Sprintf("\t\t<rect x=\"%.5f\" y=\"%.5f\" width=\"%.5f\" height=\"%.5f\" />\n", x, y, bw, bh)
 		}
 		x += bw
 		negro = !negro
 	}
 	if hri == Above || hri == Both {
-		y := 2
-		svg += fmt.Sprintf("\t<text x=\"%d\" text-anchor=\"middle\" dominant-baseline=\"hanging\" y=\"%d\" fill=\"%s\" font-size=\"12px\">%s</text>\n", modulos*w/2, y, color, code)
+		y = 1
+		svg += fmt.Sprintf("\t<text x=\"%.5f\" text-anchor=\"middle\" dominant-baseline=\"hanging\" y=\"%.5f\" fill=\"%s\" font-size=\"15px\">%s</text>\n", float64(modulos)*w/2, y, color, code)
 	}
 	if hri == Below || hri == Both {
-		y := h - 14
-		svg += fmt.Sprintf("\t<text x=\"%d\" text-anchor=\"middle\" dominant-baseline=\"hanging\" y=\"%d\" fill=\"%s\" font-size=\"12px\">%s</text>\n", modulos*w/2, y, color, code)
+		y = h - 14
+		svg += fmt.Sprintf("\t<text x=\"%.5f\" text-anchor=\"middle\" dominant-baseline=\"hanging\" y=\"%.5f\" fill=\"%s\" font-size=\"15px\">%s</text>\n", float64(modulos)*w/2, y, color, code)
 	}
 	svg += "\t</g>\n</svg>\n"
 	return svg, nil
