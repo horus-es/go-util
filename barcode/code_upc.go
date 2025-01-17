@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-func barcodeUPCA(code string) (string, error) {
+func barcodeUPCA(code string) (bars, hri string, err error) {
 	const startEnd = "111"
 	const middle = "11111"
 	var patterns = []string{
@@ -13,7 +13,7 @@ func barcodeUPCA(code string) (string, error) {
 		"1231", "1114", "1312", "1213", "3112"}
 	for _, r := range code {
 		if r < '0' || r > '9' {
-			return "", fmt.Errorf("invalid char %c", r)
+			return "", "", fmt.Errorf("invalid char 0x%02X", r)
 		}
 	}
 	// Calculamos el dígito de control
@@ -27,25 +27,28 @@ func barcodeUPCA(code string) (string, error) {
 		sum := upcSum(code)
 		chk := int(code[11]) - 48
 		if chk != sum {
-			return "", fmt.Errorf("invalid check digit %d", chk)
+			return "", "", fmt.Errorf("invalid check digit %d", chk)
 		}
 	default:
-		return "", fmt.Errorf("invalid length %d", len(code))
+		return "", "", fmt.Errorf("invalid length %d", len(code))
 	}
 	// Hallamos la secuencia
-	barpattern := startEnd
+	bars = startEnd
 	for i := 0; i < 6; i++ {
-		barpattern += patterns[code[i]-48]
+		bars += patterns[code[i]-48]
+		hri += string(code[i])
 	}
-	barpattern += middle
+	bars += middle
+	hri += " "
 	for i := 6; i < 12; i++ {
-		barpattern += patterns[code[i]-48]
+		bars += patterns[code[i]-48]
+		hri += string(code[i])
 	}
-	barpattern += startEnd
-	return barpattern, nil
+	bars += startEnd
+	return
 }
 
-func barcodeUPCE(code string) (string, error) {
+func barcodeUPCE(code string) (bars, hri string, err error) {
 	const start = "111"               // patrón inicial
 	const end = "111111"              // patrón final
 	var patterns = map[byte][]string{ // patrones[paridad]
@@ -70,7 +73,7 @@ func barcodeUPCE(code string) (string, error) {
 	}
 	for _, r := range code {
 		if r < '0' || r > '9' {
-			return "", fmt.Errorf("invalid char %c", r)
+			return "", "", fmt.Errorf("invalid char 0x%02X", r)
 		}
 	}
 	switch len(code) {
@@ -79,7 +82,7 @@ func barcodeUPCE(code string) (string, error) {
 		code = "0" + code + "X"
 		upca, err := upcExpand(code)
 		if err != nil {
-			return "", err
+			return "", "", err
 		}
 		sum := upcSum(upca)
 		code = code[:7] + string(rune(sum+48))
@@ -88,7 +91,7 @@ func barcodeUPCE(code string) (string, error) {
 		code = code + "X"
 		upca, err := upcExpand(code)
 		if err != nil {
-			return "", err
+			return "", "", err
 		}
 		sum := upcSum(upca)
 		code = code[:7] + string(rune(sum+48))
@@ -96,12 +99,12 @@ func barcodeUPCE(code string) (string, error) {
 		// Validamos el dígito de control
 		upca, err := upcExpand(code)
 		if err != nil {
-			return "", err
+			return "", "", err
 		}
 		sum := upcSum(upca)
 		chk := int(code[7]) - 48
 		if chk != sum {
-			return "", fmt.Errorf("invalid check digit %d", chk)
+			return "", "", fmt.Errorf("invalid check digit %d", chk)
 		}
 	case 11:
 		// Agregamos el dígito de control y comprimimos
@@ -110,7 +113,7 @@ func barcodeUPCE(code string) (string, error) {
 		var err error
 		code, err = upcCompress(code)
 		if err != nil {
-			return "", err
+			return "", "", err
 		}
 		code = code[:7] + string(rune(sum+48))
 	case 12:
@@ -118,31 +121,34 @@ func barcodeUPCE(code string) (string, error) {
 		sum := upcSum(code)
 		chk := int(code[11]) - 48
 		if chk != sum {
-			return "", fmt.Errorf("invalid check digit %d", chk)
+			return "", "", fmt.Errorf("invalid check digit %d", chk)
 		}
 		var err error
 		code, err = upcCompress(code)
 		if err != nil {
-			return "", err
+			return "", "", err
 		}
 	default:
-		return "", fmt.Errorf("invalid length %d", len(code))
+		return "", "", fmt.Errorf("invalid length %d", len(code))
 	}
 	// Hallamos la secuencia
 	nsc := int(code[0]) - 48
 	if nsc != 0 && nsc != 1 {
-		return "", fmt.Errorf("invalid nsc %d", nsc)
+		return "", "", fmt.Errorf("invalid nsc %d", nsc)
 	}
 	sum := int(code[7]) - 48
 	par := parities[nsc][sum]
-	barpattern := start
+	bars = start
+	hri += string(code[0]) + " "
 	for i := 1; i < 7; i++ {
 		n := int(code[i]) - 48
 		p := par[i-1]
-		barpattern += patterns[p][n]
+		bars += patterns[p][n]
+		hri += string(code[i])
 	}
-	barpattern += end
-	return barpattern, nil
+	bars += end
+	hri += " " + string(code[7])
+	return
 }
 
 // Halla la suma de control

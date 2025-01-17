@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func barcodeCode39(code string) (string, error) {
+func barcodeCode39(code string) (bars, hri string, err error) {
 
 	patterns := map[rune]string{
 		'0': "111331311", '1': "311311113", '2': "113311113", '3': "313311111", '4': "111331113",
@@ -22,19 +22,18 @@ func barcodeCode39(code string) (string, error) {
 	code = strings.TrimPrefix(code, "*")
 	code = strings.TrimSuffix(code, "*")
 	if code == "" {
-		return "", fmt.Errorf("empty code")
+		return "", "", fmt.Errorf("empty code")
 	}
-	code = "*" + code + "*"
-	barpattern := ""
-	for k, r := range code {
+	hri = "*" + code + "*"
+	for k, r := range hri {
 		p := patterns[r]
 		if p == "" {
-			return "", fmt.Errorf("invalid char %c", r)
+			return "", "", fmt.Errorf("invalid char 0x%02X", r)
 		}
 		if k > 0 {
-			barpattern += "1"
+			bars += "1"
 		}
-		barpattern += p
+		bars += p
 	}
-	return barpattern, nil
+	return
 }

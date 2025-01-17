@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-func barcodeEAN13(code string) (string, error) {
+func barcodeEAN13(code string) (bars, hri string, err error) {
 	const startend = "111"            // patrón inicial y final
 	const middle = "11111"            // patrón medio
 	var patterns = map[byte][]string{ // patrones[paridad]
@@ -31,7 +31,7 @@ func barcodeEAN13(code string) (string, error) {
 	}
 	for _, r := range code {
 		if r < '0' || r > '9' {
-			return "", fmt.Errorf("invalid char %c", r)
+			return "", "", fmt.Errorf("invalid char 0x%02X", r)
 		}
 	}
 	switch len(code) {
@@ -44,28 +44,34 @@ func barcodeEAN13(code string) (string, error) {
 		sum := ean13Sum(code)
 		chk := int(code[12]) - 48
 		if chk != sum {
-			return "", fmt.Errorf("invalid check digit %d", chk)
+			return "", "", fmt.Errorf("invalid check digit %d", chk)
 		}
 	default:
-		return "", fmt.Errorf("invalid length %d", len(code))
+		return "", "", fmt.Errorf("invalid length %d", len(code))
 	}
 	// Hallamos la secuencia
 	nsc := int(code[0]) - 48
+	if nsc > 0 {
+		hri += string(code[0]) + " "
+	}
 	par := parities[nsc]
-	barpattern := startend
+	bars = startend
 	for i := 1; i < 7; i++ {
 		n := int(code[i]) - 48
 		p := par[i-1]
-		barpattern += patterns[p][n]
+		bars += patterns[p][n]
+		hri += string(code[i])
 	}
-	barpattern += middle
+	bars += middle
+	hri += " "
 	for i := 7; i < 13; i++ {
 		n := int(code[i]) - 48
 		p := par[i-1]
-		barpattern += patterns[p][n]
+		bars += patterns[p][n]
+		hri += string(code[i])
 	}
-	barpattern += startend
-	return barpattern, nil
+	bars += startend
+	return
 }
 
 // Halla la suma de control
@@ -85,7 +91,7 @@ func ean13Sum(code string) int {
 	return sum
 }
 
-func barcodeEAN8(code string) (string, error) {
+func barcodeEAN8(code string) (bars, hri string, err error) {
 	const startend = "111"   // patrón inicial y final
 	const middle = "11111"   // patrón medio
 	var patterns = []string{ // patrones
@@ -94,7 +100,7 @@ func barcodeEAN8(code string) (string, error) {
 	}
 	for _, r := range code {
 		if r < '0' || r > '9' {
-			return "", fmt.Errorf("invalid char %c", r)
+			return "", "", fmt.Errorf("invalid char 0x%02X", r)
 		}
 	}
 	switch len(code) {
@@ -107,24 +113,27 @@ func barcodeEAN8(code string) (string, error) {
 		sum := ean8Sum(code)
 		chk := int(code[7]) - 48
 		if chk != sum {
-			return "", fmt.Errorf("invalid check digit %d", chk)
+			return "", "", fmt.Errorf("invalid check digit %d", chk)
 		}
 	default:
-		return "", fmt.Errorf("invalid length %d", len(code))
+		return "", "", fmt.Errorf("invalid length %d", len(code))
 	}
 	// Hallamos la secuencia
-	barpattern := startend
+	bars = startend
 	for i := 0; i < 4; i++ {
 		n := int(code[i]) - 48
-		barpattern += patterns[n]
+		bars += patterns[n]
+		hri += string(code[i])
 	}
-	barpattern += middle
+	bars += middle
+	hri += " "
 	for i := 4; i < 8; i++ {
 		n := int(code[i]) - 48
-		barpattern += patterns[n]
+		bars += patterns[n]
+		hri += string(code[i])
 	}
-	barpattern += startend
-	return barpattern, nil
+	bars += startend
+	return
 }
 
 // Halla la suma de control

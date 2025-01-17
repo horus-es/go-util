@@ -25,10 +25,10 @@ type T_personal struct {
 
 func init() {
 	postgres.InitPool(`
-	    host=desarrollo.horus.es
-		port=5433
-		user=jesus.san2
-		password=she1amee3Yus
+	    host=devel.horus.es
+		port=43210
+		user=SPARK2
+		password=lahh4jaequ2I
 		dbname=SPARK2
 		sslmode=disable
 		application_name=_TEST_`, nil)

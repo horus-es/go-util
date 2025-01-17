@@ -24,18 +24,18 @@ Control de la impresora:
 Códigos de barras:
   - {bc-heigth 162}: altura del código de barras (1-255)
   - {bc-modulo 3}: módulo del código de barras (2-6)
-  - {bc-hri none}: muestra el texto bajo el código de barras (none/above/below/both) (siempre se imprime debajo en html/pdf)
-  - {code128 123456}:
-  - {code128a 123456}
-  - {code128b 123456}
-  - {code128c 123456}
-  - {itf 123456}
-  - {upc-a 123456}
-  - {upc-e 123456}
-  - {ean-13 123456}
-  - {ean-8 123456}
-  - {code39 123456}
-  - {code93 123456}
+  - {bc-hri none}: muestra el texto bajo el código de barras (none/above/below/both)
+  - {code128 123456}: Conmutación automática de las variantes B y C
+  - {code128a 123456}: Códigos de control, números, mayúsculas y simbolos
+  - {code128b 123456}: Números, mayúsculas, minúsculas y más simbolos
+  - {code128c 123456}: Solo números de longitud par
+  - {itf 123456}: Solo números de longitud par
+  - {upc-a 123456}: Códigos numéricos para productos (usa)
+  - {upc-e 123456}: Códigos cortos para productos (usa)
+  - {ean-13 123456}: Códigos numéricos para productos (eur)
+  - {ean-8 123456}: Códigos cortos para productos (eur)
+  - {code39 123456}: Números, mayúsculas y algunos símbolos
+  - {code93 123456}: Números, mayúsculas y algunos símbolos
   - {codabar 123456} (se imprime como code128 en html/pdf)
 
 Códigos QR
@@ -395,7 +395,10 @@ func processEscPosBarcodes(escpos []byte) []byte {
 		}
 		switch tipo {
 		case "code128":
-			return append([]byte{GS, 'k', 79, l}, codigo...) // GS k 79 l codigo
+			//return append([]byte{GS, 'k', 79, l}, codigo...) // GS k 79 l codigo // Muchas impresoras no lo soportan
+			codigo = C128auto(codigo)
+			l = byte(len(codigo))
+			return append([]byte{GS, 'k', 73, l}, codigo...) // GS k 73 l codigo // ... por eso usamos este
 		case "code128a":
 			if bytesInRange(codigo, [][]byte{{0, 95}}) {
 				return append([]byte{GS, 'k', 73, l + 2, '{', 'A'}, codigo...) // GS k 73 l { A codigo
@@ -1086,26 +1089,10 @@ func imprimeBC(codigo string, bcKind byte, bcWidth, bcHeight int, hri barcode.HR
 	case 72:
 		tipo = barcode.C93 // CODE93
 	case 73:
-		if strings.HasPrefix(codigo, "{A") {
-			tipo = barcode.C128A // CODE128A
-			codigo = codigo[2:]
-		} else if strings.HasPrefix(codigo, "{B") {
-			tipo = barcode.C128B // CODE128B
-			codigo = codigo[2:]
-		} else if strings.HasPrefix(codigo, "{C") {
-			tipo = barcode.C128C // CODE128C
-			s := ""
-			for i := 2; i < len(codigo); i++ {
-				s += fmt.Sprintf("%2d", codigo[i])
-			}
-			codigo = s
-		} else {
-			tipo = barcode.C128 // CODE128
-		}
-	case 74, 75, 76, 77, 78, 79:
-		tipo = barcode.C128 // Tipos GS1 los pasamos a C128
+		tipo = barcode.C128 // CODE128 codificado esc/pos
+	default:
+		tipo = barcode.C128X // Para el resto usamos CODE128 automático
 	}
-
 	svg, _ := barcode.GetBarcodeSVG(codigo, tipo, float64(bcWidth)*3/5, float64(bcHeight)/2, "#000", hri, true)
 	return svg
 }
@@ -1141,4 +1128,58 @@ func imprimeQR(qrData []byte, qrModulo, qrECC int) string {
 		return ""
 	}
 	return s
+}
+
+// Cambio automatico entre las variantes A, B y C
+func C128auto(codigo []byte) (auto []byte) {
+	variant := ' '
+	i := 0
+	for i < len(codigo) {
+		// Averiguamos el número de digitos consecutivos a partir de la posición i-sima
+		n := 0
+		for i+n < len(codigo) && codigo[i+n] >= '0' && codigo[i+n] <= '9' {
+			n++
+		}
+		// Condición para usar C: 6+ digitos en cualquier posición o 4+ digitos al principio o final
+		if (n >= 6) || (n >= 4 && i == 0) || (n >= 4 && i+n == len(codigo)) {
+			// Cambiamos a C si es preciso
+			if variant != 'C' {
+				auto = append(auto, '{', 'C')
+				variant = 'C'
+			}
+			// Agregamos los runes en parejas
+			for n > 1 {
+				auto = append(auto, (codigo[i]-48)*10+codigo[i+1]-48)
+				n -= 2
+				i += 2
+			}
+		} else {
+			// Cambiamos a B si es preciso
+			if variant != 'B' {
+				auto = append(auto, '{', 'B')
+				variant = 'B'
+			}
+			// Agregamos los dígitos que no se hayan pasado como C
+			for n > 0 {
+				auto = append(auto, codigo[i])
+				i++
+				n--
+			}
+			// Agregamos hasta encontrar un dígito
+			for i < len(codigo) && (codigo[i] < '0' || codigo[i] > '9') {
+				r := codigo[i]
+				if r == '{' {
+					auto = append(auto, '{', '{')
+				} else if r <= 31 {
+					auto = append(auto, '{', 'S', r)
+				} else if r <= 127 {
+					auto = append(auto, r)
+				} else {
+					auto = append(auto, '?')
+				}
+				i++
+			}
+		}
+	}
+	return
 }

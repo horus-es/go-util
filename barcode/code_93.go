@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func barcodeCode93(code string) (string, error) {
+func barcodeCode93(code string) (bars, hri string, err error) {
 
 	patterns := map[rune]string{
 		'0': "131112", '1': "111213", '2': "111312", '3': "111411", '4': "121113",
@@ -27,20 +27,20 @@ func barcodeCode93(code string) (string, error) {
 	code = strings.TrimPrefix(code, "*")
 	code = strings.TrimSuffix(code, "*")
 	if code == "" {
-		return "", fmt.Errorf("empty code")
+		return "", "", fmt.Errorf("empty code")
 	}
+	hri = code
 	code += checksumCode93([]rune(code))
 	code = "*" + code + "*"
-	barpattern := ""
 	for _, r := range code {
 		p := patterns[r]
 		if len(p) == 0 {
-			return "", fmt.Errorf("invalid char %c", r)
+			return "", "", fmt.Errorf("invalid char 0x%02X", r)
 		}
-		barpattern += p
+		bars += p
 	}
-	barpattern += "1"
-	return barpattern, nil
+	bars += "1"
+	return
 }
 
 // checksumCode93 calculates checksum of

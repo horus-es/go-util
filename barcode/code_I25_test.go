@@ -9,14 +9,15 @@ import (
 )
 
 func TestI25(t *testing.T) {
-	bars, err := barcode.GetBarcodeBARS("123456", barcode.I25)
+	bars, hri, err := barcode.GetBarcodeBARS("123456", barcode.I25)
 	assert.NoError(t, err)
 	assert.Equal(t, "1111211211112221211211122112221111211", bars)
-	_, err = barcode.GetBarcodeBARS("12345", barcode.I25)
+	assert.Equal(t, "123456", hri)
+	_, _, err = barcode.GetBarcodeBARS("12345", barcode.I25)
 	assert.Error(t, err)
-	_, err = barcode.GetBarcodeBARS("12345A", barcode.I25)
+	_, _, err = barcode.GetBarcodeBARS("12345A", barcode.I25)
 	assert.Error(t, err)
-	_, err = barcode.GetBarcodeBARS("", barcode.I25)
+	_, _, err = barcode.GetBarcodeBARS("", barcode.I25)
 	assert.Error(t, err)
 }
 

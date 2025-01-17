@@ -32,6 +32,6 @@
 		<rect x="186.00000" y="0.00000" width="2.00000" height="100.00000" />
 		<rect x="194.00000" y="0.00000" width="2.00000" height="100.00000" />
 		<rect x="198.00000" y="0.00000" width="2.00000" height="100.00000" />
-	<text x="105.00000" text-anchor="middle" dominant-baseline="hanging" y="102.00000" fill="#000" font-size="15px">1234567890128</text>
+	<text x="105.00000" text-anchor="middle" dominant-baseline="hanging" y="102.00000" fill="#000" font-size="15px">1 234567 890128</text>
 	</g>
 </svg>

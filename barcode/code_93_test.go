@@ -9,16 +9,17 @@ import (
 )
 
 func TestCode93(t *testing.T) {
-	bars, err := barcode.GetBarcodeBARS("1234ABCD", barcode.C93)
+	bars, hri, err := barcode.GetBarcodeBARS("1234ABCD", barcode.C93)
 	assert.NoError(t, err)
 	assert.Equal(t, "1111411112131113121114111211132111132112122113112211122112211321111111411", bars)
-	_, err = barcode.GetBarcodeBARS("1234:ABCD", barcode.C93)
+	assert.Equal(t, "1234ABCD", hri)
+	_, _, err = barcode.GetBarcodeBARS("1234:ABCD", barcode.C93)
 	assert.Error(t, err)
-	_, err = barcode.GetBarcodeBARS("123ABC*", barcode.C93)
+	_, _, err = barcode.GetBarcodeBARS("123ABC*", barcode.C93)
 	assert.NoError(t, err)
-	_, err = barcode.GetBarcodeBARS("123abc", barcode.C93)
+	_, _, err = barcode.GetBarcodeBARS("123abc", barcode.C93)
 	assert.Error(t, err)
-	_, err = barcode.GetBarcodeBARS("**", barcode.C93)
+	_, _, err = barcode.GetBarcodeBARS("**", barcode.C93)
 	assert.Error(t, err)
 }
 

@@ -9,12 +9,13 @@ import (
 )
 
 func TestCode39(t *testing.T) {
-	bars, err := barcode.GetBarcodeBARS("1234ABCD", barcode.C39)
+	bars, hri, err := barcode.GetBarcodeBARS("1234ABCD", barcode.C39)
 	assert.NoError(t, err)
 	assert.Equal(t, "131131311131131111311133111131313311111111133111313111131131113113113131311311111111331131131131311", bars)
-	_, err = barcode.GetBarcodeBARS("1234:ABCD", barcode.C39)
+	assert.Equal(t, "*1234ABCD*", hri)
+	_, _, err = barcode.GetBarcodeBARS("1234:ABCD", barcode.C39)
 	assert.Error(t, err)
-	_, err = barcode.GetBarcodeBARS("", barcode.C39)
+	_, _, err = barcode.GetBarcodeBARS("", barcode.C39)
 	assert.Error(t, err)
 }
 

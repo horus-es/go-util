@@ -7,13 +7,14 @@ import (
 )
 
 func ExampleGetBarcodeBARS() {
-	bars, _ := barcode.GetBarcodeBARS("123456", barcode.C128)
-	fmt.Print(bars)
-	// Output: 2112321122321311233311211321312331112
+	bars, hri, _ := barcode.GetBarcodeBARS("123456", barcode.C128X)
+	fmt.Printf("%s: %s\n", hri, bars)
+	// Output:
+	// 123456: 2112321122321311233311211321312331112
 }
 
 func ExampleGetBarcodeSVG() {
-	svg, _ := barcode.GetBarcodeSVG("123456", barcode.C128, 2, 100, "#000", barcode.Below, false)
+	svg, _ := barcode.GetBarcodeSVG("123456", barcode.C128X, 2, 100, "#000", barcode.Below, false)
 	fmt.Print(svg)
 
 	// Output:

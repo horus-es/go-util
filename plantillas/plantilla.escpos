@@ -42,7 +42,7 @@ CUFE: {{.Additional.CUFE}}
 {wh}Códigos de barras:{}
 {bc-height 100}{bc-modulo 3}
 
-{code128 123456}
+{code128 12345AB}
 {code128a {{.ID}}}
 {bc-hri both}{code128b 123456}
 {code128c 123456}
