@@ -52,13 +52,12 @@ func ExamplePrintPrecio() {
 }
 
 func TestRedondeaPrecio(t *testing.T) {
-	assert.Equal(t, 12345.68, formato.RedondeaPrecio(12345.6789, formato.EUR))
-	assert.Equal(t, 12345.68, formato.RedondeaPrecio(12345.6789, formato.USD), formato.USD)
-	assert.Equal(t, 12346.00, formato.RedondeaPrecio(12345.6789, formato.COP), formato.COP)
-	assert.Equal(t, 12345.6789, formato.RedondeaPrecio(12345.6789, "OTRO"), "OTRO")
+	assert.Equal(t, 12345.68, formato.RedondeaPrecio(12345.6789, 0.01), formato.EUR)
+	assert.Equal(t, 12345.68, formato.RedondeaPrecio(12345.6789, 0.01), formato.USD)
+	assert.Equal(t, 12350.00, formato.RedondeaPrecio(12345.6789, 50), formato.COP)
 }
 
 func ExampleRedondeaPrecio() {
-	fmt.Println(formato.RedondeaPrecio(12345.6789, formato.EUR))
-	// Output: 12345.68
+	fmt.Println(formato.RedondeaPrecio(12345.6789, 50))
+	// Output: 12350
 }

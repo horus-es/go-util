@@ -64,17 +64,7 @@ func PrintPrecio(v float64, fp Moneda) string {
 	return result
 }
 
-// Redondea un precio con el número de decimales de la moneda
-func RedondeaPrecio(v float64, fp Moneda) float64 {
-	var result float64
-	switch fp {
-	case EUR, USD:
-		result = 100
-	case COP, MXN:
-		result = 1
-	default:
-		result = 1000000
-	}
-	result = math.Round(v*result) / result
-	return result
+// Redondea un precio (p) usando la unidad monetaria mínima (umm)
+func RedondeaPrecio(p, umm float64) float64 {
+	return math.Round(p/umm) * umm
 }
