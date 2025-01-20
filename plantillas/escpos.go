@@ -55,6 +55,7 @@ package plantillas
 import (
 	"bytes"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"image"
 	"image/color"
@@ -75,7 +76,6 @@ import (
 	"github.com/horus-es/go-util/v2/errores"
 	"github.com/horus-es/go-util/v2/formato"
 	go_qr "github.com/piglig/go-qr"
-	"github.com/pkg/errors"
 	"golang.org/x/text/encoding/charmap"
 	"golang.org/x/text/transform"
 )
@@ -617,31 +617,16 @@ func rasterize(file string) (data []byte, width, height int, err error) {
 	return
 }
 
-// Genera un fichero PDF a partir de una plantilla *.escpos. Parámetros:
-//   - name: nombre arbitrario para la plantilla que aparece en los mensajes de error.
-//   - escpos: plantilla escpos, ver cabecera de este fichero
-//   - datos: estructura de datos para fusionar con la plantilla
-//   - assets: ruta de imágenes u otros recursos (attributos src y href). Si es una ruta local, debe estar precedida por file://
-//   - ff: formato de las fechas para las funciones DATETIME y DATE
-//   - fp: formato de los precios para la funcion PRICE
+// Genera un fichero PDF a partir de una secuencia esc/pos. Parámetros:
+//   - escpos: secuencia binaria esc/pos, tal y como se enviaría a la impresora
 //   - out: fichero PDF de salida
 //   - width: ancho del papel en mm
 //   - opciones: opciones adicionales utilidad wkhtmltopdf (ver https://wkhtmltopdf.org/usage/wkhtmltopdf.txt)
-func GenerateEscPosPdf(name, escpos string, datos any, assets string, ff formato.Fecha, fp formato.Moneda, out string, width int, opciones ...string) error {
-	// Procesa la plantilla escpos
-	escpos, err := MergeEscPosTemplate(name, escpos, datos, assets, ff, fp)
-	if err != nil {
-		return err
-	}
-	prn, err := GenerateEscPos(escpos)
-	if err != nil {
-		return err
-	}
-
+func GenerateEscPosPdf(escpos []byte, out string, width int, opciones ...string) error {
 	// Fichero temporal
 	tmp, err := os.CreateTemp("", "horus-*.html")
 	if err != nil {
-		return errors.Wrap(err, name)
+		return err
 	}
 	defer os.Remove(tmp.Name())
 
@@ -652,23 +637,18 @@ func GenerateEscPosPdf(name, escpos string, datos any, assets string, ff formato
 	tmp.WriteString("<title>Recibo</title>\n")
 	tmp.WriteString("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=Windows-1252\" />\n")
 	tmp.WriteString("<style>\n")
-	//tmp.WriteString("div { display: flex; flex-wrap: wrap; }\n")
-	//tmp.WriteString("body { background-color:#fafafa; }\n")
-	//tmp.WriteString("escpos { box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19); }\n")
 	// Añadimos CSS para tickets
 	addEscPosCSS(tmp, width)
 	tmp.WriteString("</style>\n")
 	tmp.WriteString("</head>\n")
 	tmp.WriteString("<body>\n")
-	//tmp.WriteString("<div>\n")
 	// Añadimos HTML ticket
-	addEscPosHTML(tmp, prn)
-	//tmp.WriteString("</div>\n")
+	addEscPosHTML(tmp, escpos)
 	tmp.WriteString("</body>\n")
 	tmp.WriteString("</html>\n")
 	err = tmp.Close()
 	if err != nil {
-		return errors.Wrap(err, name)
+		return err
 	}
 	// Ejecución wkhtmltopdf
 	args := append([]string{"-q", "--enable-local-file-access", "--no-outline"}, opciones...)
@@ -680,9 +660,9 @@ func GenerateEscPosPdf(name, escpos string, datos any, assets string, ff formato
 	err = cmd.Run()
 	if err != nil {
 		if log.Len() > 0 {
-			return fmt.Errorf("%s: %s", name, log.String())
+			return errors.New(log.String())
 		}
-		return errors.Wrap(err, name)
+		return err
 	}
 	return nil
 }

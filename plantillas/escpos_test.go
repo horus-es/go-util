@@ -3,7 +3,6 @@ package plantillas_test
 import (
 	"fmt"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/horus-es/go-util/v2/errores"
@@ -75,21 +74,32 @@ func ExampleGenerateEscPos() {
 	)
 	errores.PanicIfError(err)
 	// Convertir la plantilla fusionada a fichero esc/pos binario
-	g, err := plantillas.GenerateEscPos(f)
+	prn, err := plantillas.GenerateEscPos(f)
 	errores.PanicIfError(err)
 	// Guardar salida binaria (o enviar a impresora)
-	os.WriteFile("recibo.prn", []byte(g), 0666)
+	os.WriteFile("recibo.prn", []byte(prn), 0666)
 	fmt.Println("Generado fichero recibo.prn")
 	// Output: Generado fichero recibo.prn
 }
 
 func TestGenerateEscPosPdf(t *testing.T) {
+	// Cargar plantilla
 	plantilla, err := os.ReadFile("plantilla.escpos")
-	assert.NoError(t, err)
-	wd, err := os.Getwd()
-	assert.NoError(t, err)
-	wd = "file:///" + strings.ReplaceAll(wd, "\\", "/")
-	err = plantillas.GenerateEscPosPdf("template", string(plantilla), factura, wd, formato.DMA, formato.EUR, "escpos_test_out.pdf", 80)
+	errores.PanicIfError(err)
+	// Fusionar plantilla con estructura factura
+	f, err := plantillas.MergeEscPosTemplate(
+		"escpos",
+		string(plantilla),
+		factura,
+		"/assets",
+		formato.DMA,
+		formato.EUR,
+	)
+	errores.PanicIfError(err)
+	// Convertir la plantilla fusionada a fichero esc/pos binario
+	prn, err := plantillas.GenerateEscPos(f)
+	errores.PanicIfError(err)
+	err = plantillas.GenerateEscPosPdf(prn, "escpos_test_out.pdf", 80)
 	assert.NoError(t, err)
 	t1 := readPdfText(t, "escpos_test_expect.pdf")
 	t2 := readPdfText(t, "escpos_test_out.pdf")
@@ -97,20 +107,24 @@ func TestGenerateEscPosPdf(t *testing.T) {
 }
 
 func ExampleGenerateEscPosPdf() {
-	// Carga plantilla HTML
+	// Cargar plantilla
 	plantilla, err := os.ReadFile("plantilla.escpos")
 	errores.PanicIfError(err)
-	// Genera fichero PDF
-	err = plantillas.GenerateEscPosPdf(
-		"pdf",
+	// Fusionar plantilla con estructura factura
+	f, err := plantillas.MergeEscPosTemplate(
+		"escpos",
 		string(plantilla),
 		factura,
-		"file:///assets",
+		"/assets",
 		formato.DMA,
 		formato.EUR,
-		"recibo.pdf",
-		80,
 	)
+	errores.PanicIfError(err)
+	// Convertir la plantilla fusionada a fichero esc/pos binario
+	prn, err := plantillas.GenerateEscPos(f)
+	errores.PanicIfError(err)
+	// Genera fichero PDF
+	err = plantillas.GenerateEscPosPdf(prn, "recibo.pdf", 80)
 	errores.PanicIfError(err)
 	fmt.Println("Generado fichero recibo.pdf")
 	// Output: Generado fichero recibo.pdf
