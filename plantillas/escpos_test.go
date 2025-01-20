@@ -49,7 +49,7 @@ func TestGenerateEscPos(t *testing.T) {
 	assert.NoError(t, err)
 	f, err := plantillas.MergeEscPosTemplate("plantilla.escpos", string(p), factura, "", formato.DMA, formato.EUR)
 	assert.NoError(t, err)
-	escpos, err := plantillas.GenerateEscPos(f)
+	escpos, _, err := plantillas.GenerateEscPos(f)
 	assert.NoError(t, err)
 	err = os.WriteFile("escpos_test_out.prn", escpos, 0644)
 	assert.NoError(t, err)
@@ -74,7 +74,7 @@ func ExampleGenerateEscPos() {
 	)
 	errores.PanicIfError(err)
 	// Convertir la plantilla fusionada a fichero esc/pos binario
-	prn, err := plantillas.GenerateEscPos(f)
+	prn, _, err := plantillas.GenerateEscPos(f)
 	errores.PanicIfError(err)
 	// Guardar salida binaria (o enviar a impresora)
 	os.WriteFile("recibo.prn", []byte(prn), 0666)
@@ -97,9 +97,9 @@ func TestGenerateEscPosPdf(t *testing.T) {
 	)
 	errores.PanicIfError(err)
 	// Convertir la plantilla fusionada a fichero esc/pos binario
-	prn, err := plantillas.GenerateEscPos(f)
+	prn, mm, err := plantillas.GenerateEscPos(f)
 	errores.PanicIfError(err)
-	err = plantillas.GenerateEscPosPdf(prn, "escpos_test_out.pdf", 80)
+	err = plantillas.GenerateEscPosPdf(prn, "escpos_test_out.pdf", mm)
 	assert.NoError(t, err)
 	t1 := readPdfText(t, "escpos_test_expect.pdf")
 	t2 := readPdfText(t, "escpos_test_out.pdf")
@@ -121,10 +121,10 @@ func ExampleGenerateEscPosPdf() {
 	)
 	errores.PanicIfError(err)
 	// Convertir la plantilla fusionada a fichero esc/pos binario
-	prn, err := plantillas.GenerateEscPos(f)
+	prn, mm, err := plantillas.GenerateEscPos(f)
 	errores.PanicIfError(err)
 	// Genera fichero PDF
-	err = plantillas.GenerateEscPosPdf(prn, "recibo.pdf", 80)
+	err = plantillas.GenerateEscPosPdf(prn, "recibo.pdf", mm)
 	errores.PanicIfError(err)
 	fmt.Println("Generado fichero recibo.pdf")
 	// Output: Generado fichero recibo.pdf

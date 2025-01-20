@@ -158,6 +158,7 @@ var reResetEscPos = regexp.MustCompile(`{reset}`)
 var reFullCutEscPos = regexp.MustCompile(`{full-cut}`)
 var rePartialCutEscPos = regexp.MustCompile(`{partial-cut}`)
 var reFormFeedEscPos = regexp.MustCompile(`{form-feed}`)
+var rePaperWidthEscPos = regexp.MustCompile(`{paper-width ([0-9]+)}`)
 var reBcHeightEscPos = regexp.MustCompile(`{bc-height ([0-9]+)}`)
 var reBcModuloEscPos = regexp.MustCompile(`{bc-modulo ([0-9]+)}`)
 var reBcHriEscPos = regexp.MustCompile(`{bc-hri (none|above|below|both)}`)
@@ -178,7 +179,7 @@ const (
 )
 
 // Genera un []byte esc/pos (binario) a partir de una plantilla *.escpos.
-func GenerateEscPos(escpos string) (bin []byte, err error) {
+func GenerateEscPos(escpos string) (bin []byte, width int, err error) {
 
 	// Convertimos a windows-1252
 	bin = win1252(escpos)
@@ -193,7 +194,7 @@ func GenerateEscPos(escpos string) (bin []byte, err error) {
 	bin = processEscPosStyles(bin)
 
 	// Procesamos códigos de control
-	bin = processEscPosControls(bin)
+	bin, width = processEscPosControls(bin)
 
 	// Procesamos códigos de barras
 	bin = processEscPosBarcodes(bin)
@@ -340,13 +341,23 @@ func processEscPosStyles(escpos []byte) []byte {
 	return result.Bytes()
 }
 
-// Procesa las secuencias de control esc/pos
-func processEscPosControls(escpos []byte) []byte {
+// Procesa las secuencias de control esc/pos y extrae el ancho del papel
+func processEscPosControls(escpos []byte) ([]byte, int) {
+	var width int
 	result := reResetEscPos.ReplaceAll(escpos, []byte{ESC, '@'})         // ESC @
 	result = reFullCutEscPos.ReplaceAll(result, []byte{GS, 'V', '0'})    // GS V 0
 	result = rePartialCutEscPos.ReplaceAll(result, []byte{GS, 'V', '1'}) // GS V 1
 	result = reFormFeedEscPos.ReplaceAll(result, []byte{FF})             // FF
-	return result
+	result = rePaperWidthEscPos.ReplaceAllFunc(result, func(match []byte) []byte {
+		submatches := rePaperWidthEscPos.FindSubmatch(match)
+		w, _ := strconv.Atoi(string(submatches[1]))
+		width = max(width, w)
+		return nil
+	})
+	if width == 0 {
+		width = 80 // Por defecto 80mm
+	}
+	return result, width
 }
 
 // Procesa los códigos de barras esc/pos

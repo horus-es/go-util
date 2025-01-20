@@ -7,9 +7,10 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
-func DoRestGet[T any](host, endpoint string, params url.Values) (response T, code int, err error) {
+func DoRestGet[T any](host, endpoint string, params url.Values, headers ...string) (response T, code int, err error) {
 	fullURL, err := url.JoinPath(host, endpoint)
 	if err != nil {
 		return
@@ -17,7 +18,15 @@ func DoRestGet[T any](host, endpoint string, params url.Values) (response T, cod
 	if len(params) > 0 {
 		fullURL += "?" + params.Encode()
 	}
-	httpResponse, err := http.Get(fullURL)
+	req, err := http.NewRequest(http.MethodGet, fullURL, nil)
+	for _, h := range headers {
+		k, v, ok := strings.Cut(h, ":")
+		if ok {
+			req.Header.Add(k, v)
+		}
+	}
+	client := &http.Client{}
+	httpResponse, err := client.Do(req)
 	if err != nil {
 		return
 	}
@@ -37,7 +46,7 @@ func DoRestGet[T any](host, endpoint string, params url.Values) (response T, cod
 	return
 }
 
-func DoRestPost[T any](host, endpoint string, request any) (response T, code int, err error) {
+func DoRestPost[T any](host, endpoint string, request any, headers ...string) (response T, code int, err error) {
 	fullURL, err := url.JoinPath(host, endpoint)
 	if err != nil {
 		return
@@ -46,7 +55,16 @@ func DoRestPost[T any](host, endpoint string, request any) (response T, code int
 	if err != nil {
 		return
 	}
-	httpResponse, err := http.Post(fullURL, "application/json", bytes.NewReader(requestBytes))
+	req, err := http.NewRequest(http.MethodPost, fullURL, bytes.NewReader(requestBytes))
+	for _, h := range headers {
+		k, v, ok := strings.Cut(h, ":")
+		if ok {
+			req.Header.Add(k, v)
+		}
+	}
+	req.Header.Set("Content-Type", "application/json")
+	client := &http.Client{}
+	httpResponse, err := client.Do(req)
 	if err != nil {
 		return
 	}
@@ -66,7 +84,7 @@ func DoRestPost[T any](host, endpoint string, request any) (response T, code int
 	return
 }
 
-func DoRestPut[T any](host, endpoint string, request any) (response T, code int, err error) {
+func DoRestPut[T any](host, endpoint string, request any, headers ...string) (response T, code int, err error) {
 	fullURL, err := url.JoinPath(host, endpoint)
 	if err != nil {
 		return
@@ -76,8 +94,11 @@ func DoRestPut[T any](host, endpoint string, request any) (response T, code int,
 		return
 	}
 	req, err := http.NewRequest(http.MethodPut, fullURL, bytes.NewReader(requestBytes))
-	if err != nil {
-		return
+	for _, h := range headers {
+		k, v, ok := strings.Cut(h, ":")
+		if ok {
+			req.Header.Add(k, v)
+		}
 	}
 	req.Header.Set("Content-Type", "application/json")
 	client := &http.Client{}
