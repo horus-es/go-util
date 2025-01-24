@@ -254,7 +254,7 @@ func selectSpaceAttr(tag *etree.Element, space string) []*etree.Attr {
 //   - ff: formato de las fechas para las funciones DATETIME y DATE
 //   - fp: formato de los precios para la funcion PRICE
 //   - adjuntos: ficheros a adjuntar
-//   - to,form,subject,bcc,replyto: parámetros MIME
+//   - from,to,subject,bcc,replyto: parámetros MIME
 //   - host,port,username,password: parámtros SMTP. La contraseña debe ir codificada en base64.
 func SendXhtmlMail(name, xhtml string, datos any, assets string, ff formato.Fecha, fp formato.Moneda, adjuntos []string,
 	from, to, subject string, bcc, replyto []string,

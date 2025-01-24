@@ -77,3 +77,18 @@ func ExampleDoRestPut() {
 	fmt.Println(response["data"])
 	// Output: {"Uno":"1","Dos":"2","Tres":"3"}
 }
+
+func ExampleDoRestDelete() {
+	// Servicio REST publico de prueba que devuelve lo mismo que se le envía
+	host := "https://httpbin.org"
+	endpoint := "anything"
+	params := url.Values{}
+	params.Set("action", "getHolidaysForYear")
+	params.Set("year", "2023")
+	params.Set("country", "esp")
+	code, err := rest.DoRestDelete(host, endpoint, params)
+	errores.PanicIfError(err, "Error de red")
+	errores.PanicIfTrue(code < 200 || code > 299, "Recibido código de respuesta http: %d", code)
+	fmt.Println(code)
+	// Output: 200
+}

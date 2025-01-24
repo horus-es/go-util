@@ -121,3 +121,31 @@ func DoRestPut[T any](host, endpoint string, request any, headers ...string) (re
 	}
 	return
 }
+
+func DoRestDelete(host, endpoint string, params url.Values, headers ...string) (code int, err error) {
+	fullURL, err := url.JoinPath(host, endpoint)
+	if err != nil {
+		return
+	}
+	if len(params) > 0 {
+		fullURL += "?" + params.Encode()
+	}
+	req, err := http.NewRequest(http.MethodDelete, fullURL, nil)
+	for _, h := range headers {
+		k, v, ok := strings.Cut(h, ":")
+		if ok {
+			req.Header.Add(k, v)
+		}
+	}
+	client := &http.Client{}
+	httpResponse, err := client.Do(req)
+	if err != nil {
+		return
+	}
+	defer httpResponse.Body.Close()
+	code = httpResponse.StatusCode
+	if code >= 500 {
+		return
+	}
+	return
+}
