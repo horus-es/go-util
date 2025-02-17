@@ -39,10 +39,7 @@ func DoRestGet[T any](host, endpoint string, params url.Values, headers ...strin
 	if err != nil {
 		return
 	}
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		return
-	}
+	json.Unmarshal(body, &response)
 	return
 }
 
@@ -77,10 +74,7 @@ func DoRestPost[T any](host, endpoint string, request any, headers ...string) (r
 	if err != nil {
 		return
 	}
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		return
-	}
+	json.Unmarshal(body, &response)
 	return
 }
 
@@ -115,10 +109,7 @@ func DoRestPut[T any](host, endpoint string, request any, headers ...string) (re
 	if err != nil {
 		return
 	}
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		return
-	}
+	json.Unmarshal(body, &response)
 	return
 }
 
