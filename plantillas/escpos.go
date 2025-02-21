@@ -64,6 +64,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -140,7 +141,7 @@ func MergeEscPosTemplate(name, escpos string, datos any, assets string, ff forma
 		// En las estructuras se exige la existencia del dato
 		opt = "missingkey=error"
 	}
-	tmpl, err := template.New(name).Funcs(funciones).Option(opt).Parse(escpos)
+	tmpl, err := template.New(filepath.Join(assets, name)).Funcs(funciones).Option(opt).Parse(escpos)
 	if err != nil {
 		return "", err
 	}
