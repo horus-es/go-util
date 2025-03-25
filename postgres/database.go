@@ -55,7 +55,7 @@ func StartTX() {
 		numTxs.Add(-1)
 		errores.PanicIfError(err, "StartTX")
 	}
-	_, loaded := dbTxs.LoadOrStore(misc.GetGID(), &tx)
+	_, loaded := dbTxs.LoadOrStore(misc.GetGID(), tx)
 	errores.PanicIfTrue(loaded, "StartTX: hilo duplicado")
 	if n > 0 {
 		dbLog.Infof("StartTX: %d", n)
@@ -70,9 +70,10 @@ func CommitTX() {
 	if !ok {
 		return
 	}
-	err := (*tx.(*pgx.Tx)).Commit(dbCtx)
+	err := tx.(pgx.Tx).Commit(dbCtx)
 	errores.PanicIfError(err, "CommitTX")
 	dbLog.Infof("CommitTX")
+	numTxs.Add(-1)
 	if !muTxs.TryLock() {
 		muTxs.Unlock()
 	}
@@ -84,9 +85,10 @@ func RollbackTX() {
 	if !ok {
 		return
 	}
-	err := (*tx.(*pgx.Tx)).Rollback(dbCtx)
+	err := tx.(pgx.Tx).Rollback(dbCtx)
 	errores.PanicIfError(err, "RollbackTX")
 	dbLog.Warnf("RollbackTX")
+	numTxs.Add(-1)
 	if !muTxs.TryLock() {
 		muTxs.Unlock()
 	}
@@ -104,7 +106,7 @@ func GetOneRow(dst any, query string, params ...any) {
 	var err error
 	tx, ok := dbTxs.Load(misc.GetGID())
 	if ok {
-		rows, err = (*tx.(*pgx.Tx)).Query(dbCtx, query, params...)
+		rows, err = tx.(pgx.Tx).Query(dbCtx, query, params...)
 	} else {
 		rows, err = dbPool.Query(dbCtx, query, params...)
 	}
@@ -127,7 +129,7 @@ func GetOneOrZeroRows(dst any, query string, params ...any) bool {
 	var err error
 	tx, ok := dbTxs.Load(misc.GetGID())
 	if ok {
-		rows, err = (*tx.(*pgx.Tx)).Query(dbCtx, query, params...)
+		rows, err = tx.(pgx.Tx).Query(dbCtx, query, params...)
 	} else {
 		rows, err = dbPool.Query(dbCtx, query, params...)
 	}
@@ -275,7 +277,7 @@ func InsertRow(src any, especiales ...string) string {
 	var row pgx.Row
 	tx, ok := dbTxs.Load(misc.GetGID())
 	if ok {
-		row = (*tx.(*pgx.Tx)).QueryRow(dbCtx, query, params...)
+		row = tx.(pgx.Tx).QueryRow(dbCtx, query, params...)
 	} else {
 		row = dbPool.QueryRow(dbCtx, query, params...)
 	}
@@ -358,7 +360,7 @@ func UpdateRow(src any, especiales ...string) {
 	var err error
 	tx, ok := dbTxs.Load(misc.GetGID())
 	if ok {
-		tag, err = (*tx.(*pgx.Tx)).Exec(dbCtx, query, params...)
+		tag, err = tx.(pgx.Tx).Exec(dbCtx, query, params...)
 	} else {
 		tag, err = dbPool.Exec(dbCtx, query, params...)
 	}
@@ -381,7 +383,7 @@ func DeleteRow(id string, table string) {
 	var err error
 	tx, ok := dbTxs.Load(misc.GetGID())
 	if ok {
-		tag, err = (*tx.(*pgx.Tx)).Exec(dbCtx, query, id)
+		tag, err = tx.(pgx.Tx).Exec(dbCtx, query, id)
 	} else {
 		tag, err = dbPool.Exec(dbCtx, query, id)
 	}

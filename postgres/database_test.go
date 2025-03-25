@@ -303,7 +303,7 @@ func TestRollTX(t *testing.T) {
 }
 
 func TestSimultenousTX(t *testing.T) {
-	for i := 0; i < 30; i++ {
+	for i := 0; i < 40; i++ {
 		go TestRollTX(t)
 	}
 	time.Sleep(10 * time.Second)
