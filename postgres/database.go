@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/georgysavva/scany/v2/dbscan"
@@ -28,6 +29,8 @@ var dbCtx context.Context
 var dbPool *pgxpool.Pool
 var dbLog *logger.Logger
 var dbTxs = sync.Map{}
+var muTxs = sync.Mutex{}
+var numTxs = atomic.Int32{}
 var inTest bool
 
 // Conecta a la base de datos y establece el logger. Si el logger es nil, se usa el logger por defecto.
@@ -42,11 +45,23 @@ func InitPool(connectString string, logger *logger.Logger) {
 
 // Comienza una transacción
 func StartTX() {
+	n := numTxs.Add(1) - int32(dbPool.Config().MaxConns) + 1
+	if n > 0 {
+		dbLog.Warnf("StartTX: esperando conexión %d", n)
+		muTxs.Lock()
+	}
 	tx, err := dbPool.BeginTx(dbCtx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead})
-	errores.PanicIfError(err, "StartTX")
+	if err != nil {
+		numTxs.Add(-1)
+		errores.PanicIfError(err, "StartTX")
+	}
 	_, loaded := dbTxs.LoadOrStore(misc.GetGID(), &tx)
-	errores.PanicIfTrue(loaded, "Transacción duplicaa")
-	dbLog.Infof("StartTX")
+	errores.PanicIfTrue(loaded, "StartTX: hilo duplicado")
+	if n > 0 {
+		dbLog.Infof("StartTX: %d", n)
+	} else {
+		dbLog.Infof("StartTX")
+	}
 }
 
 // Finaliza una transacción
@@ -58,6 +73,9 @@ func CommitTX() {
 	err := (*tx.(*pgx.Tx)).Commit(dbCtx)
 	errores.PanicIfError(err, "CommitTX")
 	dbLog.Infof("CommitTX")
+	if !muTxs.TryLock() {
+		muTxs.Unlock()
+	}
 }
 
 // Aborta una transacción
@@ -69,6 +87,9 @@ func RollbackTX() {
 	err := (*tx.(*pgx.Tx)).Rollback(dbCtx)
 	errores.PanicIfError(err, "RollbackTX")
 	dbLog.Warnf("RollbackTX")
+	if !muTxs.TryLock() {
+		muTxs.Unlock()
+	}
 }
 
 // Función de utilidad para consultas que devuelven exactamente una fila.

@@ -285,7 +285,7 @@ func ExampleRollbackTX() {
 	// WARN: RollbackTX
 }
 
-func TestTX(t *testing.T) {
+func TestRollTX(t *testing.T) {
 	// Iniciamos transacción
 	postgres.StartTX()
 	// Cargamos un usuario
@@ -300,4 +300,11 @@ func TestTX(t *testing.T) {
 	// Comprobamos si se ha modificado la fila
 	postgres.GetOneRow(&u, "select * from personal where id=$1", UUIDempleado)
 	assert.Equal(t, códigoOriginal, u.Codigo)
+}
+
+func TestSimultenousTX(t *testing.T) {
+	for i := 0; i < 30; i++ {
+		go TestRollTX(t)
+	}
+	time.Sleep(10 * time.Second)
 }
