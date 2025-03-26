@@ -39,7 +39,11 @@ func InitPool(connectString string, logger *logger.Logger) {
 	errores.PanicIfError(err, "Error conectando a postgres")
 	dbLog = logger
 	inTest = strings.Contains(connectString, "application_name=_TEST_")
-	chanTxs = make(chan bool, dbPool.Stat().MaxConns()-1) // Es necesario dejar una conexión libre (¿¿bug pgx??)
+	n := dbPool.Stat().MaxConns()
+	chanTxs = make(chan bool, n-1) // Es necesario dejar una conexión libre (¿¿bug pgx??)
+	if !inTest {
+		dbLog.Infof("InitPool: pool_max_conns=%d", n)
+	}
 }
 
 // Comienza una transacción
