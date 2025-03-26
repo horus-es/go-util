@@ -4,10 +4,16 @@ import (
 	"bytes"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"sync"
+	"testing"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/horus-es/go-util/v2/formato"
 	"github.com/horus-es/go-util/v2/ginhelper"
+	"github.com/horus-es/go-util/v2/postgres"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func Example() {
@@ -50,25 +56,8 @@ func Example() {
 	router.ServeHTTP(w, req)
 
 	// Solicitud multipart/form-data
-	body := `-----------------------------9051914041544843365972754266
-Content-Disposition: form-data; name="text"
-
-text default
------------------------------9051914041544843365972754266
-Content-Disposition: form-data; name="file1"; filename="a.txt"
-Content-Type: text/plain
-
-Content of a.txt.
-
------------------------------9051914041544843365972754266
-Content-Disposition: form-data; name="file2"; filename="a.html"
-Content-Type: text/html
-
-<!DOCTYPE html><title>Content of a.html.</title>
-
------------------------------9051914041544843365972754266--`
-
-	req, _ = http.NewRequest("POST", "/multipart", bytes.NewBufferString(body))
+	body, _ := os.ReadFile("multipart.mime")
+	req, _ = http.NewRequest("POST", "/multipart", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "multipart/form-data; boundary=---------------------------9051914041544843365972754266")
 	w = httptest.NewRecorder()
 	router.ServeHTTP(w, req)
@@ -89,5 +78,55 @@ Content-Type: text/html
 	// INFO: HTTP 201 Created - 0ms
 	// INFO: {}
 	// INFO: ==================================================
+
+}
+
+func TestGin(t *testing.T) {
+
+	postgres.InitPool(`
+	    host=devel.horus.es
+		port=43210
+		user=SPARK2
+		password=lahh4jaequ2I
+		dbname=SPARK2
+		sslmode=disable
+		application_name=_TEST_`, nil)
+
+	// Modo producción
+	gin.SetMode(gin.ReleaseMode)
+
+	// Crea el router
+	router := gin.New()
+	router.Use(ginhelper.MiddlewareLogger(true), ginhelper.MiddlewareTransaction())
+
+	// Rutas
+	router.GET("/gin_test", func(c *gin.Context) {
+
+		type item struct {
+			Id         pgtype.UUID
+			Nombre     string
+			Fechas     formato.Fecha
+			FhAvisos   pgtype.Timestamp
+			NumAvisos  int
+			FhErrores  pgtype.Timestamp
+			NumErrores int
+			Tarifas    []byte
+		}
+		var lista []item
+		postgres.GetOrderedRows(&lista, `SELECT p.id, p.nombre::text, o.fechas::text, p.tarifas, (SELECT MAX(p2.desde) FROM problemas p2 LEFT JOIN mensajes m ON m.codigo = p2.codigo WHERE p2.hasta IS NULL AND m.nivel = 'WARN' AND p2.parking = p.id) AS fh_avisos, (SELECT COUNT(*) FROM problemas p2 LEFT JOIN mensajes m ON m.codigo = p2.codigo WHERE p2.hasta IS NULL AND m.nivel = 'WARN' AND p2.parking = p.id) AS num_avisos, (SELECT MAX(p2.desde) FROM problemas p2 LEFT JOIN mensajes m ON m.codigo = p2.codigo WHERE p2.hasta IS NULL AND m.nivel = 'ERROR' AND p2.parking = p.id) AS fh_errores, (SELECT COUNT(*) FROM problemas p2 LEFT JOIN mensajes m ON m.codigo = p2.codigo WHERE p2.hasta IS NULL AND m.nivel = 'ERROR' AND p2.parking = p.id) AS num_errores FROM operadores o JOIN parkings p ON o.id = p.operador JOIN personal pe ON o.id = pe.operador JOIN sesiones s ON pe.id = s.empleado WHERE s.id = 'd6d8770d-5619-4a9d-9d10-95e508a35b71' ORDER BY 2`)
+	})
+
+	// Solicitudes
+	var wg sync.WaitGroup
+	for range 200 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			req, _ := http.NewRequest("GET", "/gin_test", nil)
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+		}()
+	}
+	wg.Wait()
 
 }

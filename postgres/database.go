@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/georgysavva/scany/v2/dbscan"
@@ -29,68 +28,68 @@ var dbCtx context.Context
 var dbPool *pgxpool.Pool
 var dbLog *logger.Logger
 var dbTxs = sync.Map{}
-var muTxs = sync.Mutex{}
-var numTxs = atomic.Int32{}
+var chanTxs chan bool
 var inTest bool
 
 // Conecta a la base de datos y establece el logger. Si el logger es nil, se usa el logger por defecto.
 func InitPool(connectString string, logger *logger.Logger) {
 	var err error
-	dbCtx = context.TODO()
+	dbCtx = context.Background()
 	dbPool, err = pgxpool.New(dbCtx, connectString)
 	errores.PanicIfError(err, "Error conectando a postgres")
 	dbLog = logger
 	inTest = strings.Contains(connectString, "application_name=_TEST_")
+	chanTxs = make(chan bool, dbPool.Stat().MaxConns()-1) // Es necesario dejar una conexión libre (¿¿bug pgx??)
 }
 
 // Comienza una transacción
 func StartTX() {
-	n := numTxs.Add(1) - int32(dbPool.Config().MaxConns) + 1
-	if n > 0 {
-		dbLog.Warnf("StartTX: esperando conexión %d", n)
-		muTxs.Lock()
-	}
+	ts := time.Now()
+	chanTxs <- true
 	tx, err := dbPool.BeginTx(dbCtx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead})
 	if err != nil {
-		numTxs.Add(-1)
 		errores.PanicIfError(err, "StartTX")
 	}
 	_, loaded := dbTxs.LoadOrStore(misc.GetGID(), tx)
 	errores.PanicIfTrue(loaded, "StartTX: hilo duplicado")
-	if n > 0 {
-		dbLog.Infof("StartTX: %d", n)
-	} else {
+	if inTest {
 		dbLog.Infof("StartTX")
+	} else {
+		dbLog.Infof("StartTX: %dms", time.Since(ts).Milliseconds())
 	}
 }
 
 // Finaliza una transacción
 func CommitTX() {
+	ts := time.Now()
 	tx, ok := dbTxs.LoadAndDelete(misc.GetGID())
 	if !ok {
 		return
 	}
 	err := tx.(pgx.Tx).Commit(dbCtx)
 	errores.PanicIfError(err, "CommitTX")
-	dbLog.Infof("CommitTX")
-	numTxs.Add(-1)
-	if !muTxs.TryLock() {
-		muTxs.Unlock()
+	<-chanTxs
+	if inTest {
+		dbLog.Infof("CommitTX")
+	} else {
+		dbLog.Infof("CommitTX: %dms", time.Since(ts).Milliseconds())
 	}
 }
 
 // Aborta una transacción
 func RollbackTX() {
+	ts := time.Now()
 	tx, ok := dbTxs.LoadAndDelete(misc.GetGID())
 	if !ok {
 		return
 	}
 	err := tx.(pgx.Tx).Rollback(dbCtx)
 	errores.PanicIfError(err, "RollbackTX")
-	dbLog.Warnf("RollbackTX")
-	numTxs.Add(-1)
-	if !muTxs.TryLock() {
-		muTxs.Unlock()
+	<-chanTxs
+	if inTest {
+		dbLog.Warnf("RollbackTX")
+	} else {
+		dbLog.Warnf("RollbackTX: %dms", time.Since(ts).Milliseconds())
 	}
 }
 
