@@ -671,10 +671,11 @@ func GenerateEscPosPdf(escpos []byte, out string, width int, opciones ...string)
 	cmd.Stderr = &log
 	err = cmd.Run()
 	if err != nil {
-		if log.Len() > 0 {
-			return errors.New(log.String())
-		}
-		return err
+		s := "wkhtmltopdf " + strings.Join(args, " ") + "\n" + err.Error() + "\n" + log.String()
+		s = strings.TrimSpace(s)
+		s = strings.ReplaceAll(s, "\r", "")
+		s = strings.ReplaceAll(s, "\n", " -> ")
+		return errors.New(s)
 	}
 	return nil
 }
