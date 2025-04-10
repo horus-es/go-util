@@ -682,7 +682,7 @@ func GenerateEscPosPdf(escpos []byte, out string, width int, opciones ...string)
 
 // Añade el CSS necesario para esc/pos
 func addEscPosCSS(html io.Writer, width int) {
-	io.WriteString(html, "escpos { font-family: monospace; font-size: 12px; white-space: pre-wrap; display: inline-block; border: 1px solid black; padding: 1em; margin: 1em; word-break: break-all; vertical-align: top; width: "+strconv.Itoa(width)+"mm; }\n")
+	io.WriteString(html, "escpos { font-family: 'DejaVu Sans Mono', monospace; font-size: 12px; white-space: pre-wrap; display: inline-block; border: 1px solid black; padding: 1em; margin: 1em; word-break: break-all; vertical-align: top; width: "+strconv.Itoa(width)+"mm; }\n")
 	io.WriteString(html, "escpos .bold { font-weight: bold; }\n")
 	io.WriteString(html, "escpos .underline { text-decoration: underline; }\n")
 	io.WriteString(html, "escpos .italics { font-style: italic; }\n")
