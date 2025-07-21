@@ -319,17 +319,18 @@ func UpdateRow(src any, especiales ...string) {
 			query += ","
 		}
 		c++
-		if especial == "" {
+		switch especial {
+		case "":
 			p++
 			query += fieldName + "=$" + strconv.Itoa(p)
-		} else if especial == "[]" {
+		case "[]":
 			for k, a := range getArrayEspecial(especiales, fieldName) {
 				if k > 0 {
 					query += ","
 				}
 				query += a
 			}
-		} else {
+		default:
 			query += fieldName + "=" + especial
 		}
 	}

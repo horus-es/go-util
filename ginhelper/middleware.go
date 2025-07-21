@@ -153,14 +153,18 @@ func recuperaDiferido(c *gin.Context) {
 		return
 	}
 	// ¿Es debido a un error de red?
-	networkError := isNetworkError(causa.(error))
-	if networkError {
+	e, ok := causa.(error)
+	if ok && isNetworkError(e) {
 		// Si hay error de red, no podemos responder nada ...
 		ghLog.Errorf("Error de red: %v", causa)
 	} else {
 		// TODO: ¿añadir 404 para claves no halladas?
 		// ¿Es debido a una violación de restricción SQL o custom?
-		errorSQL, msg := postgres.GetErrorSQL(causa.(error))
+		errorSQL := postgres.NON_SQL
+		var msg string
+		if ok {
+			errorSQL, msg = postgres.GetErrorSQL(e)
+		}
 		switch errorSQL {
 		case postgres.INTEGRITY_CONSTRAINT_VIOLATION:
 			// Si es una violación de restriccion SQL, se supone que la culpa es del cliente

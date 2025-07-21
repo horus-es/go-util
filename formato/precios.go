@@ -55,9 +55,17 @@ func PrintPrecio(v float64, fp Moneda) string {
 	case EUR:
 		result = PrintNumero(v, 2, ",", ".") + " €"
 	case USD:
-		result = "$" + PrintNumero(v, 2, ".", ",")
+		if v >= 0 {
+			result = "$" + PrintNumero(v, 2, ".", ",")
+		} else {
+			result = "-$" + PrintNumero(-v, 2, ".", ",")
+		}
 	case COP, MXN:
-		result = "$" + PrintNumero(v, 0, ",", ".")
+		if v >= 0 {
+			result = "$" + PrintNumero(v, 0, ",", ".")
+		} else {
+			result = "-$" + PrintNumero(-v, 0, ",", ".")
+		}
 	default:
 		result = fmt.Sprintf("%f", v)
 	}
