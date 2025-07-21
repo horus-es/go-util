@@ -408,7 +408,7 @@ func processEscPosBarcodes(escpos []byte) []byte {
 		switch tipo {
 		case "code128":
 			//return append([]byte{GS, 'k', 79, l}, codigo...) // GS k 79 l codigo // Muchas impresoras no lo soportan
-			codigo = C128auto(codigo)
+			codigo = c128auto(codigo)
 			l = byte(len(codigo))
 			return append([]byte{GS, 'k', 73, l}, codigo...) // GS k 73 l codigo // ... por eso usamos este
 		case "code128a":
@@ -1124,7 +1124,7 @@ func imprimeQR(qrData []byte, qrModulo, qrECC int) string {
 }
 
 // Cambio automatico entre las variantes A, B y C
-func C128auto(codigo []byte) (auto []byte) {
+func c128auto(codigo []byte) (auto []byte) {
 	variant := ' '
 	i := 0
 	for i < len(codigo) {
