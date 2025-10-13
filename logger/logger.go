@@ -22,7 +22,7 @@ type Logger struct {
 
 var defaultLogger *Logger // Logger por defecto
 
-// Crea un logger. Si file=="", le salida se producirá por consola.
+// Crea un logger. Si file=="", la salida se producirá por consola.
 // A file se le añade el sufijo .log automáticamente.
 func NewLogger(file string, debug bool) *Logger {
 	logger := Logger{}
@@ -71,9 +71,6 @@ func writeFile(logger *Logger, prefix, format string, v ...any) bool {
 	}
 	logger.mutex.Lock()
 	defer logger.mutex.Unlock()
-	if logger.writer == nil {
-		return false
-	}
 	ahora := time.Now()
 	hoy := ahora.Format("20060102")
 	if logger.date != hoy {
