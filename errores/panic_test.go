@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/horus-es/go-util/v2/errores"
+	"github.com/horus-es/go-util/v3/errores"
 	"github.com/stretchr/testify/assert"
 )
 

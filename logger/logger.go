@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/horus-es/go-util/v2/errores"
+	"github.com/horus-es/go-util/v3/errores"
 	"github.com/pkg/errors"
 )
 

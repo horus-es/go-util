@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/horus-es/go-util/v2/barcode"
+	"github.com/horus-es/go-util/v3/barcode"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/horus-es/go-util/v2/errores"
+	"github.com/horus-es/go-util/v3/errores"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 

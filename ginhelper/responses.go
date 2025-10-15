@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	"github.com/horus-es/go-util/v2/logger"
+	"github.com/horus-es/go-util/v3/logger"
 )
 
 var ghLog *logger.Logger

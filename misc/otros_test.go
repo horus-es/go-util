@@ -3,7 +3,7 @@ package misc_test
 import (
 	"fmt"
 
-	"github.com/horus-es/go-util/v2/misc"
+	"github.com/horus-es/go-util/v3/misc"
 )
 
 func ExampleTitle() {

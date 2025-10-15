@@ -32,8 +32,8 @@ import (
 	"time"
 
 	"github.com/beevik/etree"
-	"github.com/horus-es/go-util/v2/errores"
-	"github.com/horus-es/go-util/v2/formato"
+	"github.com/horus-es/go-util/v3/errores"
+	"github.com/horus-es/go-util/v3/formato"
 	"github.com/pkg/errors"
 	"github.com/vanng822/go-premailer/premailer"
 	"gopkg.in/gomail.v2"

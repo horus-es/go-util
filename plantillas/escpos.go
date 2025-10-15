@@ -73,9 +73,9 @@ import (
 	"time"
 
 	"github.com/beevik/etree"
-	"github.com/horus-es/go-util/v2/barcode"
-	"github.com/horus-es/go-util/v2/errores"
-	"github.com/horus-es/go-util/v2/formato"
+	"github.com/horus-es/go-util/v3/barcode"
+	"github.com/horus-es/go-util/v3/errores"
+	"github.com/horus-es/go-util/v3/formato"
 	go_qr "github.com/piglig/go-qr"
 	"golang.org/x/text/encoding/charmap"
 	"golang.org/x/text/transform"

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/horus-es/go-util/v2/logger"
+	"github.com/horus-es/go-util/v3/logger"
 )
 
 func ExampleLogger() {

@@ -3,7 +3,7 @@ package barcode_test
 import (
 	"fmt"
 
-	"github.com/horus-es/go-util/v2/barcode"
+	"github.com/horus-es/go-util/v3/barcode"
 )
 
 func ExampleGetBarcodeBARS() {

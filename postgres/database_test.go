@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/horus-es/go-util/v2/errores"
-	"github.com/horus-es/go-util/v2/formato"
-	"github.com/horus-es/go-util/v2/logger"
-	"github.com/horus-es/go-util/v2/postgres"
+	"github.com/horus-es/go-util/v3/errores"
+	"github.com/horus-es/go-util/v3/formato"
+	"github.com/horus-es/go-util/v3/logger"
+	"github.com/horus-es/go-util/v3/postgres"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
 )

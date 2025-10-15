@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/horus-es/go-util/v2/misc"
+	"github.com/horus-es/go-util/v3/misc"
 	"github.com/stretchr/testify/assert"
 )
 

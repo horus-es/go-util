@@ -5,9 +5,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/horus-es/go-util/v2/errores"
-	"github.com/horus-es/go-util/v2/formato"
-	"github.com/horus-es/go-util/v2/plantillas"
+	"github.com/horus-es/go-util/v3/errores"
+	"github.com/horus-es/go-util/v3/formato"
+	"github.com/horus-es/go-util/v3/plantillas"
 	"github.com/stretchr/testify/assert"
 )
 

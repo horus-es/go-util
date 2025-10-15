@@ -10,10 +10,10 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/horus-es/go-util/v2/formato"
-	"github.com/horus-es/go-util/v2/ginhelper"
-	"github.com/horus-es/go-util/v2/logger"
-	"github.com/horus-es/go-util/v2/postgres"
+	"github.com/horus-es/go-util/v3/formato"
+	"github.com/horus-es/go-util/v3/ginhelper"
+	"github.com/horus-es/go-util/v3/logger"
+	"github.com/horus-es/go-util/v3/postgres"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
