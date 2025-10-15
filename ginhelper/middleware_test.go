@@ -18,8 +18,10 @@ import (
 )
 
 func Example() {
-	ghLog := logger.NewLogger("", true)
-	ginhelper.InitGinHelper(ghLog)
+	// Logger
+	logger.InitLogger("", true)
+	//log := logger.NewLogger("testlog", true)
+	//ginhelper.InitGinHelper(log)
 	// Modo producción
 	gin.SetMode(gin.ReleaseMode)
 	// Crea el router
@@ -41,8 +43,8 @@ func Example() {
 		c.String(200, "pong")
 	})
 	router.POST("/json", func(c *gin.Context) {
-		ghLog.Warnf(c, "Advertencia")
-		ghLog.Errorf(c, "Error")
+		logger.Warnf(c, "Advertencia")
+		logger.Errorf(c, "Error")
 		c.String(201, `{"response":"Sorry, the market was closed ..."}`)
 	})
 	router.POST("/multipart", func(c *gin.Context) {
@@ -67,6 +69,8 @@ func Example() {
 	w = httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
+	logger.CloseLogger()
+
 	// Output:
 	// INFO: GET /ping
 	// INFO: HTTP 200 OK - 0ms
@@ -90,15 +94,7 @@ func TestGin(t *testing.T) {
 
 	log := logger.NewLogger("testlog", true)
 	ginhelper.InitGinHelper(log)
-
-	postgres.InitPool(`
-	    host=devel.horus.es
-		port=43210
-		user=SPARK2
-		password=lahh4jaequ2I
-		dbname=SPARK2
-		sslmode=disable
-		application_name=_TEST_`, log)
+	postgres.InitPool(`host=devel.horus.es port=43210 user=SPARK2 password=lahh4jaequ2I dbname=SPARK2 sslmode=disable application_name=_TEST_`, log)
 
 	// Modo producción
 	gin.SetMode(gin.ReleaseMode)
@@ -136,5 +132,5 @@ func TestGin(t *testing.T) {
 		}()
 	}
 	wg.Wait()
-
+	log.CloseLogger()
 }

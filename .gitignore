@@ -1,4 +1,4 @@
-logger/*.log
 plantillas/factura.*
 plantillas/recibo.*
 plantillas/*_out.*
+**/*.log
