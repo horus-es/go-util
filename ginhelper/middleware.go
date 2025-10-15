@@ -23,38 +23,6 @@ func MiddlewareNotImplemented() gin.HandlerFunc {
 	}
 }
 
-// Middleware de registro de actividad en modo produccion
-func productionLogger(c *gin.Context) {
-	t := time.Now()
-	c.Next()
-	latency := time.Since(t).Milliseconds()
-	statusCode := c.Writer.Status()
-	statusText := http.StatusText(statusCode)
-	method := c.Request.Method
-	path := c.Request.URL.String()
-	path, _ = url.PathUnescape(path)
-	path = strings.ReplaceAll(path, " ", "+")
-	const fmt = "%d %s - %s %s - %dms"
-	const max = 1000
-	if statusCode >= 200 && statusCode <= 299 {
-		if latency < max {
-			// Todo OK
-			ghLog.Infof(fmt, statusCode, statusText, method, path, latency)
-		} else {
-			// Respuesta lenta
-			ghLog.Warnf(fmt, statusCode, statusText, method, path, latency)
-		}
-		return
-	}
-	if statusCode >= 300 && statusCode <= 499 {
-		// Error de solicitud o redirección
-		ghLog.Warnf(fmt, statusCode, statusText, method, path, latency)
-	} else {
-		// Error de servidor
-		ghLog.Errorf(fmt, statusCode, statusText, method, path, latency)
-	}
-}
-
 // Middleware de registro de actividad en modo depuración
 
 type bodyLogWriter struct {
@@ -67,72 +35,80 @@ func (w bodyLogWriter) Write(b []byte) (int, error) {
 	return w.ResponseWriter.Write(b)
 }
 
-func debugLogger(c *gin.Context) {
-	// Registramos metodo y ruta
-	method := c.Request.Method
-	path := c.Request.URL.String()
-	path, _ = url.PathUnescape(path)
-	path = strings.ReplaceAll(path, " ", "+")
-	ghLog.Infof("%s %s", method, path)
-	if c.Request.ContentLength > 0 {
-		// Duplicamos reader
-		buffer, _ := io.ReadAll(c.Request.Body)
-		c.Request.Body = io.NopCloser(bytes.NewBuffer(buffer))
-		// Registramos solicitud
-		ct, _, _ := strings.Cut(c.Request.Header.Get("Content-Type"), ";")
-		isTxt := ct == "application/json" || ct == "application/xml" || strings.HasPrefix(ct, "text/")
-		if isTxt {
-			ghLog.Infof(string(buffer))
-		} else {
-			if len(ct) > 0 {
-				ghLog.Infof("Content-Type: %s", ct)
+// Middleware logger
+func MiddlewareLogger() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		method := c.Request.Method
+		path := c.Request.URL.String()
+		path, _ = url.PathUnescape(path)
+		path = strings.ReplaceAll(path, " ", "+")
+		ghLog.Infof(c, "%s %s", method, path)
+		if c.Request.ContentLength > 0 {
+			// Duplicamos reader
+			buffer, _ := io.ReadAll(c.Request.Body)
+			c.Request.Body = io.NopCloser(bytes.NewBuffer(buffer))
+			// Registramos solicitud
+			ctype, _, _ := strings.Cut(c.Request.Header.Get("Content-Type"), ";")
+			isTxt := ctype == "application/json" || ctype == "application/xml" || strings.HasPrefix(ctype, "text/")
+			if isTxt {
+				ghLog.Infof(c, string(buffer))
+			} else {
+				if len(ctype) > 0 {
+					ghLog.Infof(c, "Content-Type: %s", ctype)
+				}
+				ghLog.Infof(c, "Content-Length: %d", c.Request.ContentLength)
 			}
-			ghLog.Infof("Content-Length: %d", c.Request.ContentLength)
 		}
-	}
-	// Duplicamos writer
-	blw := &bodyLogWriter{body: new(bytes.Buffer), ResponseWriter: c.Writer}
-	c.Writer = blw
-	// Siguiente en cadena
-	t := time.Now()
-	c.Next()
-	latency := time.Since(t).Milliseconds()
-	// Registramos status
-	statusCode := c.Writer.Status()
-	statusText := http.StatusText(statusCode)
-	ghLog.Infof("HTTP %d %s - %dms", statusCode, statusText, latency)
-	// Registramos respuesta
-	ct, _, _ := strings.Cut(c.Writer.Header().Get("Content-Type"), ";")
-	isTxt := ct == "application/json" || ct == "application/xml" || strings.HasPrefix(ct, "text/")
-	if isTxt {
-		ghLog.Infof(blw.body.String())
-	} else {
-		if len(ct) > 0 {
-			ghLog.Infof("Content-Type: %s", ct)
+		// Duplicamos writer
+		blw := &bodyLogWriter{body: new(bytes.Buffer), ResponseWriter: c.Writer}
+		c.Writer = blw
+		// Siguiente en cadena
+		t := time.Now()
+		c.Next()
+		latency := time.Since(t).Milliseconds()
+		// Registramos status
+		statusCode := c.Writer.Status()
+		statusText := http.StatusText(statusCode)
+		const max = 1000
+		if (statusCode >= 200 && statusCode <= 299) || (statusCode >= 400 && statusCode <= 499) {
+			if latency <= max {
+				// Todo OK
+				ghLog.Infof(c, "HTTP %d %s - %dms", statusCode, statusText, latency)
+			} else {
+				// Respuesta lenta
+				ghLog.Warnf(c, "HTTP %d %s - %dms (!!)", statusCode, statusText, latency)
+			}
+		} else {
+			if latency <= max {
+				ghLog.Errorf(c, "HTTP %d %s - %dms", statusCode, statusText, latency)
+			} else {
+				ghLog.Errorf(c, "HTTP %d %s - %dms (!)", statusCode, statusText, latency)
+			}
 		}
-		ghLog.Infof("Content-Length: %d", blw.body.Len())
-	}
-	ghLog.Infof("==================================================")
-}
-
-// Devuelve el logger de depuración o de producción
-func MiddlewareLogger(debug bool) gin.HandlerFunc {
-	if debug {
-		return debugLogger
-	} else {
-		return productionLogger
+		// Registramos respuesta
+		ctype, _, _ := strings.Cut(c.Writer.Header().Get("Content-Type"), ";")
+		isTxt := ctype == "application/json" || ctype == "application/xml" || strings.HasPrefix(ctype, "text/")
+		if isTxt {
+			ghLog.Infof(c, blw.body.String())
+		} else {
+			if len(ctype) > 0 {
+				ghLog.Infof(c, "Content-Type: %s", ctype)
+			}
+			ghLog.Infof(c, "Content-Length: %d", blw.body.Len())
+		}
+		ghLog.Flush(c)
 	}
 }
 
 // Middleware de gestión de transacciones
 func MiddlewareTransaction() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		postgres.StartTX()
-		defer postgres.RollbackTX()
+		postgres.StartTX(c)
+		defer postgres.RollbackTX(c)
 		c.Next()
 		statusCode := c.Writer.Status()
 		if statusCode >= 200 && statusCode <= 299 {
-			postgres.CommitTX()
+			postgres.CommitTX(c)
 		}
 	}
 }
@@ -156,7 +132,7 @@ func recuperaDiferido(c *gin.Context) {
 	e, ok := causa.(error)
 	if ok && isNetworkError(e) {
 		// Si hay error de red, no podemos responder nada ...
-		ghLog.Errorf("Error de red: %v", causa)
+		ghLog.Errorf(c, "Error de red: %v", causa)
 	} else {
 		// TODO: ¿añadir 404 para claves no halladas?
 		// ¿Es debido a una violación de restricción SQL o custom?
@@ -169,13 +145,13 @@ func recuperaDiferido(c *gin.Context) {
 		case postgres.INTEGRITY_CONSTRAINT_VIOLATION:
 			// Si es una violación de restriccion SQL, se supone que la culpa es del cliente
 			// TODO: ¿Cambiar mensaje según tipo de violación?
-			c.PureJSON(http.StatusBadRequest, BadRequestResponse("Valor duplicado", causa))
+			c.PureJSON(http.StatusBadRequest, BadRequestResponse(c, "Valor duplicado", causa))
 		case postgres.PL_PGSQL_RAISE_EXCEPTION:
 			// Si es una excepcion levantada en un procedimiento, se supone que la culpa es del cliente
-			c.PureJSON(http.StatusBadRequest, BadRequestResponse(msg, causa))
+			c.PureJSON(http.StatusBadRequest, BadRequestResponse(c, msg, causa))
 		default:
 			// Otros errores seguramente sean de programación o de sistema
-			ghLog.Errorf("Error interno: %v", causa)
+			ghLog.Errorf(c, "Error interno: %v", causa)
 			c.PureJSON(http.StatusInternalServerError, gin.H{"error": "Error interno"})
 		}
 	}

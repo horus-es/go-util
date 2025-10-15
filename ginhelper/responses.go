@@ -4,6 +4,7 @@ package ginhelper
 import (
 	"fmt"
 
+	"github.com/gin-gonic/gin"
 	"github.com/horus-es/go-util/v2/logger"
 )
 
@@ -16,11 +17,11 @@ func InitGinHelper(logger *logger.Logger) {
 
 // Genera una respuesta json/REST a una solicitud incorrecta.
 // Incluye un mensaje de error para el usuario y opcionalmente la causa del error para depuración.
-func BadRequestResponse(msg string, causa any) map[string]any {
+func BadRequestResponse(c *gin.Context, msg string, causa any) map[string]any {
 	if causa == nil {
-		ghLog.Warnf("%s", msg)
+		ghLog.Warnf(c, "%s", msg)
 		return map[string]any{"error": msg}
 	}
-	ghLog.Warnf("%s: %v", msg, causa)
+	ghLog.Warnf(c, "%s: %v", msg, causa)
 	return map[string]any{"error": msg, "causa": fmt.Sprint(causa)}
 }

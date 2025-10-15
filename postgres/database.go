@@ -14,6 +14,7 @@ import (
 
 	"github.com/georgysavva/scany/v2/dbscan"
 	"github.com/georgysavva/scany/v2/pgxscan"
+	"github.com/gin-gonic/gin"
 	"github.com/horus-es/go-util/v2/errores"
 	"github.com/horus-es/go-util/v2/formato"
 	"github.com/horus-es/go-util/v2/logger"
@@ -42,12 +43,12 @@ func InitPool(connectString string, logger *logger.Logger) {
 	n := dbPool.Stat().MaxConns()
 	chanTxs = make(chan bool, n-1) // Es necesario dejar una conexión libre (¿¿bug pgx??)
 	if !inTest {
-		dbLog.Infof("InitPool: pool_max_conns=%d", n)
+		dbLog.Infof(nil, "InitPool: pool_max_conns=%d", n)
 	}
 }
 
 // Comienza una transacción
-func StartTX() {
+func StartTX(c *gin.Context) {
 	ts := time.Now()
 	chanTxs <- true
 	tx, err := dbPool.BeginTx(dbCtx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead})
@@ -57,14 +58,14 @@ func StartTX() {
 	_, loaded := dbTxs.LoadOrStore(misc.GetGID(), tx)
 	errores.PanicIfTrue(loaded, "StartTX: hilo duplicado")
 	if inTest {
-		dbLog.Infof("StartTX")
+		dbLog.Infof(c, "StartTX")
 	} else {
-		dbLog.Infof("StartTX: %dms", time.Since(ts).Milliseconds())
+		dbLog.Infof(c, "StartTX: %dms", time.Since(ts).Milliseconds())
 	}
 }
 
 // Finaliza una transacción
-func CommitTX() {
+func CommitTX(c *gin.Context) {
 	ts := time.Now()
 	tx, ok := dbTxs.LoadAndDelete(misc.GetGID())
 	if !ok {
@@ -74,14 +75,14 @@ func CommitTX() {
 	errores.PanicIfError(err, "CommitTX")
 	<-chanTxs
 	if inTest {
-		dbLog.Infof("CommitTX")
+		dbLog.Infof(c, "CommitTX")
 	} else {
-		dbLog.Infof("CommitTX: %dms", time.Since(ts).Milliseconds())
+		dbLog.Infof(c, "CommitTX: %dms", time.Since(ts).Milliseconds())
 	}
 }
 
 // Aborta una transacción
-func RollbackTX() {
+func RollbackTX(c *gin.Context) {
 	ts := time.Now()
 	tx, ok := dbTxs.LoadAndDelete(misc.GetGID())
 	if !ok {
@@ -91,16 +92,16 @@ func RollbackTX() {
 	errores.PanicIfError(err, "RollbackTX")
 	<-chanTxs
 	if inTest {
-		dbLog.Warnf("RollbackTX")
+		dbLog.Warnf(c, "RollbackTX")
 	} else {
-		dbLog.Warnf("RollbackTX: %dms", time.Since(ts).Milliseconds())
+		dbLog.Warnf(c, "RollbackTX: %dms", time.Since(ts).Milliseconds())
 	}
 }
 
 // Función de utilidad para consultas que devuelven exactamente una fila.
 // dst puede ser la direccion de una struct o de una variable simple.
 // Panic si la query devuelve mas de una fila o no devuelve ninguna fila.
-func GetOneRow(dst any, query string, params ...any) {
+func GetOneRow(c *gin.Context, dst any, query string, params ...any) {
 	limpio := reemplaza(query, params...)
 	if strings.HasPrefix(strings.ToLower(limpio), "select * from ") {
 		query = replaceAsterisk(query, dst)
@@ -117,13 +118,13 @@ func GetOneRow(dst any, query string, params ...any) {
 	defer rows.Close()
 	err = pgxscan.ScanOne(dst, rows)
 	errores.PanicIfError(err, "GetOneRow: %s", limpio)
-	dbLog.Infof(limpio)
+	dbLog.Infof(c, limpio)
 }
 
 // Función de utilidad para consultas que solo pueden devolver una (resultado true)
 // o ninguna filas (resultado false).
 // Panic si la query devuelve mas de una fila.
-func GetOneOrZeroRows(dst any, query string, params ...any) bool {
+func GetOneOrZeroRows(c *gin.Context, dst any, query string, params ...any) bool {
 	limpio := reemplaza(query, params...)
 	if strings.HasPrefix(strings.ToLower(limpio), "select * from ") {
 		query = replaceAsterisk(query, dst)
@@ -140,17 +141,17 @@ func GetOneOrZeroRows(dst any, query string, params ...any) bool {
 	defer rows.Close()
 	err = pgxscan.ScanOne(dst, rows)
 	if pgxscan.NotFound(err) {
-		dbLog.Infof(limpio)
+		dbLog.Infof(c, limpio)
 		return false
 	}
 	errores.PanicIfError(err, "GetOneOrZeroRows: %s", limpio)
-	dbLog.Infof(limpio)
+	dbLog.Infof(c, limpio)
 	return true
 }
 
 // Función de utilidad para consultas que pueden devolver varias filas.
 // Panic si la query no contiene un "order by".
-func GetOrderedRows(dst any, query string, params ...any) {
+func GetOrderedRows(c *gin.Context, dst any, query string, params ...any) {
 	limpio := reemplaza(query, params...)
 	isOrdered := strings.Contains(strings.ToLower(limpio), " order by ")
 	errores.PanicIfTrue(!isOrdered, "GetOrderedRows: Debe incluir la cláusula 'order by'")
@@ -159,7 +160,7 @@ func GetOrderedRows(dst any, query string, params ...any) {
 	}
 	err := pgxscan.Select(dbCtx, dbPool, dst, query, params...)
 	errores.PanicIfError(err, "GetOrderedRows: %s", limpio)
-	dbLog.Infof(limpio)
+	dbLog.Infof(c, limpio)
 }
 
 // Función auxiliar de insert y update, que parsea especial en un mapa, puede ser:
@@ -223,14 +224,14 @@ func getArrayEspecial(especiales []string, campo string) []string {
 //
 // Por ejemplo si especial es "-inicio","final=now()","parking=null" se excluye inicio, final=hora actual y parking=nulo.
 // Devuelve el id de la fila insertada.
-func InsertRow(src any, especiales ...string) string {
+func InsertRow(c *gin.Context, src any, especiales ...string) string {
 	mapaEspecial, excludeAll := getMapaEspecial(especiales)
 	valor := reflect.ValueOf(src)
 	tipo := valor.Type()
 	campos := reflect.VisibleFields(tipo)
 	tabla := strings.TrimPrefix(strings.ToLower(tipo.Name()), "t_")
 	query := "insert into " + tabla
-	var c int // número de campos
+	var n int // número de campos
 	var p int // número de parámetros
 	for _, campo := range campos {
 		fieldName := dbscan.SnakeCaseMapper(campo.Name)
@@ -238,21 +239,21 @@ func InsertRow(src any, especiales ...string) string {
 		if fieldName == "id" || especial == "-" || (excludeAll && !ok) {
 			continue
 		}
-		if c == 0 {
+		if n == 0 {
 			query += " ("
 		} else {
 			query += ","
 		}
 		query += fieldName
-		c++
+		n++
 		if especial == "" {
 			p++
 		}
 	}
-	errores.PanicIfTrue(c == 0, "InsertRow: No hay campos que insertar")
+	errores.PanicIfTrue(n == 0, "InsertRow: No hay campos que insertar")
 	query += ") values"
 	params := make([]any, p)
-	c = 0
+	n = 0
 	p = 0
 	for _, campo := range campos {
 		fieldName := dbscan.SnakeCaseMapper(campo.Name)
@@ -260,12 +261,12 @@ func InsertRow(src any, especiales ...string) string {
 		if fieldName == "id" || especial == "-" || (excludeAll && !ok) {
 			continue
 		}
-		if c == 0 {
+		if n == 0 {
 			query += " ("
 		} else {
 			query += ","
 		}
-		c++
+		n++
 		if especial == "" {
 			params[p] = valor.FieldByName(campo.Name).Interface()
 			p++
@@ -287,7 +288,7 @@ func InsertRow(src any, especiales ...string) string {
 	var result string
 	err := row.Scan(&result)
 	errores.PanicIfError(err, "InsertRow: %s", limpio)
-	dbLog.Infof(limpio)
+	dbLog.Infof(c, limpio)
 	return result
 }
 
@@ -300,14 +301,14 @@ func InsertRow(src any, especiales ...string) string {
 //
 // Por ejemplo si especial es "-inicio","final=now()","parking=null" se excluye inicio, final=hora actual, parking=nulo y la tabla a actualizar es otra
 // Panic si la fila no existe
-func UpdateRow(src any, especiales ...string) {
+func UpdateRow(c *gin.Context, src any, especiales ...string) {
 	mapaEspecial, excludeAll := getMapaEspecial(especiales)
 	valor := reflect.ValueOf(src)
 	tipo := valor.Type()
 	campos := reflect.VisibleFields(tipo)
 	tabla := strings.TrimPrefix(strings.ToLower(tipo.Name()), "t_")
 	query := "update " + tabla + " set "
-	var c int // número de campos
+	var n int // número de campos
 	var p int // número de parámetros
 	for _, campo := range campos {
 		fieldName := dbscan.SnakeCaseMapper(campo.Name)
@@ -315,10 +316,10 @@ func UpdateRow(src any, especiales ...string) {
 		if fieldName == "id" || especial == "-" || (excludeAll && !ok) {
 			continue
 		}
-		if c > 0 {
+		if n > 0 {
 			query += ","
 		}
-		c++
+		n++
 		switch especial {
 		case "":
 			p++
@@ -334,12 +335,12 @@ func UpdateRow(src any, especiales ...string) {
 			query += fieldName + "=" + especial
 		}
 	}
-	errores.PanicIfTrue(c == 0, "UpdateRow: No hay campos que actualizar")
+	errores.PanicIfTrue(n == 0, "UpdateRow: No hay campos que actualizar")
 	p++
 	query += " where id=$" + strconv.Itoa(p)
 	params := make([]any, p)
 	var id any
-	c = 0
+	n = 0
 	p = 0
 	for _, campo := range campos {
 		fieldName := dbscan.SnakeCaseMapper(campo.Name)
@@ -371,12 +372,12 @@ func UpdateRow(src any, especiales ...string) {
 	errores.PanicIfError(err, "UpdateRow: %s", limpio)
 	errores.PanicIfTrue(tag.RowsAffected() == 0, "UpdateRow: Ninguna fila actualizada: %s", limpio)
 	errores.PanicIfTrue(tag.RowsAffected() >= 2, "UpdateRow: %d filas actualizadas: %s", tag.RowsAffected(), limpio)
-	dbLog.Infof(limpio)
+	dbLog.Infof(c, limpio)
 }
 
 // Elimina una fila en una tabla que tenga una pk (id uuid).
 // Panic si la fila no existe
-func DeleteRow(id string, table string) {
+func DeleteRow(c *gin.Context, id string, table string) {
 	query := "delete from " + table + " where id=$1"
 	limpio := reemplaza(query, id)
 	if inTest {
@@ -394,7 +395,7 @@ func DeleteRow(id string, table string) {
 	errores.PanicIfError(err, "DeleteRow: %s", limpio)
 	errores.PanicIfTrue(tag.RowsAffected() == 0, "DeleteRow: Ninguna fila eliminada: %s", limpio)
 	errores.PanicIfTrue(tag.RowsAffected() >= 2, "DeleteRow: %d filas eliminadas: %s", tag.RowsAffected(), limpio)
-	dbLog.Infof(limpio)
+	dbLog.Infof(c, limpio)
 }
 
 // auxiliar reemplaza()

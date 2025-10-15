@@ -12,11 +12,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/horus-es/go-util/v2/formato"
 	"github.com/horus-es/go-util/v2/ginhelper"
+	"github.com/horus-es/go-util/v2/logger"
 	"github.com/horus-es/go-util/v2/postgres"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func Example() {
+	ghLog := logger.NewLogger("", true)
+	ginhelper.InitGinHelper(ghLog)
 	// Modo producción
 	gin.SetMode(gin.ReleaseMode)
 	// Crea el router
@@ -31,13 +34,15 @@ func Example() {
 	corsCfg.AddAllowHeaders("Authorization")
 	router.Use(cors.New(corsCfg))
 	// Middleware no implementado y debugLogger
-	router.Use(ginhelper.MiddlewareNotImplemented(), ginhelper.MiddlewareLogger(true))
+	router.Use(ginhelper.MiddlewareNotImplemented(), ginhelper.MiddlewareLogger())
 
 	// Rutas
 	router.GET("/ping", func(c *gin.Context) {
 		c.String(200, "pong")
 	})
 	router.POST("/json", func(c *gin.Context) {
+		ghLog.Warnf(c, "Advertencia")
+		ghLog.Errorf(c, "Error")
 		c.String(201, `{"response":"Sorry, the market was closed ..."}`)
 	})
 	router.POST("/multipart", func(c *gin.Context) {
@@ -66,22 +71,25 @@ func Example() {
 	// INFO: GET /ping
 	// INFO: HTTP 200 OK - 0ms
 	// INFO: pong
-	// INFO: ==================================================
+	// ==================================================
 	// INFO: POST /json
 	// INFO: {"request":"Buy cheese and bread for breakfast."}
+	// WARN: Advertencia
 	// INFO: HTTP 201 Created - 0ms
 	// INFO: {"response":"Sorry, the market was closed ..."}
-	// INFO: ==================================================
+	// ==================================================
 	// INFO: POST /multipart
 	// INFO: Content-Type: multipart/form-data
 	// INFO: Content-Length: 538
 	// INFO: HTTP 201 Created - 0ms
 	// INFO: {}
-	// INFO: ==================================================
-
+	// ==================================================
 }
 
 func TestGin(t *testing.T) {
+
+	log := logger.NewLogger("testlog", true)
+	ginhelper.InitGinHelper(log)
 
 	postgres.InitPool(`
 	    host=devel.horus.es
@@ -90,14 +98,14 @@ func TestGin(t *testing.T) {
 		password=lahh4jaequ2I
 		dbname=SPARK2
 		sslmode=disable
-		application_name=_TEST_`, nil)
+		application_name=_TEST_`, log)
 
 	// Modo producción
 	gin.SetMode(gin.ReleaseMode)
 
 	// Crea el router
 	router := gin.New()
-	router.Use(ginhelper.MiddlewareLogger(true), ginhelper.MiddlewareTransaction())
+	router.Use(ginhelper.MiddlewareLogger(), ginhelper.MiddlewareTransaction())
 
 	// Rutas
 	router.GET("/gin_test", func(c *gin.Context) {
@@ -113,7 +121,7 @@ func TestGin(t *testing.T) {
 			Tarifas    []byte
 		}
 		var lista []item
-		postgres.GetOrderedRows(&lista, `SELECT p.id, p.nombre::text, o.fechas::text, p.tarifas, (SELECT MAX(p2.desde) FROM problemas p2 LEFT JOIN mensajes m ON m.codigo = p2.codigo WHERE p2.hasta IS NULL AND m.nivel = 'WARN' AND p2.parking = p.id) AS fh_avisos, (SELECT COUNT(*) FROM problemas p2 LEFT JOIN mensajes m ON m.codigo = p2.codigo WHERE p2.hasta IS NULL AND m.nivel = 'WARN' AND p2.parking = p.id) AS num_avisos, (SELECT MAX(p2.desde) FROM problemas p2 LEFT JOIN mensajes m ON m.codigo = p2.codigo WHERE p2.hasta IS NULL AND m.nivel = 'ERROR' AND p2.parking = p.id) AS fh_errores, (SELECT COUNT(*) FROM problemas p2 LEFT JOIN mensajes m ON m.codigo = p2.codigo WHERE p2.hasta IS NULL AND m.nivel = 'ERROR' AND p2.parking = p.id) AS num_errores FROM operadores o JOIN parkings p ON o.id = p.operador JOIN personal pe ON o.id = pe.operador JOIN sesiones s ON pe.id = s.empleado WHERE s.id = 'd6d8770d-5619-4a9d-9d10-95e508a35b71' ORDER BY 2`)
+		postgres.GetOrderedRows(c, &lista, `SELECT p.id, p.nombre::text, o.fechas::text, p.tarifas, (SELECT MAX(p2.desde) FROM problemas p2 LEFT JOIN mensajes m ON m.codigo = p2.codigo WHERE p2.hasta IS NULL AND m.nivel = 'WARN' AND p2.parking = p.id) AS fh_avisos, (SELECT COUNT(*) FROM problemas p2 LEFT JOIN mensajes m ON m.codigo = p2.codigo WHERE p2.hasta IS NULL AND m.nivel = 'WARN' AND p2.parking = p.id) AS num_avisos, (SELECT MAX(p2.desde) FROM problemas p2 LEFT JOIN mensajes m ON m.codigo = p2.codigo WHERE p2.hasta IS NULL AND m.nivel = 'ERROR' AND p2.parking = p.id) AS fh_errores, (SELECT COUNT(*) FROM problemas p2 LEFT JOIN mensajes m ON m.codigo = p2.codigo WHERE p2.hasta IS NULL AND m.nivel = 'ERROR' AND p2.parking = p.id) AS num_errores FROM operadores o JOIN parkings p ON o.id = p.operador JOIN personal pe ON o.id = pe.operador JOIN sesiones s ON pe.id = s.empleado WHERE s.id = 'd6d8770d-5619-4a9d-9d10-95e508a35b71' ORDER BY 2`)
 	})
 
 	// Solicitudes

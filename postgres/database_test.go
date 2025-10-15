@@ -46,8 +46,8 @@ func ExampleGetOneRow() {
 		Codigo string
 		Activo bool
 	}{}
-	postgres.GetOneRow(&u, "select codigo,activo from personal where id=$1", UUIDempleado)
-	logger.Infof("%v", u)
+	postgres.GetOneRow(nil, &u, "select codigo,activo from personal where id=$1", UUIDempleado)
+	logger.Infof(nil, "%v", u)
 	// Output:
 	// INFO: select codigo,activo from personal where id='fe90b961-0646-4f8e-a698-d3a153abf7d2'
 	// INFO: {pablo7 true}
@@ -55,21 +55,21 @@ func ExampleGetOneRow() {
 
 func TestGetOneRowSummary(t *testing.T) {
 	var n int
-	postgres.GetOneRow(&n, "select count(*) from personal where id=$1", UUIDempleado)
+	postgres.GetOneRow(nil, &n, "select count(*) from personal where id=$1", UUIDempleado)
 	assert.Equal(t, n, 1, "Carga sumaria incorrecta")
 }
 
 func TestGetOneRowPanicNone(t *testing.T) {
 	u := T_personal{}
 	defer func() { recover() }()
-	postgres.GetOneRow(&u, "select * from personal where id=$1", UUIDnoexiste)
+	postgres.GetOneRow(nil, &u, "select * from personal where id=$1", UUIDnoexiste)
 	t.Error("Sin pánico sin filas")
 }
 
 func TestGetOneRowPanicMany(t *testing.T) {
 	p := T_personal{}
 	defer func() { recover() }()
-	postgres.GetOneRow(&p, "select * from personal")
+	postgres.GetOneRow(nil, &p, "select * from personal")
 	t.Error("Sin pánico con varias filas")
 }
 
@@ -78,11 +78,11 @@ func ExampleGetOneOrZeroRows() {
 		Codigo string
 		Activo bool
 	}{}
-	if postgres.GetOneOrZeroRows(&u, "select codigo,activo from personal where id=$1", UUIDempleado) {
-		logger.Infof("Hallado usuario: %q\n", u.Codigo)
+	if postgres.GetOneOrZeroRows(nil, &u, "select codigo,activo from personal where id=$1", UUIDempleado) {
+		logger.Infof(nil, "Hallado usuario: %q\n", u.Codigo)
 	}
-	if !postgres.GetOneOrZeroRows(&u, "select codigo,activo from personal where id=$1", UUIDnoexiste) {
-		logger.Infof("Usuario no hallado.\n")
+	if !postgres.GetOneOrZeroRows(nil, &u, "select codigo,activo from personal where id=$1", UUIDnoexiste) {
+		logger.Infof(nil, "Usuario no hallado.\n")
 	}
 	// Output:
 	// INFO: select codigo,activo from personal where id='fe90b961-0646-4f8e-a698-d3a153abf7d2'
@@ -94,14 +94,14 @@ func ExampleGetOneOrZeroRows() {
 func TestGetOneOrZeroRowsPanicMany(t *testing.T) {
 	p := T_personal{}
 	defer func() { recover() }()
-	postgres.GetOneOrZeroRows(&p, "select * from personal")
+	postgres.GetOneOrZeroRows(nil, &p, "select * from personal")
 	t.Error("Sin pánico con varias filas")
 }
 
 func ExampleGetOrderedRows() {
 	us := []string{}
-	postgres.GetOrderedRows(&us, "select codigo from personal where operador=$1 and codigo>'dad' order by codigo limit 3", UUIDoperador)
-	logger.Infof("Primeros 3 usuarios hallados: %s\n", strings.Join(us, ", "))
+	postgres.GetOrderedRows(nil, &us, "select codigo from personal where operador=$1 and codigo>'dad' order by codigo limit 3", UUIDoperador)
+	logger.Infof(nil, "Primeros 3 usuarios hallados: %s\n", strings.Join(us, ", "))
 	// Output:
 	// INFO: select codigo from personal where operador='0cec7694-eb8d-4ab2-95bb-d5d733a3be94' and codigo>'dad' order by codigo limit 3
 	// INFO: Primeros 3 usuarios hallados: dadiz, emple, emple100E
@@ -118,14 +118,14 @@ func TestGetJoin(t *testing.T) {
 		Operador t_operador
 	}
 	var datos []t_datos
-	postgres.GetOrderedRows(&datos, "select * from personal,operadores operador where personal.operador=operador.id order by personal.id")
+	postgres.GetOrderedRows(nil, &datos, "select * from personal,operadores operador where personal.operador=operador.id order by personal.id")
 	assert.Greater(t, len(datos), 1, "Filas no cargadas")
 }
 
 func TestGetOrderedRowsPanic(t *testing.T) {
 	var ps []*T_personal
 	defer func() { recover() }()
-	postgres.GetOrderedRows(&ps, "select * from personal where operador=$1", UUIDoperador)
+	postgres.GetOrderedRows(nil, &ps, "select * from personal where operador=$1", UUIDoperador)
 	t.Error("Sin pánico sin 'order by'")
 }
 
@@ -135,17 +135,17 @@ func TestInsertUpdateDelete(t *testing.T) {
 	p1.Nombre = "InsertRow"
 	p1.Codigo = "TestInsertUpdateDelete " + time.Now().Format("01-02-2006 15:04:05")
 	p1.Hash.Valid = true
-	p1.ID = postgres.InsertRow(p1)
+	p1.ID = postgres.InsertRow(nil, p1)
 	p2 := T_personal{}
-	postgres.GetOneRow(&p2, "select * from personal where id=$1", p1.ID)
+	postgres.GetOneRow(nil, &p2, "select * from personal where id=$1", p1.ID)
 	assert.Equal(t, p1, p2, "Insert falló")
 	p1.Nombre = "UpdateRow"
 	p1.Activo = true
-	postgres.UpdateRow(p1)
-	postgres.GetOneRow(&p2, "select * from personal where id=$1", p1.ID)
+	postgres.UpdateRow(nil, p1)
+	postgres.GetOneRow(nil, &p2, "select * from personal where id=$1", p1.ID)
 	assert.Equal(t, p1, p2, "Update falló")
-	postgres.DeleteRow(p1.ID, "personal")
-	f := postgres.GetOneOrZeroRows(&p2, "select * from personal where id=$1", p1.ID)
+	postgres.DeleteRow(nil, p1.ID, "personal")
+	f := postgres.GetOneOrZeroRows(nil, &p2, "select * from personal where id=$1", p1.ID)
 	assert.False(t, f, "Delete falló")
 }
 
@@ -155,10 +155,10 @@ func ExampleInsertRow() {
 	u.Codigo = "TestInsert"
 	u.Nombre = "Usuario de prueba"
 	u.Activo = true
-	u.ID = postgres.InsertRow(u, "hash='zecreto2023'")
-	logger.Infof("Una fila insertada")
-	postgres.DeleteRow(u.ID, "personal")
-	logger.Infof("Una fila eliminada")
+	u.ID = postgres.InsertRow(nil, u, "hash='zecreto2023'")
+	logger.Infof(nil, "Una fila insertada")
+	postgres.DeleteRow(nil, u.ID, "personal")
+	logger.Infof(nil, "Una fila eliminada")
 	// Output:
 	// INFO: insert into personal (operador,codigo,nombre,hash,activo,administrador,tag) values ('0cec7694-eb8d-4ab2-95bb-d5d733a3be94','TestInsert','Usuario de prueba','zecreto2023',true,false,'') returning id
 	// INFO: Una fila insertada
@@ -172,10 +172,10 @@ func ExampleDeleteRow() {
 	u.Codigo = "TestDelete"
 	u.Nombre = "Usuario de prueba"
 	u.Activo = true
-	u.ID = postgres.InsertRow(u, "hash='zecreto2023'")
-	logger.Infof("Una fila insertada")
-	postgres.DeleteRow(u.ID, "personal")
-	logger.Infof("Una fila eliminada")
+	u.ID = postgres.InsertRow(nil, u, "hash='zecreto2023'")
+	logger.Infof(nil, "Una fila insertada")
+	postgres.DeleteRow(nil, u.ID, "personal")
+	logger.Infof(nil, "Una fila eliminada")
 	// Output:
 	// INFO: insert into personal (operador,codigo,nombre,hash,activo,administrador,tag) values ('0cec7694-eb8d-4ab2-95bb-d5d733a3be94','TestDelete','Usuario de prueba','zecreto2023',true,false,'') returning id
 	// INFO: Una fila insertada
@@ -185,11 +185,11 @@ func ExampleDeleteRow() {
 
 func ExampleUpdateRow() {
 	u := T_personal{}
-	postgres.GetOneRow(&u, "select * from personal where id=$1", UUIDempleado)
-	logger.Infof("Usuario cargado")
+	postgres.GetOneRow(nil, &u, "select * from personal where id=$1", UUIDempleado)
+	logger.Infof(nil, "Usuario cargado")
 	u.Codigo = "pablo7"
-	postgres.UpdateRow(u, "codigo")
-	logger.Infof("Nombre actualizado")
+	postgres.UpdateRow(nil, u, "codigo")
+	logger.Infof(nil, "Nombre actualizado")
 	// Output:
 	// INFO: select * from personal where id='fe90b961-0646-4f8e-a698-d3a153abf7d2'
 	// INFO: Usuario cargado
@@ -203,27 +203,27 @@ func TestInsertUpdateDeleteEspecial(t *testing.T) {
 	p1.Nombre = "postgres.InsertRow"
 	p1.Codigo = "TestInsertUpdateDeleteExclude " + time.Now().Format("01-02-2006 15:04:05")
 	p1.Activo = true
-	p1.ID = postgres.InsertRow(p1, "-hash", "activo=false")
+	p1.ID = postgres.InsertRow(nil, p1, "-hash", "activo=false")
 	p1.Activo = false
 	p1.Hash.Valid = true
 	p2 := T_personal{}
-	postgres.GetOneRow(&p2, "select * from personal where id=$1", p1.ID)
+	postgres.GetOneRow(nil, &p2, "select * from personal where id=$1", p1.ID)
 	assert.Equal(t, p1, p2, "Insert falló")
 	p1.Nombre = "postgres.UpdateRow"
-	postgres.UpdateRow(p1, "-codigo", "-hash", "-operador", "activo=true")
-	postgres.GetOneRow(&p2, "select * from personal where id=$1", p1.ID)
+	postgres.UpdateRow(nil, p1, "-codigo", "-hash", "-operador", "activo=true")
+	postgres.GetOneRow(nil, &p2, "select * from personal where id=$1", p1.ID)
 	p1.Activo = true
 	assert.Equal(t, p1, p2, "Update falló")
-	postgres.UpdateRow(p1, "activo=false")
-	postgres.GetOneRow(&p2, "select * from personal where id=$1", p1.ID)
+	postgres.UpdateRow(nil, p1, "activo=false")
+	postgres.GetOneRow(nil, &p2, "select * from personal where id=$1", p1.ID)
 	p1.Activo = false
 	assert.Equal(t, p1, p2, "Update falló")
 	p1.Activo = true
-	postgres.UpdateRow(p1, "activo")
-	postgres.GetOneRow(&p2, "select * from personal where id=$1", p1.ID)
+	postgres.UpdateRow(nil, p1, "activo")
+	postgres.GetOneRow(nil, &p2, "select * from personal where id=$1", p1.ID)
 	assert.Equal(t, p1, p2, "Update falló")
-	postgres.DeleteRow(p1.ID, "personal")
-	f := postgres.GetOneOrZeroRows(&p2, "select * from personal where id=$1", p1.ID)
+	postgres.DeleteRow(nil, p1.ID, "personal")
+	f := postgres.GetOneOrZeroRows(nil, &p2, "select * from personal where id=$1", p1.ID)
 	assert.False(t, f, "Delete falló")
 }
 
@@ -234,23 +234,23 @@ func TestUpdateNonExistant(t *testing.T) {
 	p1.Nombre = "postgres.UpdateRow"
 	p1.Codigo = "TestUpdateNoExistant " + time.Now().Format("01-02-2006 15:04:05")
 	defer func() { recover() }()
-	postgres.UpdateRow(p1)
+	postgres.UpdateRow(nil, p1)
 	t.Error("Sin pánico no existe")
 }
 
 func TestDeleteNonExistant(t *testing.T) {
 	defer func() { recover() }()
-	postgres.DeleteRow(UUIDnoexiste, "personal")
+	postgres.DeleteRow(nil, UUIDnoexiste, "personal")
 	t.Error("Sin pánico no existe")
 }
 
 func ExampleStartTX() {
-	postgres.StartTX()
-	defer postgres.RollbackTX()
+	postgres.StartTX(nil)
+	defer postgres.RollbackTX(nil)
 	// Inicio del bloque protegido con transacción
-	logger.Infof("... órdenes SQL contenidas en la transacción ...")
+	logger.Infof(nil, "... órdenes SQL contenidas en la transacción ...")
 	// Fin del bloque protegido con transacción
-	postgres.CommitTX()
+	postgres.CommitTX(nil)
 	// Output:
 	// INFO: StartTX
 	// INFO: ... órdenes SQL contenidas en la transacción ...
@@ -258,12 +258,12 @@ func ExampleStartTX() {
 }
 
 func ExampleCommitTX() {
-	postgres.StartTX()
-	defer postgres.RollbackTX()
+	postgres.StartTX(nil)
+	defer postgres.RollbackTX(nil)
 	// Inicio del bloque protegido con transacción
-	logger.Infof("... órdenes SQL contenidas en la transacción ...")
+	logger.Infof(nil, "... órdenes SQL contenidas en la transacción ...")
 	// Fin del bloque protegido con transacción
-	postgres.CommitTX()
+	postgres.CommitTX(nil)
 	// Output:
 	// INFO: StartTX
 	// INFO: ... órdenes SQL contenidas en la transacción ...
@@ -272,14 +272,14 @@ func ExampleCommitTX() {
 
 func ExampleRollbackTX() {
 	defer func() { recover() }() // Capturamos panic
-	postgres.StartTX()
-	defer postgres.RollbackTX()
+	postgres.StartTX(nil)
+	defer postgres.RollbackTX(nil)
 	// Inicio del bloque protegido con transacción
-	logger.Infof("... órdenes SQL contenidas en la transacción ...")
+	logger.Infof(nil, "... órdenes SQL contenidas en la transacción ...")
 	errores.PanicIfTrue(true, "... algo produce un panic ...")
-	logger.Infof("... mas órdenes SQL ...")
+	logger.Infof(nil, "... mas órdenes SQL ...")
 	// Fin del bloque protegido con transacción
-	postgres.CommitTX()
+	postgres.CommitTX(nil)
 	// Output:
 	// INFO: StartTX
 	// INFO: ... órdenes SQL contenidas en la transacción ...
@@ -288,18 +288,18 @@ func ExampleRollbackTX() {
 
 func TestRollTX(t *testing.T) {
 	// Iniciamos transacción
-	postgres.StartTX()
+	postgres.StartTX(nil)
 	// Cargamos un usuario
 	u := T_personal{}
-	postgres.GetOneRow(&u, "select * from personal where id=$1", UUIDempleado)
+	postgres.GetOneRow(nil, &u, "select * from personal where id=$1", UUIDempleado)
 	códigoOriginal := u.Codigo
 	// Actualizamos la fila
 	u.Codigo = "Nombre " + formato.PrintFechaHora(time.Now(), formato.ISO)
-	postgres.UpdateRow(u, "codigo")
+	postgres.UpdateRow(nil, u, "codigo")
 	// Deshacemos transacción
-	postgres.RollbackTX()
+	postgres.RollbackTX(nil)
 	// Comprobamos si se ha modificado la fila
-	postgres.GetOneRow(&u, "select * from personal where id=$1", UUIDempleado)
+	postgres.GetOneRow(nil, &u, "select * from personal where id=$1", UUIDempleado)
 	assert.Equal(t, códigoOriginal, u.Codigo)
 }
 
