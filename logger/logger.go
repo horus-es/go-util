@@ -62,7 +62,9 @@ func NewLogger(filename string, debug bool) *Logger {
 	return &logger
 }
 
-// Inicializa el logger por defecto
+// Inicializa el logger por defecto. Si filename esta vacío, la salida se producirá por STDOUT y STDERR.
+// A filename se le añade el sufijo .log automáticamente.
+// Los ficheros se rotan diariamente con formato filename-XX.log, donde XX es el día del mes
 func InitLogger(filename string, debug bool) {
 	closeLogger(defaultLogger)
 	defaultLogger = NewLogger(filename, debug)

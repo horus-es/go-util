@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"syscall"
 	"time"
@@ -35,14 +36,20 @@ func (w bodyLogWriter) Write(b []byte) (int, error) {
 	return w.ResponseWriter.Write(b)
 }
 
-// Middleware logger
-func MiddlewareLogger() gin.HandlerFunc {
+// Middleware logger.
+// warnTime: milisegundos de respuesta por encima de los cuales la respuesta sale con WARN en vez de INFO
+// reSlow: expresion regular de las URLs lentas, para las cuales no se tiene en cuenta el timeout
+func MiddlewareLogger(warnTime int64, reSlow string) gin.HandlerFunc {
+	var reTime *regexp.Regexp
+	if reSlow != "" {
+		reTime = regexp.MustCompile(reSlow)
+	}
 	return func(c *gin.Context) {
-		method := c.Request.Method
 		path := c.Request.URL.String()
 		path, _ = url.PathUnescape(path)
 		path = strings.ReplaceAll(path, " ", "+")
-		ghLog.Infof(c, "%s %s", method, path)
+		path = c.Request.Method + " " + path
+		ghLog.Infof(c, path)
 		if c.Request.ContentLength > 0 {
 			// Duplicamos reader
 			buffer, _ := io.ReadAll(c.Request.Body)
@@ -69,21 +76,17 @@ func MiddlewareLogger() gin.HandlerFunc {
 		// Registramos status
 		statusCode := c.Writer.Status()
 		statusText := http.StatusText(statusCode)
-		const max = 1000
 		if (statusCode >= 200 && statusCode <= 299) || (statusCode >= 400 && statusCode <= 499) {
-			if latency <= max {
+			if latency > warnTime && (reTime == nil || !reTime.MatchString(path)) {
+				// Respuesta lenta
+				ghLog.Warnf(c, "HTTP %d %s - %dms", statusCode, statusText, latency)
+			} else {
 				// Todo OK
 				ghLog.Infof(c, "HTTP %d %s - %dms", statusCode, statusText, latency)
-			} else {
-				// Respuesta lenta
-				ghLog.Warnf(c, "HTTP %d %s - %dms (!!)", statusCode, statusText, latency)
 			}
 		} else {
-			if latency <= max {
-				ghLog.Errorf(c, "HTTP %d %s - %dms", statusCode, statusText, latency)
-			} else {
-				ghLog.Errorf(c, "HTTP %d %s - %dms (!)", statusCode, statusText, latency)
-			}
+			// Error
+			ghLog.Errorf(c, "HTTP %d %s - %dms", statusCode, statusText, latency)
 		}
 		// Registramos respuesta
 		ctype, _, _ := strings.Cut(c.Writer.Header().Get("Content-Type"), ";")

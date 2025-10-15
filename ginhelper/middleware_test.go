@@ -36,7 +36,7 @@ func Example() {
 	corsCfg.AddAllowHeaders("Authorization")
 	router.Use(cors.New(corsCfg))
 	// Middleware no implementado y debugLogger
-	router.Use(ginhelper.MiddlewareNotImplemented(), ginhelper.MiddlewareLogger())
+	router.Use(ginhelper.MiddlewareNotImplemented(), ginhelper.MiddlewareLogger(1000, ``))
 
 	// Rutas
 	router.GET("/ping", func(c *gin.Context) {
@@ -101,7 +101,7 @@ func TestGin(t *testing.T) {
 
 	// Crea el router
 	router := gin.New()
-	router.Use(ginhelper.MiddlewareLogger(), ginhelper.MiddlewareTransaction())
+	router.Use(ginhelper.MiddlewareLogger(100, `GET /gin_`), ginhelper.MiddlewareTransaction())
 
 	// Rutas
 	router.GET("/gin_test", func(c *gin.Context) {
