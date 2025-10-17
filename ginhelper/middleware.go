@@ -107,14 +107,15 @@ func MiddlewareLogger(warnTime int64, reSlow string) gin.HandlerFunc {
 
 // Auxiliar de MiddlewareLogger
 func recuperaLogger(c *gin.Context) {
-	causa := recover()
-	if causa == nil {
+	p := recover()
+	if p == nil {
 		// No panic
 		return
 	}
 	// Registramos el error y el stack
-	ghLog.Errorf(c, "panic: %v\n%s", causa, debug.Stack())
+	ghLog.Errorf(c, "panic: %v\n%s", p, debug.Stack())
 	ghLog.Flush(c)
+	panic(p)
 }
 
 // Middleware de gestión de transacciones
