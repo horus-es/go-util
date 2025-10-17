@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"runtime/debug"
 	"strings"
 	"syscall"
 	"time"
@@ -70,6 +71,7 @@ func MiddlewareLogger(warnTime int64, reSlow string) gin.HandlerFunc {
 		blw := &bodyLogWriter{body: new(bytes.Buffer), ResponseWriter: c.Writer}
 		c.Writer = blw
 		// Siguiente en cadena
+		defer recuperaLogger(c)
 		t := time.Now()
 		c.Next()
 		latency := time.Since(t).Milliseconds()
@@ -103,6 +105,18 @@ func MiddlewareLogger(warnTime int64, reSlow string) gin.HandlerFunc {
 	}
 }
 
+// Auxiliar de MiddlewareLogger
+func recuperaLogger(c *gin.Context) {
+	causa := recover()
+	if causa == nil {
+		// No panic
+		return
+	}
+	// Registramos el error y el stack
+	ghLog.Errorf(c, "panic: %v\n%s", causa, debug.Stack())
+	ghLog.Flush(c)
+}
+
 // Middleware de gestión de transacciones
 func MiddlewareTransaction() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -119,13 +133,13 @@ func MiddlewareTransaction() gin.HandlerFunc {
 // Middleware de recuperación de errores
 func MiddlewarePanic() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		defer recuperaDiferido(c)
+		defer recuperaPanic(c)
 		c.Next()
 	}
 }
 
 // Auxiliar de MiddlewarePanic
-func recuperaDiferido(c *gin.Context) {
+func recuperaPanic(c *gin.Context) {
 	causa := recover()
 	if causa == nil {
 		// No panic

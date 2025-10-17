@@ -2,9 +2,11 @@ package ginhelper_test
 
 import (
 	"bytes"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"regexp"
 	"sync"
 	"testing"
 
@@ -18,37 +20,40 @@ import (
 )
 
 func Example() {
-	// Logger
-	logger.InitLogger("", true)
-	//log := logger.NewLogger("testlog", true)
-	//ginhelper.InitGinHelper(log)
+	// Borramos el fichero de log para el ejemplo
+	const logfile = "testlog"
+	os.Remove(logfile + ".log")
+	// Creamos el logger en modo debug
+	logger.InitLogger(logfile, true)
 	// Modo producción
 	gin.SetMode(gin.ReleaseMode)
-	// Crea el router
+	// Creamos el router
 	router := gin.New()
 	// Evitamos los redirect si falta la barra final
 	router.RedirectTrailingSlash = false
-	// Middleware recuperación errores
+	// Middleware para recuperación errores
 	router.Use(ginhelper.MiddlewarePanic())
 	// Middleware CORS
 	corsCfg := cors.DefaultConfig()
 	corsCfg.AllowAllOrigins = true
 	corsCfg.AddAllowHeaders("Authorization")
 	router.Use(cors.New(corsCfg))
-	// Middleware no implementado y debugLogger
+	// Middlewares para no implementado y logger
 	router.Use(ginhelper.MiddlewareNotImplemented(), ginhelper.MiddlewareLogger(1000, ``))
-
 	// Rutas
 	router.GET("/ping", func(c *gin.Context) {
 		c.String(200, "pong")
 	})
 	router.POST("/json", func(c *gin.Context) {
-		logger.Warnf(c, "Advertencia")
-		logger.Errorf(c, "Error")
+		logger.Warnf(c, "Las advertencias siempre salen por STDOUT")
+		logger.Errorf(c, "Los errores siempre salen por STDERR")
 		c.String(201, `{"response":"Sorry, the market was closed ..."}`)
 	})
 	router.POST("/multipart", func(c *gin.Context) {
 		c.PureJSON(201, gin.H{})
+	})
+	router.GET("/panic", func(c *gin.Context) {
+		panic("panico inesperado")
 	})
 
 	// Solicitud Ping/Pong
@@ -69,16 +74,28 @@ func Example() {
 	w = httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
+	// Solicitud Panic
+	req, _ = http.NewRequest("GET", "/panic", nil)
+	w = httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
 	logger.CloseLogger()
 
+	// Imprime el fichero de log quitando las fechas y el stack trace
+	printLogFile(logfile)
+
+	// Nota: los warnings siempre salen por STDOUT y los errores seimpre salen por STDERR, ademas de quedar registrados en el fichero de log.
+
 	// Output:
+	// WARN: Las advertencias siempre salen por STDOUT
 	// INFO: GET /ping
 	// INFO: HTTP 200 OK - 0ms
 	// INFO: pong
 	// ==================================================
 	// INFO: POST /json
 	// INFO: {"request":"Buy cheese and bread for breakfast."}
-	// WARN: Advertencia
+	// WARN: Las advertencias siempre salen por STDOUT
+	// ERROR: Los errores siempre salen por STDERR
 	// INFO: HTTP 201 Created - 0ms
 	// INFO: {"response":"Sorry, the market was closed ..."}
 	// ==================================================
@@ -88,6 +105,23 @@ func Example() {
 	// INFO: HTTP 201 Created - 0ms
 	// INFO: {}
 	// ==================================================
+	// INFO: GET /panic
+	// ERROR: panic: panico inesperado
+	// goroutine 1 [running]:
+	// runtime/debug.Stack()
+	// ... stack trace ...
+}
+
+// Imprime el fichero de log quitando las fechas y el stack trace
+func printLogFile(logfile string) {
+	data, _ := os.ReadFile(logfile + ".log")
+	stackStart := []byte("runtime/debug.Stack()")
+	if idx := bytes.Index(data, stackStart); idx != -1 {
+		data = data[:idx+len(stackStart)]
+	}
+	data = regexp.MustCompile(`(?m)^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}\s*`).ReplaceAll(data, nil)
+	fmt.Println(string(data))
+	fmt.Println("... stack trace ...")
 }
 
 func TestGin(t *testing.T) {
