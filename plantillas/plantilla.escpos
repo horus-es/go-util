@@ -1,9 +1,9 @@
 {paper-width 80}{c}{img acme.png}
 {whc}C.C SEXTA AVENIDA
-{i}Saint Croix Holding Immobilier Socimi S.A.
+{l}Saint Croix Holding Immobilier Socimi S.A.
 {s}Glorieta Cuatro Caminos, 6 - 7 - 4º, 28020 , Madrid
-{swh}CIF:{{.Issuer.VatID}}
-{}
+{swh}CIF:{{.Issuer.VatID}}{}
+
 {{if .Recipient}}
 FACTURA Nro. {{.ID}}
 Cliente: {{.Recipient.VatID}}
@@ -31,19 +31,20 @@ Base imponible     : {{PRICE .Base}}
 I.V.A. (21%)       : {{PRICE .Vat}}
 Total              : {o}{{PRICE .Total}}{}
 
-Medio de pago: {i}{{.Transaction.Method}}{}
+Medio de pago: {{.Transaction.Method}}
 
-CUFE: {{.Additional.CUFE}}
+{wcx}CUFE:
+{h}{{.Additional.CUFE}}{}
 -------------------------------------
 
 
 
 {partial-cut}
-{wh}Códigos de barras:{}
-{bc-height 100}{bc-modulo 3}
+{wh}Códigos de barras{}
+{bc-height 80}{bc-modulo 3}
 
 {code128 12345AB}
-{code128a {{.ID}}}
+{bc-modulo 2}{code128a {{.ID}}}{bc-modulo 3}
 {bc-hri both}{code128b 123456}
 {code128c 123456}
 {bc-hri below}{itf 123456}
@@ -54,8 +55,8 @@ CUFE: {{.Additional.CUFE}}
 {bc-hri above}{code39 123456}
 {code93 123456}
 {codabar 123456}
-{qr-ecc L}{qr-modulo 3}{qr {{.Additional.CUFE}}}
+{qr-ecc L}{qr-modulo 6}{qr {{.Additional.CUFE}}}
 
 
 
-{partial-cut}
+{full-cut}

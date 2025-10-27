@@ -2,13 +2,12 @@
 /*
 En las plantillas escpos se sustituyen los siguientes comandos entre {} por las correspondientes secuencias de escape esc/pos:
 
-Estilos {whsbuioxlrc}, cada letra es opcional y significan:
+Estilos {whsbuoxlrc}, cada letra es opcional y significan:
   - w - doble ancho
   - h - doble alto
   - s - pequeño
   - b - negrita
   - u - subrayado
-  - i - itálica
   - o - blanco sobre negro
   - x - arriba-abajo
   - l - izquierda
@@ -188,7 +187,7 @@ const (
 func GenerateEscPos(escpos string, familia int) (bin []byte, width int, err error) {
 
 	// Convertimos a windows-1252
-	bin = win1252(escpos)
+	bin = win1252(escpos, familia)
 
 	// Quitamos espacios iniciales y finales
 	bin = bytes.TrimSpace(bin)
@@ -202,16 +201,17 @@ func GenerateEscPos(escpos string, familia int) (bin []byte, width int, err erro
 	// Procesamos códigos de control
 	bin, width = processEscPosControls(bin)
 
-	// Procesamos códigos de barras
-	bin = processEscPosBarcodes(bin)
-
 	switch familia {
 	case EPSON:
+		// Procesamos códigos de barras
+		bin = processEpsonBarcodes(bin)
 		// Procesamos códigos QR
 		bin = processEpsonQR(bin)
 		// Procesamos imágenes
 		bin = processEpsonImg(bin)
 	case SEIKO:
+		// Procesamos códigos de barras
+		bin = processSeikoBarcodes(bin)
 		// Procesamos códigos QR
 		bin = processSeikoQR(bin)
 		// Procesamos imágenes
@@ -221,7 +221,7 @@ func GenerateEscPos(escpos string, familia int) (bin []byte, width int, err erro
 	return
 }
 
-func win1252(escpos string) (bin []byte) {
+func win1252(escpos string, familia int) (bin []byte) {
 	bin = []byte(escpos)
 	var buf bytes.Buffer
 	writer := transform.NewWriter(&buf, charmap.Windows1252.NewEncoder())
@@ -230,7 +230,12 @@ func win1252(escpos string) (bin []byte) {
 		return
 	}
 	defer writer.Close()
-	bin = append([]byte{ESC, 't', 16}, buf.Bytes()...)
+	switch familia {
+	case EPSON:
+		bin = append([]byte{ESC, 't', 16}, buf.Bytes()...)
+	case SEIKO:
+		bin = append([]byte{ESC, 't', 5}, buf.Bytes()...)
+	}
 	return
 }
 
@@ -241,7 +246,6 @@ func processEscPosStyles(escpos []byte) []byte {
 		alignment    byte
 		isBold       bool
 		isUnderline  bool
-		isItalics    bool
 		isSmall      bool
 		isDoubleX    bool
 		isDoubleY    bool
@@ -271,8 +275,6 @@ func processEscPosStyles(escpos []byte) []byte {
 				nuevo.isBold = true
 			case 'u':
 				nuevo.isUnderline = true
-			case 'i':
-				nuevo.isItalics = true
 			case 'o':
 				nuevo.isReverse = true
 			case 'x':
@@ -318,16 +320,6 @@ func processEscPosStyles(escpos []byte) []byte {
 			}
 			result.WriteByte(octeto)
 		}
-		if estado.isItalics != nuevo.isItalics {
-			// ESC 4
-			result.WriteByte(ESC)
-			result.WriteByte('4')
-			if nuevo.isItalics {
-				result.WriteByte('1')
-			} else {
-				result.WriteByte('0')
-			}
-		}
 		if estado.isUpsideDown != nuevo.isUpsideDown {
 			// ESC {
 			result.WriteByte(ESC)
@@ -357,10 +349,10 @@ func processEscPosStyles(escpos []byte) []byte {
 // Procesa las secuencias de control esc/pos y extrae el ancho del papel
 func processEscPosControls(escpos []byte) ([]byte, int) {
 	var width int
-	result := reResetEscPos.ReplaceAll(escpos, []byte{ESC, '@'})         // ESC @
-	result = reFullCutEscPos.ReplaceAll(result, []byte{GS, 'V', '0'})    // GS V 0
-	result = rePartialCutEscPos.ReplaceAll(result, []byte{GS, 'V', '1'}) // GS V 1
-	result = reFormFeedEscPos.ReplaceAll(result, []byte{FF})             // FF
+	result := reResetEscPos.ReplaceAll(escpos, []byte{ESC, '@'})     // ESC @
+	result = reFullCutEscPos.ReplaceAll(result, []byte{ESC, 'i'})    // ESC i
+	result = rePartialCutEscPos.ReplaceAll(result, []byte{ESC, 'm'}) // ESC m
+	result = reFormFeedEscPos.ReplaceAll(result, []byte{FF})         // FF
 	result = rePaperWidthEscPos.ReplaceAllFunc(result, func(match []byte) []byte {
 		submatches := rePaperWidthEscPos.FindSubmatch(match)
 		w, _ := strconv.Atoi(string(submatches[1]))
@@ -373,8 +365,8 @@ func processEscPosControls(escpos []byte) ([]byte, int) {
 	return result, width
 }
 
-// Procesa los códigos de barras esc/pos
-func processEscPosBarcodes(escpos []byte) []byte {
+// Procesa los códigos de barras EPSON
+func processEpsonBarcodes(escpos []byte) []byte {
 	result := reBcHeightEscPos.ReplaceAllFunc(escpos, func(match []byte) []byte {
 		submatches := reBcHeightEscPos.FindSubmatch(match)
 		h := bytesToByte(submatches[1])
@@ -419,10 +411,9 @@ func processEscPosBarcodes(escpos []byte) []byte {
 		}
 		switch tipo {
 		case "code128":
-			//return append([]byte{GS, 'k', 79, l}, codigo...) // GS k 79 l codigo // Muchas impresoras no lo soportan
 			codigo = c128auto(codigo)
 			l = byte(len(codigo))
-			return append([]byte{GS, 'k', 73, l}, codigo...) // GS k 73 l codigo // ... por eso usamos este
+			return append([]byte{GS, 'k', 73, l}, codigo...) // GS k 73 l codigo
 		case "code128a":
 			if bytesInRange(codigo, [][]byte{{0, 95}}) {
 				return append([]byte{GS, 'k', 73, l + 2, '{', 'A'}, codigo...) // GS k 73 l { A codigo
@@ -474,6 +465,120 @@ func processEscPosBarcodes(escpos []byte) []byte {
 			}
 			if bytesInRange(codigo, [][]byte{{'0', '9'}, {'A', 'D'}, {'a', 'd'}}, '$', '+', '-', '.', '/', ':') {
 				return append([]byte{GS, 'k', 71, l}, codigo...) // GS k 71 l codigo
+			}
+		}
+		return match
+	})
+	return result
+}
+
+// Procesa los códigos de barras SEIKO
+func processSeikoBarcodes(escpos []byte) []byte {
+	result := reBcHeightEscPos.ReplaceAllFunc(escpos, func(match []byte) []byte {
+		submatches := reBcHeightEscPos.FindSubmatch(match)
+		h := bytesToByte(submatches[1])
+		if h > 0 {
+			return []byte{GS, 'h', h} // GS h altura
+		}
+		return match
+	})
+	result = reBcModuloEscPos.ReplaceAllFunc(result, func(match []byte) []byte {
+		submatches := reBcModuloEscPos.FindSubmatch(match)
+		m := bytesToByte(submatches[1])
+		if m >= 2 && m <= 4 {
+			return []byte{GS, 'w', m} // GS w modulo
+		}
+		return match
+	})
+	result = reBcHriEscPos.ReplaceAllFunc(result, func(match []byte) []byte {
+		submatches := reBcHriEscPos.FindSubmatch(match)
+		hri := string(submatches[1])
+		switch hri {
+		case "none":
+			return []byte{GS, 'H', '0'} // GS H 0
+		case "above":
+			return []byte{GS, 'H', '1'} // GS H 1
+		case "below":
+			return []byte{GS, 'H', '2'} // GS H 2
+		case "both":
+			return []byte{GS, 'H', '3'} // GS H 3
+		}
+		return match
+	})
+	result = reBarcodeEscPos.ReplaceAllFunc(result, func(match []byte) []byte {
+		submatches := reBarcodeEscPos.FindSubmatch(match)
+		tipo := string(submatches[1])
+		codigo := submatches[2]
+		var l byte
+		if len(codigo) < 30 { // Suficiente
+			l = byte(len(codigo))
+		}
+		if l == 0 {
+			return match
+		}
+		switch tipo {
+		case "code128":
+			codigo = c128auto(codigo)
+			b := append([]byte{GS, 'k', 7}, codigo...)
+			return append(b, 0) // GS k 7 ... 0
+		case "code128a":
+			if bytesInRange(codigo, [][]byte{{0, 95}}) {
+				b := append([]byte{GS, 'k', 7, '{', 'A'}, codigo...)
+				return append(b, 0) // GS k 7 { A ... 0
+			}
+		case "code128b":
+			if bytesInRange(codigo, [][]byte{{32, 122}}, 124, 126) {
+				b := append([]byte{GS, 'k', 7, '{', 'B'}, codigo...)
+				return append(b, 0) // GS k 7 { B ... 0
+			}
+		case "code128c":
+			if l%2 == 0 && bytesInRange(codigo, [][]byte{{'0', '9'}}) {
+				l = l / 2
+				pares := make([]byte, l)
+				for i := byte(0); i < l; i++ {
+					pares[i] = (codigo[i*2]-48)*10 + codigo[i*2+1] - 48
+				}
+				b := append([]byte{GS, 'k', 7, '{', 'C'}, pares...)
+				return append(b, 0) // GS k 7 { C ... 0
+			}
+		case "itf":
+			if l%2 == 0 && bytesInRange(codigo, [][]byte{{'0', '9'}}) {
+				b := append([]byte{GS, 'k', 5}, codigo...)
+				return append(b, 0) // GS k 5 ... 0
+			}
+		case "upc-a":
+			if (l == 11 || l == 12) && bytesInRange(codigo, [][]byte{{'0', '9'}}) {
+				b := append([]byte{GS, 'k', 0}, codigo...)
+				return append(b, 0) // GS k 0 ... 0
+			}
+		case "upc-e":
+			if (l == 7 || l == 11) && bytesInRange(codigo, [][]byte{{'0', '9'}}) && codigo[0] == '0' {
+				b := append([]byte{GS, 'k', 1}, codigo...)
+				return append(b, 0) // GS k 1 ... 0
+			}
+		case "ean-13":
+			if l == 12 && bytesInRange(codigo, [][]byte{{'0', '9'}}) {
+				b := append([]byte{GS, 'k', 2}, codigo...)
+				return append(b, 0) // GS k 2 ... 0
+			}
+		case "ean-8":
+			if l == 7 && bytesInRange(codigo, [][]byte{{'0', '9'}}) {
+				b := append([]byte{GS, 'k', 3}, codigo...)
+				return append(b, 0) // GS k 3 ... 0
+			}
+		case "code39":
+			if bytesInRange(codigo, [][]byte{{'0', '9'}, {'A', 'Z'}}, ' ', '$', '%', '*', '+', '-', '.', '/') {
+				b := append([]byte{GS, 'k', 4}, codigo...)
+				return append(b, 0) // GS k 4 ... 0
+			}
+		case "codabar":
+			if bytesInRange(codigo, [][]byte{{'0', '9'}}, '$', '+', '-', '.', '/', ':') {
+				b := append([]byte{GS, 'k', 6, 'a'}, codigo...)
+				return append(b, 'a', 0) // GS k 6 a ... a 0
+			}
+			if bytesInRange(codigo, [][]byte{{'0', '9'}, {'A', 'D'}, {'a', 'd'}}, '$', '+', '-', '.', '/', ':') {
+				b := append([]byte{GS, 'k', 6}, codigo...)
+				return append(b, 0) // GS k 6 ... 0
 			}
 		}
 		return match
@@ -571,26 +676,14 @@ func processEpsonImg(escpos []byte) []byte {
 		submatches := reImgEscPos.FindSubmatch(match)
 		raster, width, height, err := rasterize(string(submatches[1]))
 		if err == nil {
-			size := len(raster) + 10
 			var datos []byte
-			if size < 256*256 {
-				pL := byte(size)
-				pH := byte(size >> 8)
-				datos = []byte{GS, '(', 'L', pL, pH} // GS ( L ...
-			} else {
-				p1 := byte(size)
-				p2 := byte(size >> 8)
-				p3 := byte(size >> 16)
-				p4 := byte(size >> 24)
-				datos = []byte{GS, '8', 'L', p1, p2, p3, p4} // GS 8 L ...
-			}
-			xL := byte(width)
-			xH := byte(width >> 8)
+			ancho := (width + 7) >> 3
+			xL := byte(ancho)
+			xH := byte(ancho >> 8)
 			yL := byte(height)
 			yH := byte(height >> 8)
-			datos = append(datos, '0', 112, '0', 1, 1, '1', xL, xH, yL, yH) // 0 112 ...
-			datos = append(datos, raster...)                                // raster
-			datos = append(datos, GS, '(', 'L', 2, 0, '0', '2')             // GS ( L ... 0 2
+			datos = []byte{GS, 'v', '0', 0, xL, xH, yL, yH} // GS v 0 0 xL xH yL yH
+			datos = append(datos, raster...)                // raster
 			return datos
 		}
 		return match
@@ -604,7 +697,8 @@ func processSeikoImg(escpos []byte) []byte {
 		raster, width, height, err := rasterize(string(submatches[1]))
 		if err == nil {
 			var datos []byte
-			x := byte((width + 7) >> 3)
+			ancho := (width + 7) >> 3
+			x := byte(ancho)
 			yL := byte(height)
 			yH := byte(height >> 8)
 			datos = []byte{ESC, 'b', x, yL, yH} // ESC b n1 n2 n3
@@ -758,7 +852,6 @@ func addEscPosCSS(html io.Writer, width int) {
 	io.WriteString(html, "escpos { font-family: 'DejaVu Sans Mono', monospace; font-size: 12px; white-space: pre-wrap; display: inline-block; border: 1px solid black; padding: 1em; margin: 1em; word-break: break-all; vertical-align: top; width: "+strconv.Itoa(width)+"mm; }\n")
 	io.WriteString(html, "escpos .bold { font-weight: bold; }\n")
 	io.WriteString(html, "escpos .underline { text-decoration: underline; }\n")
-	io.WriteString(html, "escpos .italics { font-style: italic; }\n")
 	io.WriteString(html, "escpos .center { display:inline-block; width: 100%; text-align: center; }\n")
 	io.WriteString(html, "escpos .right { display:inline-block; width: 100%; text-align: right; }\n")
 	io.WriteString(html, "escpos .img-left { display:block; margin-right: auto; }\n")
@@ -780,7 +873,6 @@ func addEscPosHTML(html io.Writer, escpos []byte) {
 	alignment := "left"
 	isBold := false
 	isUnderline := false
-	isItalics := false
 	isSmall := false
 	isDoubleX := false
 	isDoubleY := false
@@ -827,9 +919,6 @@ func addEscPosHTML(html io.Writer, escpos []byte) {
 		}
 		if isUnderline {
 			class = append(class, "underline")
-		}
-		if isItalics {
-			class = append(class, "italics")
 		}
 		if isDoubleX && !isDoubleY {
 			class = append(class, "doubleX")
@@ -886,7 +975,6 @@ func addEscPosHTML(html io.Writer, escpos []byte) {
 					flushBuffer()
 					isBold = false
 					isUnderline = false
-					isItalics = false
 					isSmall = false
 					isReverse = false
 					isUpsideDown = false
@@ -919,10 +1007,6 @@ func addEscPosHTML(html io.Writer, escpos []byte) {
 					flushBuffer()
 					isUpsideDown = next%2 == 1
 					i += 2
-				case '4': // ESC 4 (itálico)
-					flushBuffer()
-					isItalics = next%2 == 1
-					i += 2
 				case 'E': // ESC E (negrita)
 					flushBuffer()
 					isBold = next%2 == 1
@@ -946,7 +1030,7 @@ func addEscPosHTML(html io.Writer, escpos []byte) {
 					}
 					col = 0
 					i += 2
-				case 'i', 'm': // ESC i/m (corte total/parcial)
+				case 'i', 'm': // ESC i (corte total) / ESC m (corte parcial)
 					flushBuffer()
 					if inLabel {
 						inLabel = false
@@ -957,7 +1041,7 @@ func addEscPosHTML(html io.Writer, escpos []byte) {
 					i += 4
 				case 't': // ESC t (página de código) 16=WIN1252
 					i += 2
-				case 'q': // ESC q S E V M n1 n2 ... (qr code seiko)
+				case 'q': // ESC q S E V M n1 n2 ... (QR SEIKO)
 					if i+8 < len(escpos) {
 						qrModulo := int(escpos[i+2])
 						qrECC := int(escpos[i+3])
@@ -970,7 +1054,7 @@ func addEscPosHTML(html io.Writer, escpos []byte) {
 							i += z
 						}
 					}
-				case 'b': // ESC b n1 n2 n3 ... ESC J 0 (QR raster image seiko)
+				case 'b': // ESC b n1 n2 n3 ... ESC J 0 (raster SEIKO)
 					if i+5 < len(escpos) {
 						w := int(escpos[i+2]) * 8
 						h := int(escpos[i+3]) + int(escpos[i+4])*256
@@ -997,40 +1081,22 @@ func addEscPosHTML(html io.Writer, escpos []byte) {
 					flushBuffer()
 					isReverse = next%2 == 1
 					i += 2
-				case 'V': // GS V (corte total/parcial)
-					flushBuffer()
-					if inLabel {
-						inLabel = false
-						io.WriteString(html, "</escpos>\n")
-					}
-					if next == 0 || next == 1 || next == '0' || next == '1' {
-						i += 2
-					} else {
-						i += 3
-					}
-				case '(':
-					// GS (L (bitmap <64k epson)
-					if next == 'L' && i+4 < len(escpos) {
-						z := int(escpos[i+3]) + int(escpos[i+4])*256
-						i += 4
-						if z > 10 && escpos[i+1] == '0' && escpos[i+2] == 112 {
-							// store raster image
-							w := int(escpos[i+7]) + int(escpos[i+8])*256
-							h := int(escpos[i+9]) + int(escpos[i+10])*256
-							img = decodeRastrerImage(&escpos, i+11, z, w, h)
-						}
-						if z > 10 && escpos[i+1] == '0' && escpos[i+2] == 113 {
-							// TODO: store column image
-							//img = decodeColumnImage(&escpos, i, z)
-						}
-						if z == 2 && escpos[i+1] == '0' && (escpos[i+2] == 2 || escpos[i+2] == '2') {
-							// print image
+				case 'v':
+					// GS v 0 0 xL xH yL yH (raster EPSON)
+					if next == '0' && i+8 < len(escpos) {
+						w := (int(escpos[i+4]) + int(escpos[i+5])*256) * 8
+						h := int(escpos[i+6]) + int(escpos[i+7])*256
+						z := w * h / 8
+						i += 8
+						if i+z < len(escpos) {
+							img = decodeRastrerImage(&escpos, i, z, w, h)
 							flushBuffer()
 							writeToHtml(encodeImage(img, alignment))
+							i += z
 						}
-						i += z
 					}
-					// GS (k (2d barcode epson)
+				case '(':
+					// GS (k (QR EPSON)
 					if next == 'k' && i+4 < len(escpos) {
 						z := int(escpos[i+3]) + int(escpos[i+4])*256
 						i += 4
@@ -1050,29 +1116,13 @@ func addEscPosHTML(html io.Writer, escpos []byte) {
 						}
 						i += z
 					}
-				case '8': // GS 8L (bitmap >64k epson)
-					if next == 'L' && i+6 < len(escpos) {
-						z := int(escpos[i+3]) + int(escpos[i+4])*256 + int(escpos[i+5])*65536 + int(escpos[i+6])*16777216
-						i += 6
-						if z > 10 && escpos[i+1] == '0' && escpos[i+2] == 112 {
-							// store raster image
-							w := int(escpos[i+7]) + int(escpos[i+8])*256
-							h := int(escpos[i+9]) + int(escpos[i+10])*256
-							img = decodeRastrerImage(&escpos, i+11, z, w, h)
-						}
-						if z > 10 && escpos[i+1] == '0' && escpos[i+2] == 113 {
-							// TODO: store column image
-							//img = decodeColumnImage(&escpos, i, z)
-						}
-						i += z
-					}
-				case 'h': // GS h (barcode height epson)
+				case 'h': // GS h (barcode height)
 					bcHeight = int(next)
 					i += 2
-				case 'w': // GS w (barcode width epson)
+				case 'w': // GS w (barcode width)
 					bcWidth = int(next)
 					i += 2
-				case 'H': // GS H (barcode show epson)
+				case 'H': // GS H (barcode show)
 					switch next {
 					case 0, '0':
 						bcHRI = barcode.None
@@ -1084,19 +1134,19 @@ func addEscPosHTML(html io.Writer, escpos []byte) {
 						bcHRI = barcode.Both
 					}
 					i += 2
-				case 'k': // GS k (print barcode epson)
+				case 'k': // GS k (print barcode)
 					z := 0
-					if next <= 6 {
-						i += 2
+					if next <= 7 {
+						i += 2 // SEIKO
 						for i < len(escpos) {
-							if escpos[i+z] == 0 {
+							if escpos[i+z+1] == 0 {
 								break
 							}
 							z++
 						}
 					}
 					if next >= 65 && next <= 79 {
-						i += 3
+						i += 3 // EPSON
 						z = int(escpos[i])
 					}
 					if z > 0 {
@@ -1163,6 +1213,7 @@ func decodeRastrerImage(escpos *[]byte, i, z, w, h int) *image.Gray {
 	return img
 }
 
+// Genera un código de barras
 func imprimeBC(codigo string, bcKind byte, bcWidth, bcHeight int, hri barcode.HRI) string {
 	var tipo barcode.KIND
 	switch bcKind {
@@ -1182,7 +1233,7 @@ func imprimeBC(codigo string, bcKind byte, bcWidth, bcHeight int, hri barcode.HR
 		tipo = barcode.CODABAR // CODABAR
 	case 72:
 		tipo = barcode.C93 // CODE93
-	case 73:
+	case 7, 73:
 		tipo = barcode.C128 // CODE128 codificado esc/pos
 	default:
 		tipo = barcode.C128X // Para el resto usamos CODE128 automático

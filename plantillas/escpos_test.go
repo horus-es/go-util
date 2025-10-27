@@ -97,7 +97,31 @@ func ExampleGenerateEscPos() {
 	// Output: Generado fichero recibo.prn
 }
 
-func TestGenerateEscPosPdf(t *testing.T) {
+func TestGenerateEpsonPosPdf(t *testing.T) {
+	// Cargar plantilla
+	plantilla, err := os.ReadFile("plantilla.escpos")
+	errores.PanicIfError(err)
+	// Fusionar plantilla con estructura factura
+	f, err := plantillas.MergeEscPosTemplate(
+		"escpos",
+		string(plantilla),
+		factura,
+		"/assets",
+		formato.DMA,
+		formato.EUR,
+	)
+	errores.PanicIfError(err)
+	// Convertir la plantilla fusionada a fichero esc/pos binario
+	prn, mm, err := plantillas.GenerateEscPos(f, plantillas.EPSON)
+	errores.PanicIfError(err)
+	err = plantillas.GenerateEscPosPdf(prn, "epson_test_out.pdf", mm)
+	assert.NoError(t, err)
+	t1 := readPdfText(t, "epson_test_expect.pdf")
+	t2 := readPdfText(t, "epson_test_out.pdf")
+	assert.Equal(t, t1, t2)
+}
+
+func TestGenerateSeikoPosPdf(t *testing.T) {
 	// Cargar plantilla
 	plantilla, err := os.ReadFile("plantilla.escpos")
 	errores.PanicIfError(err)
@@ -114,10 +138,10 @@ func TestGenerateEscPosPdf(t *testing.T) {
 	// Convertir la plantilla fusionada a fichero esc/pos binario
 	prn, mm, err := plantillas.GenerateEscPos(f, plantillas.SEIKO)
 	errores.PanicIfError(err)
-	err = plantillas.GenerateEscPosPdf(prn, "escpos_test_out.pdf", mm)
+	err = plantillas.GenerateEscPosPdf(prn, "seiko_test_out.pdf", mm)
 	assert.NoError(t, err)
-	t1 := readPdfText(t, "escpos_test_expect.pdf")
-	t2 := readPdfText(t, "escpos_test_out.pdf")
+	t1 := readPdfText(t, "seiko_test_expect.pdf")
+	t2 := readPdfText(t, "seiko_test_out.pdf")
 	assert.Equal(t, t1, t2)
 }
 
