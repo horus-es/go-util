@@ -50,6 +50,7 @@ Se soportan las funciones de formato DATETIME, DATE, TIME y PRICE.
 
 Ejemplo de plantillla en https://github.com/horus-es/go-util/blob/main/plantillas/plantilla.escpos
 */
+
 package plantillas
 
 import (
@@ -163,24 +164,28 @@ var rePaperWidthEscPos = regexp.MustCompile(`{paper-width ([0-9]+)}`)
 var reBcHeightEscPos = regexp.MustCompile(`{bc-height ([0-9]+)}`)
 var reBcModuloEscPos = regexp.MustCompile(`{bc-modulo ([0-9]+)}`)
 var reBcHriEscPos = regexp.MustCompile(`{bc-hri (none|above|below|both)}`)
+var reBarcodeEscPos = regexp.MustCompile(`{(code128|code128a|code128b|code128c|itf|upc-a|upc-e|ean-13|ean-8|code39|code93|codabar) ([^{}]+)}`)
 var reQrModuloEscPos = regexp.MustCompile(`{qr-modulo ([0-9]+)}`)
 var reQrEccEscPos = regexp.MustCompile(`{qr-ecc (L|M|Q|H)}`)
-var reBarcodeEscPos = regexp.MustCompile(`{(code128|code128a|code128b|code128c|itf|upc-a|upc-e|ean-13|ean-8|code39|code93|codabar) ([^{}]+)}`)
 var reQrEscPos = regexp.MustCompile(`{qr ([^{}]+)}`)
+var reQrAnyEscPos = regexp.MustCompile(`{qr-modulo ([0-9]+)}|{qr-ecc (L|M|Q|H)}|{qr ([^{}]+)}`)
 var reImgEscPos = regexp.MustCompile(`{img ([^{}]+)}`)
 
 const (
-	TAB = byte(0x09)
-	LF  = byte(0x0a)
-	CR  = byte(0x0d)
-	FF  = byte(0x0c)
-	ESC = byte(0x1b)
-	FS  = byte(0x1c)
-	GS  = byte(0x1d)
+	TAB   = byte(0x09)
+	LF    = byte(0x0a)
+	CR    = byte(0x0d)
+	FF    = byte(0x0c)
+	ESC   = byte(0x1b)
+	FS    = byte(0x1c)
+	GS    = byte(0x1d)
+	EPSON = 1 // Familia de impresoras normalmente usadas en POS: Epson, Bixolon, Posiflex, Star, Citizen
+	SEIKO = 2 // Familia de impresoras normalmente usadas en KIOSKOS: Nippon Primex, Seiko, Axiohm, Fujitsu
 )
 
 // Genera un []byte esc/pos (binario) a partir de una plantilla *.escpos.
-func GenerateEscPos(escpos string) (bin []byte, width int, err error) {
+// Parámetro familia: EPSON/SEIKO
+func GenerateEscPos(escpos string, familia int) (bin []byte, width int, err error) {
 
 	// Convertimos a windows-1252
 	bin = win1252(escpos)
@@ -200,11 +205,18 @@ func GenerateEscPos(escpos string) (bin []byte, width int, err error) {
 	// Procesamos códigos de barras
 	bin = processEscPosBarcodes(bin)
 
-	// Procesamos códigos QR
-	bin = processEscPosQR(bin)
-
-	// Procesamos imágenes
-	bin = processEscPosImg(bin)
+	switch familia {
+	case EPSON:
+		// Procesamos códigos QR
+		bin = processEpsonQR(bin)
+		// Procesamos imágenes
+		bin = processEpsonImg(bin)
+	case SEIKO:
+		// Procesamos códigos QR
+		bin = processSeikoQR(bin)
+		// Procesamos imágenes
+		bin = processSeikoImg(bin)
+	}
 
 	return
 }
@@ -469,8 +481,8 @@ func processEscPosBarcodes(escpos []byte) []byte {
 	return result
 }
 
-// Procesa los códigos QR esc/pos
-func processEscPosQR(escpos []byte) []byte {
+// Procesa los códigos QR EPSON
+func processEpsonQR(escpos []byte) []byte {
 	result := reQrModuloEscPos.ReplaceAllFunc(escpos, func(match []byte) []byte {
 		submatches := reQrModuloEscPos.FindSubmatch(match)
 		m := bytesToByte(submatches[1])
@@ -512,7 +524,49 @@ func processEscPosQR(escpos []byte) []byte {
 	return result
 }
 
-func processEscPosImg(escpos []byte) []byte {
+// Procesa los códigos QR SEIKO
+func processSeikoQR(escpos []byte) []byte {
+	var modulo byte = 4
+	var ecc byte = 0
+	result := reQrAnyEscPos.ReplaceAllFunc(escpos, func(match []byte) []byte {
+		submatches := reQrAnyEscPos.FindSubmatch(match)
+		if bytes.HasPrefix(match, []byte("{qr-modulo ")) {
+			m := bytesToByte(submatches[1])
+			if m < 1 || m > 20 {
+				return match
+			}
+			modulo = m
+		}
+		if bytes.HasPrefix(match, []byte("{qr-ecc ")) {
+			e := string(submatches[2])
+			switch e {
+			case "L":
+				ecc = 0
+			case "M":
+				ecc = 1
+			case "Q":
+				ecc = 2
+			case "H":
+				ecc = 3
+			default:
+				return match
+			}
+		}
+		if bytes.HasPrefix(match, []byte("{qr ")) {
+			codigo := submatches[3]
+			p := len(codigo)
+			var pL byte = byte(p % 256)
+			var pH byte = byte(p / 256)
+			datos := []byte{ESC, 'q', modulo, ecc, 0, 5, pL, pH} // ESC q S E V M n1 n2
+			datos = append(datos, codigo...)                     // codigo
+			return datos
+		}
+		return nil
+	})
+	return result
+}
+
+func processEpsonImg(escpos []byte) []byte {
 	result := reImgEscPos.ReplaceAllFunc(escpos, func(match []byte) []byte {
 		submatches := reImgEscPos.FindSubmatch(match)
 		raster, width, height, err := rasterize(string(submatches[1]))
@@ -537,6 +591,25 @@ func processEscPosImg(escpos []byte) []byte {
 			datos = append(datos, '0', 112, '0', 1, 1, '1', xL, xH, yL, yH) // 0 112 ...
 			datos = append(datos, raster...)                                // raster
 			datos = append(datos, GS, '(', 'L', 2, 0, '0', '2')             // GS ( L ... 0 2
+			return datos
+		}
+		return match
+	})
+	return result
+}
+
+func processSeikoImg(escpos []byte) []byte {
+	result := reImgEscPos.ReplaceAllFunc(escpos, func(match []byte) []byte {
+		submatches := reImgEscPos.FindSubmatch(match)
+		raster, width, height, err := rasterize(string(submatches[1]))
+		if err == nil {
+			var datos []byte
+			x := byte((width + 7) >> 3)
+			yL := byte(height)
+			yH := byte(height >> 8)
+			datos = []byte{ESC, 'b', x, yL, yH} // ESC b n1 n2 n3
+			datos = append(datos, raster...)    // raster
+			datos = append(datos, ESC, 'J', 0)  // ESC J 0
 			return datos
 		}
 		return match
@@ -590,7 +663,7 @@ func rasterize(file string) (data []byte, width, height int, err error) {
 	bounds := img.Bounds()
 	width = bounds.Dx()
 	height = bounds.Dy()
-	rowSize := (width + 7) / 8
+	rowSize := (width + 7) >> 3
 	m16 := uint32(1<<16 - 1)
 	// Crear un array de bytes para almacenar los datos rasterizados
 	data = make([]byte, rowSize*height)
@@ -884,6 +957,32 @@ func addEscPosHTML(html io.Writer, escpos []byte) {
 					i += 4
 				case 't': // ESC t (página de código) 16=WIN1252
 					i += 2
+				case 'q': // ESC q S E V M n1 n2 ... (qr code seiko)
+					if i+8 < len(escpos) {
+						qrModulo := int(escpos[i+2])
+						qrECC := int(escpos[i+3])
+						z := int(escpos[i+6]) + int(escpos[i+7])*256
+						i += 8
+						if i+z < len(escpos) {
+							qrData := escpos[i : i+z]
+							flushBuffer()
+							writeToHtml(imprimeQR(qrData, qrModulo, qrECC))
+							i += z
+						}
+					}
+				case 'b': // ESC b n1 n2 n3 ... ESC J 0 (QR raster image seiko)
+					if i+5 < len(escpos) {
+						w := int(escpos[i+2]) * 8
+						h := int(escpos[i+3]) + int(escpos[i+4])*256
+						z := w * h / 8
+						i += 5
+						if i+z+3 < len(escpos) && escpos[i+z] == ESC && escpos[i+z+1] == 'J' {
+							img = decodeRastrerImage(&escpos, i, z, w, h)
+							flushBuffer()
+							writeToHtml(encodeImage(img, alignment))
+							i += z + 3
+						}
+					}
 				}
 			}
 
@@ -910,13 +1009,15 @@ func addEscPosHTML(html io.Writer, escpos []byte) {
 						i += 3
 					}
 				case '(':
-					// GS (L (bitmap <64k)
+					// GS (L (bitmap <64k epson)
 					if next == 'L' && i+4 < len(escpos) {
 						z := int(escpos[i+3]) + int(escpos[i+4])*256
 						i += 4
 						if z > 10 && escpos[i+1] == '0' && escpos[i+2] == 112 {
 							// store raster image
-							img = decodeRastrerImage(&escpos, i, z)
+							w := int(escpos[i+7]) + int(escpos[i+8])*256
+							h := int(escpos[i+9]) + int(escpos[i+10])*256
+							img = decodeRastrerImage(&escpos, i+11, z, w, h)
 						}
 						if z > 10 && escpos[i+1] == '0' && escpos[i+2] == 113 {
 							// TODO: store column image
@@ -929,7 +1030,7 @@ func addEscPosHTML(html io.Writer, escpos []byte) {
 						}
 						i += z
 					}
-					// GS (k (2d barcode)
+					// GS (k (2d barcode epson)
 					if next == 'k' && i+4 < len(escpos) {
 						z := int(escpos[i+3]) + int(escpos[i+4])*256
 						i += 4
@@ -949,13 +1050,15 @@ func addEscPosHTML(html io.Writer, escpos []byte) {
 						}
 						i += z
 					}
-				case '8': // GS 8L (bitmap >64k)
+				case '8': // GS 8L (bitmap >64k epson)
 					if next == 'L' && i+6 < len(escpos) {
 						z := int(escpos[i+3]) + int(escpos[i+4])*256 + int(escpos[i+5])*65536 + int(escpos[i+6])*16777216
 						i += 6
 						if z > 10 && escpos[i+1] == '0' && escpos[i+2] == 112 {
 							// store raster image
-							img = decodeRastrerImage(&escpos, i, z)
+							w := int(escpos[i+7]) + int(escpos[i+8])*256
+							h := int(escpos[i+9]) + int(escpos[i+10])*256
+							img = decodeRastrerImage(&escpos, i+11, z, w, h)
 						}
 						if z > 10 && escpos[i+1] == '0' && escpos[i+2] == 113 {
 							// TODO: store column image
@@ -963,13 +1066,13 @@ func addEscPosHTML(html io.Writer, escpos []byte) {
 						}
 						i += z
 					}
-				case 'h': // GS h (barcode height)
+				case 'h': // GS h (barcode height epson)
 					bcHeight = int(next)
 					i += 2
-				case 'w': // GS w (barcode width)
+				case 'w': // GS w (barcode width epson)
 					bcWidth = int(next)
 					i += 2
-				case 'H': // GS H (barcode show)
+				case 'H': // GS H (barcode show epson)
 					switch next {
 					case 0, '0':
 						bcHRI = barcode.None
@@ -981,7 +1084,7 @@ func addEscPosHTML(html io.Writer, escpos []byte) {
 						bcHRI = barcode.Both
 					}
 					i += 2
-				case 'k': // GS k (print barcode)
+				case 'k': // GS k (print barcode epson)
 					z := 0
 					if next <= 6 {
 						i += 2
@@ -1042,17 +1145,15 @@ func encodeImage(img *image.Gray, class string) string {
 }
 
 // Decodifica una imagen raster
-func decodeRastrerImage(escpos *[]byte, i, z int) *image.Gray {
-	w := int((*escpos)[i+7]) + int((*escpos)[i+8])*256
-	h := int((*escpos)[i+9]) + int((*escpos)[i+10])*256
+func decodeRastrerImage(escpos *[]byte, i, z, w, h int) *image.Gray {
 	img := image.NewGray(image.Rect(0, 0, w-1, h-1))
 	if w%8 != 0 {
 		// Ajustar ancho a múltiplo de 8
 		w = w + 8 - w%8
 	}
-	for p := 11; p < z; p++ {
-		x := (p - 11) * 8 % w
-		y := (p - 11) * 8 / w
+	for p := 0; p < z; p++ {
+		x := p * 8 % w
+		y := p * 8 / w
 		for b := 0; b < 8; b++ {
 			if ((*escpos)[i+p] & (128 >> b)) == 0 {
 				img.SetGray(x+b, y, color.Gray{255})
@@ -1091,7 +1192,10 @@ func imprimeBC(codigo string, bcKind byte, bcWidth, bcHeight int, hri barcode.HR
 }
 
 func imprimeQR(qrData []byte, qrModulo, qrECC int) string {
-	qr, err := go_qr.EncodeBinary(qrData, go_qr.Ecc(qrECC-48))
+	if qrECC >= 48 {
+		qrECC -= 48
+	}
+	qr, err := go_qr.EncodeBinary(qrData, go_qr.Ecc(qrECC))
 	if err != nil {
 		return ""
 	}

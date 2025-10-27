@@ -84,8 +84,6 @@ func Example() {
 	// Imprime el fichero de log quitando las fechas y el stack trace
 	printLogFile(logfile)
 
-	// Nota: los warnings siempre salen por STDOUT y los errores seimpre salen por STDERR, ademas de quedar registrados en el fichero de log.
-
 	// Output:
 	// WARN: Las advertencias siempre salen por STDOUT
 	// INFO: GET /ping
