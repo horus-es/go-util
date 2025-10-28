@@ -1137,7 +1137,7 @@ func addEscPosHTML(html io.Writer, escpos []byte) {
 				case 'k': // GS k (print barcode)
 					z := 0
 					if next <= 7 {
-						i += 2 // SEIKO
+						i += 2
 						for i < len(escpos) {
 							if escpos[i+z+1] == 0 {
 								break
@@ -1146,7 +1146,7 @@ func addEscPosHTML(html io.Writer, escpos []byte) {
 						}
 					}
 					if next >= 65 && next <= 79 {
-						i += 3 // EPSON
+						i += 3
 						z = int(escpos[i])
 					}
 					if z > 0 {

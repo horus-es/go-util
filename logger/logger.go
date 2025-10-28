@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
@@ -170,6 +171,10 @@ func flush(c *gin.Context, logger *Logger) {
 		// No estamos en modo depuración y no hay ningún WARN o ERROR
 		logBuf.buf.Reset()
 		return
+	}
+	if logBuf.buf.Len() == 0 { // temporal para ver poque nos salen trazas vacía
+		fmt.Fprintln(&logBuf.buf, "Nada que registrar!")
+		logBuf.buf.Write(debug.Stack())
 	}
 	fmt.Fprintln(&logBuf.buf, kSEP)
 	rotateLog(logger, ahora)
