@@ -207,6 +207,14 @@ func procesaURL(tag *etree.Element, base *url.URL, attribute string) error {
 	if ref == nil {
 		return nil
 	}
+	if strings.HasPrefix(ref.Value, "https://") || strings.HasPrefix(ref.Value, "http://") {
+		// No cambiamos las referencias externas
+		return nil
+	}
+	if strings.HasPrefix(ref.Value, "{{") && strings.HasSuffix(ref.Value, "}}") {
+		// No cambiamos las variables
+		return nil
+	}
 	dest := *base
 	dest.Path = path.Join(dest.Path, ref.Value)
 	ref.Value = dest.String()
