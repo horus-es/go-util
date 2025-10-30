@@ -288,7 +288,7 @@ func InsertRow(c *gin.Context, src any, especiales ...string) string {
 	var result string
 	err := row.Scan(&result)
 	errores.PanicIfError(err, "InsertRow: %s", limpio)
-	dbLog.Infof(c, limpio)
+	dbLog.Infof(c, limpio+" -- id: "+result)
 	return result
 }
 

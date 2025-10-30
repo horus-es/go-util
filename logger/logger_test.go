@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/horus-es/go-util/v3/logger"
 )
 
@@ -63,4 +64,18 @@ func TestRotacion(t *testing.T) {
 	log.Warnf(nil, "Prueba 2 de logger: %s", "warn")
 	log.Errorf(nil, "Prueba 2 de logger: %s", "error")
 	log.CloseLogger()
+}
+
+func TestContext(t *testing.T) {
+	log := logger.NewLogger("testlog", true)
+	c := &gin.Context{}
+	log.Infof(c, "Prueba 1 de logger: %s", "info")
+	log.Warnf(c, "Prueba 1 de logger: %s", "warn")
+	log.Errorf(c, "Prueba 1 de logger: %s", "error")
+	log.Flush(c)
+}
+
+func TestEmpty(t *testing.T) {
+	log := logger.NewLogger("testlog", true)
+	log.Flush(&gin.Context{})
 }
