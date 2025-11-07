@@ -19,7 +19,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-// NOTA: pot motivos misteriosos, este test pasa con 'run test' o con 'debug test' pero falla con 'go test ./... -count=1' (go1.25.3: parece que tiene que ver con la captura de stdout/stderr)
+// NOTA: pot motivos misteriosos, este test pasa con 'run test' o con 'debug test' pero falla con 'run package tests' o con 'go test ./... -count=1' (go1.25.3: parece que tiene que ver con la captura de stdout/stderr)
 func Example() {
 	// Borramos el fichero de log para el ejemplo
 	const logfile = "_TESTLOG_"
