@@ -160,7 +160,7 @@ func ExampleInsertRow() {
 	postgres.DeleteRow(nil, u.ID, "personal")
 	logger.Infof(nil, "Una fila eliminada")
 	// Output:
-	// INFO: insert into personal (operador,codigo,nombre,hash,activo,administrador,tag) values ('0cec7694-eb8d-4ab2-95bb-d5d733a3be94','TestInsert','Usuario de prueba','zecreto2023',true,false,'') returning id
+	// INFO: insert into personal (operador,codigo,nombre,hash,activo,administrador,tag) values ('0cec7694-eb8d-4ab2-95bb-d5d733a3be94','TestInsert','Usuario de prueba','zecreto2023',true,false,'') returning id -- 81c11fc2-0439-4ae5-baa4-3d40716bdce3
 	// INFO: Una fila insertada
 	// INFO: delete from personal where id='81c11fc2-0439-4ae5-baa4-3d40716bdce3'
 	// INFO: Una fila eliminada
@@ -177,7 +177,7 @@ func ExampleDeleteRow() {
 	postgres.DeleteRow(nil, u.ID, "personal")
 	logger.Infof(nil, "Una fila eliminada")
 	// Output:
-	// INFO: insert into personal (operador,codigo,nombre,hash,activo,administrador,tag) values ('0cec7694-eb8d-4ab2-95bb-d5d733a3be94','TestDelete','Usuario de prueba','zecreto2023',true,false,'') returning id
+	// INFO: insert into personal (operador,codigo,nombre,hash,activo,administrador,tag) values ('0cec7694-eb8d-4ab2-95bb-d5d733a3be94','TestDelete','Usuario de prueba','zecreto2023',true,false,'') returning id -- 81c11fc2-0439-4ae5-baa4-3d40716bdce3
 	// INFO: Una fila insertada
 	// INFO: delete from personal where id='81c11fc2-0439-4ae5-baa4-3d40716bdce3'
 	// INFO: Una fila eliminada

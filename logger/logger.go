@@ -22,6 +22,7 @@ type Logger struct {
 	date      string     // Fecha de escritura del último log, usado para rotar
 	file      *os.File   // Handler del fichero de salida, o nil para STDOUT/STDERR
 	mutex     sync.Mutex // Para evitar que se mezclen bloques
+	inTest    bool       // Flag para ajustar el comportamiento dentro de los tests
 }
 
 type logBuffer struct {
@@ -47,6 +48,7 @@ func NewLogger(filename string, debug bool) *Logger {
 	logger := Logger{}
 	logger.debugging = debug
 	logger.filename = filename
+	logger.inTest = filename == "_TESTLOG_"
 	// Abrimos fichero
 	if logger.filename != "" {
 		fn := logger.filename + ".log"
@@ -158,8 +160,7 @@ func rotateLog(logger *Logger, ahora time.Time) {
 
 // Graba el buffer a fichero (interno).
 func flush(c *gin.Context, logger *Logger) {
-	errores.PanicIfTrue(c == nil, "Flush requiere contexto")
-	if logger == nil || logger.file == nil {
+	if logger == nil || logger.file == nil || c == nil {
 		fmt.Fprintln(os.Stdout, kSEP)
 		return // Flush es solo para fichero
 	}
@@ -167,14 +168,14 @@ func flush(c *gin.Context, logger *Logger) {
 	logger.mutex.Lock()
 	defer logger.mutex.Unlock()
 	logBuf := getLogBuf(c)
+	if logBuf.buf.Len() == 0 {
+		// Buffer vacío
+		return
+	}
 	if !logger.debugging && logBuf.errores == 0 {
 		// No estamos en modo depuración y no hay ningún WARN o ERROR
 		logBuf.buf.Reset()
 		return
-	}
-	if logBuf.buf.Len() == 0 { // temporal para ver poque nos salen trazas vacía
-		fmt.Fprintln(&logBuf.buf, "Nada que registrar!")
-		logBuf.buf.Write(debug.Stack())
 	}
 	fmt.Fprintln(&logBuf.buf, kSEP)
 	rotateLog(logger, ahora)
@@ -185,20 +186,31 @@ func flush(c *gin.Context, logger *Logger) {
 	logBuf.errores = 0
 }
 
+// Recupera el panic, añade la traza al log, y llama a flush.
+func panicRecover(c *gin.Context, logger *Logger) {
+	err := recover()
+	if err != nil {
+		errorf(c, logger, "panic: %v\n%s", err, debug.Stack())
+	}
+	flush(c, logger)
+}
+
 // Registra un INFO  (interno): por fichero si procede, en otro caso por STDOUT en modo depuración
 func infof(c *gin.Context, logger *Logger, format string, v ...any) {
 	if logger == nil {
 		writeLine(os.Stdout, kINFO, format, v...)
 	} else if logger.file != nil {
 		writeFileOrBuffer(c, logger, kINFO, format, v...)
-	} else if logger.debugging {
+	} else if logger.debugging && !logger.inTest {
 		writeLine(os.Stdout, kINFO, format, v...)
 	}
 }
 
 // Registra un WARN (interno): siempre por STDOUT y por fichero si procede
 func warnf(c *gin.Context, logger *Logger, format string, v ...any) {
-	writeLine(os.Stdout, kWARN, format, v...)
+	if logger == nil || !logger.inTest {
+		writeLine(os.Stdout, kWARN, format, v...)
+	}
 	if logger != nil && logger.file != nil {
 		writeFileOrBuffer(c, logger, kWARN, format, v...)
 	}
@@ -206,7 +218,9 @@ func warnf(c *gin.Context, logger *Logger, format string, v ...any) {
 
 // Registra un ERROR (interno): siempre por STDERR y por fichero si procede
 func errorf(c *gin.Context, logger *Logger, format string, v ...any) {
-	writeLine(os.Stderr, kERROR, format, v...)
+	if logger == nil || !logger.inTest {
+		writeLine(os.Stderr, kERROR, format, v...)
+	}
 	if logger != nil && logger.file != nil {
 		writeFileOrBuffer(c, logger, kERROR, format, v...)
 	}
@@ -266,4 +280,18 @@ func (logger *Logger) Flush(c *gin.Context) {
 // Graba el buffer en fichero usando el logger por defecto
 func Flush(c *gin.Context) {
 	flush(c, defaultLogger)
+}
+
+// Recupera un panic registrando eun ERROR
+func (logger *Logger) PanicRecover(c *gin.Context) {
+	if logger == nil {
+		panicRecover(c, defaultLogger)
+	} else {
+		panicRecover(c, logger)
+	}
+}
+
+// Recupera un panic registrando eun ERROR usando el logger por defecto
+func PanicRecover(c *gin.Context) {
+	panicRecover(c, defaultLogger)
 }

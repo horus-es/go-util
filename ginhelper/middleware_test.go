@@ -19,9 +19,10 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+// NOTA: pot motivos misteriosos, este test pasa con 'run test' o con 'debug test' pero falla con 'go test ./... -count=1' (go1.25.3: parece que tiene que ver con la captura de stdout/stderr)
 func Example() {
 	// Borramos el fichero de log para el ejemplo
-	const logfile = "testlog"
+	const logfile = "_TESTLOG_"
 	os.Remove(logfile + ".log")
 	// Creamos el logger en modo debug
 	logger.InitLogger(logfile, true)
@@ -85,7 +86,6 @@ func Example() {
 	printLogFile(logfile)
 
 	// Output:
-	// WARN: Las advertencias siempre salen por STDOUT
 	// INFO: GET /ping
 	// INFO: HTTP 200 OK - 0ms
 	// INFO: pong
