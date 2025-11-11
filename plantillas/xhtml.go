@@ -34,7 +34,6 @@ import (
 	"github.com/beevik/etree"
 	"github.com/horus-es/go-util/v3/errores"
 	"github.com/horus-es/go-util/v3/formato"
-	"github.com/pkg/errors"
 	"github.com/vanng822/go-premailer/premailer"
 	"gopkg.in/gomail.v2"
 )
@@ -130,13 +129,13 @@ func thTemplate(name, template, assets string) (string, error) {
 	doc.ReadSettings.Entity = map[string]string{"nbsp": "\u00A0"}
 	err := doc.ReadFromString(template)
 	if err != nil {
-		return "", errors.Wrap(err, name)
+		return "", err
 	}
 	var base *url.URL
 	if assets > "" {
 		base, err = url.Parse(assets)
 		if err != nil {
-			return "", errors.Wrap(err, name)
+			return "", err
 		}
 	}
 	root := doc.Root()
@@ -174,11 +173,11 @@ func thTemplate(name, template, assets string) (string, error) {
 		}
 		err = procesaURL(tag, base, "src")
 		if err != nil {
-			return "", errors.Wrap(err, name)
+			return "", err
 		}
 		err = procesaURL(tag, base, "href")
 		if err != nil {
-			return "", errors.Wrap(err, name)
+			return "", err
 		}
 	}
 	doc.WriteSettings.CanonicalText = true
@@ -271,17 +270,17 @@ func SendXhtmlMail(name, xhtml string, datos any, assets string, ff formato.Fech
 	// procesa la plantilla XHTML
 	body, err := MergeXhtmlTemplate(name, xhtml, datos, assets, ff, fp)
 	if err != nil {
-		return errors.Wrap(err, name)
+		return err
 	}
 
 	// css-inline: mejora la compatibilidad de los clientes de email
 	bodycss, err := premailer.NewPremailerFromBytes([]byte(body), premailer.NewOptions())
 	if err != nil {
-		return errors.Wrap(err, name)
+		return err
 	}
 	html, err := bodycss.Transform()
 	if err != nil {
-		return errors.Wrap(err, name)
+		return err
 	}
 
 	// cabeceras
@@ -310,14 +309,14 @@ func SendXhtmlMail(name, xhtml string, datos any, assets string, ff formato.Fech
 	if len(password) > 0 {
 		p, err := base64.StdEncoding.DecodeString(password)
 		if err != nil {
-			return errors.Wrap(err, name)
+			return err
 		}
 		password = string(p)
 	}
 	d := gomail.NewDialer(host, port, username, password)
 	err = d.DialAndSend(m)
 	if err != nil {
-		return errors.Wrap(err, name)
+		return err
 	}
 
 	// OK
@@ -343,16 +342,16 @@ func GenerateXhtmlPdf(name, xhtml string, datos any, assets string, ff formato.F
 	// Fichero temporal
 	tmp, err := os.CreateTemp("", "horus-*.html")
 	if err != nil {
-		return errors.Wrap(err, name)
+		return err
 	}
 	defer os.Remove(tmp.Name())
 	_, err = tmp.WriteString(body)
 	if err != nil {
-		return errors.Wrap(err, name)
+		return err
 	}
 	err = tmp.Close()
 	if err != nil {
-		return errors.Wrap(err, name)
+		return err
 	}
 	// Ejecución wkhtmltopdf
 	args := append([]string{"-q", "--enable-local-file-access"}, opciones...)
@@ -366,7 +365,7 @@ func GenerateXhtmlPdf(name, xhtml string, datos any, assets string, ff formato.F
 		if log.Len() > 0 {
 			return fmt.Errorf("%s: %s", name, log.String())
 		}
-		return errors.Wrap(err, name)
+		return err
 	}
 	return nil
 }

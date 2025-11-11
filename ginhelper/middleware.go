@@ -4,6 +4,7 @@ package ginhelper
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -107,15 +108,15 @@ func MiddlewareLogger(warnTime int64, reSlow string) gin.HandlerFunc {
 
 // Auxiliar de MiddlewareLogger
 func recuperaLogger(c *gin.Context) {
-	p := recover()
-	if p == nil {
+	causa := recover()
+	if causa == nil {
 		// No panic
 		return
 	}
 	// Registramos el error y el stack
-	ghLog.Errorf(c, "panic: %v\n%s", p, debug.Stack())
+	ghLog.Errorf(c, "panic: %v\n%s", causa, debug.Stack())
 	ghLog.Flush(c)
-	panic(p)
+	panic(causa)
 }
 
 // Middleware de gestión de transacciones
@@ -146,31 +147,26 @@ func recuperaPanic(c *gin.Context) {
 		// No panic
 		return
 	}
-	// ¿Es debido a un error de red?
 	e, ok := causa.(error)
-	if ok && isNetworkError(e) {
-		// Si hay error de red, no podemos responder nada ...
-		ghLog.Errorf(c, "Error de red: %v", causa)
+	if !ok {
+		ghLog.Errorf(c, "panic: %v\n%s", causa, debug.Stack())
+		c.PureJSON(http.StatusInternalServerError, gin.H{"error": "Error interno"})
 	} else {
-		// TODO: ¿añadir 404 para claves no halladas?
-		// ¿Es debido a una violación de restricción SQL o custom?
-		errorSQL := postgres.NON_SQL
-		var msg string
-		if ok {
-			errorSQL, msg = postgres.GetErrorSQL(e)
-		}
-		switch errorSQL {
-		case postgres.INTEGRITY_CONSTRAINT_VIOLATION:
-			// Si es una violación de restriccion SQL, se supone que la culpa es del cliente
-			// TODO: ¿Cambiar mensaje según tipo de violación?
-			c.PureJSON(http.StatusBadRequest, BadRequestResponse(c, "Valor duplicado", causa))
-		case postgres.PL_PGSQL_RAISE_EXCEPTION:
-			// Si es una excepcion levantada en un procedimiento, se supone que la culpa es del cliente
-			c.PureJSON(http.StatusBadRequest, BadRequestResponse(c, msg, causa))
-		default:
-			// Otros errores seguramente sean de programación o de sistema
-			ghLog.Errorf(c, "Error interno: %v", causa)
-			c.PureJSON(http.StatusInternalServerError, gin.H{"error": "Error interno"})
+		// ¿Es un error de red?
+		if isNetworkError(e) {
+			// Como hay error de red no podemos responder nada ...
+			ghLog.Errorf(c, "Error de red: %v", causa)
+		} else {
+			errorSQL, msg := postgres.GetErrorSQL(e)
+			switch errorSQL {
+			case postgres.INTEGRITY_CONSTRAINT_VIOLATION:
+				c.PureJSON(http.StatusBadRequest, BadRequestResponse(c, "Valor duplicado", causa))
+			case postgres.PL_PGSQL_RAISE_EXCEPTION:
+				c.PureJSON(http.StatusBadRequest, BadRequestResponse(c, msg, causa))
+			default:
+				ghLog.Errorf(c, "panic: %v\n%s", causa, debug.Stack())
+				c.PureJSON(http.StatusInternalServerError, gin.H{"error": "Error interno", "causa": fmt.Sprint(causa)})
+			}
 		}
 	}
 	c.Abort()

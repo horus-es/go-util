@@ -188,9 +188,9 @@ func flush(c *gin.Context, logger *Logger) {
 
 // Recupera el panic, añade la traza al log, y llama a flush.
 func panicRecover(c *gin.Context, logger *Logger) {
-	err := recover()
-	if err != nil {
-		errorf(c, logger, "panic: %v\n%s", err, debug.Stack())
+	causa := recover()
+	if causa != nil {
+		errorf(c, logger, "panic: %v\n%s", causa, debug.Stack())
 	}
 	flush(c, logger)
 }
