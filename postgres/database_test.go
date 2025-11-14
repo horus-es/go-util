@@ -85,9 +85,9 @@ func ExampleGetOneOrZeroRows() {
 		logger.Infof(nil, "Usuario no hallado.\n")
 	}
 	// Output:
-	// INFO: select codigo,activo from personal where id='fe90b961-0646-4f8e-a698-d3a153abf7d2'
+	// INFO: select codigo,activo from personal where id='fe90b961-0646-4f8e-a698-d3a153abf7d2' -- found
 	// INFO: Hallado usuario: "pablo7"
-	// INFO: select codigo,activo from personal where id='fe90b951-9999-9999-9999-999999999999'
+	// INFO: select codigo,activo from personal where id='fe90b951-9999-9999-9999-999999999999' -- not found
 	// INFO: Usuario no hallado.
 }
 
@@ -103,7 +103,7 @@ func ExampleGetOrderedRows() {
 	postgres.GetOrderedRows(nil, &us, "select codigo from personal where operador=$1 and codigo>'dad' order by codigo limit 3", UUIDoperador)
 	logger.Infof(nil, "Primeros 3 usuarios hallados: %s\n", strings.Join(us, ", "))
 	// Output:
-	// INFO: select codigo from personal where operador='0cec7694-eb8d-4ab2-95bb-d5d733a3be94' and codigo>'dad' order by codigo limit 3
+	// INFO: select codigo from personal where operador='0cec7694-eb8d-4ab2-95bb-d5d733a3be94' and codigo>'dad' order by codigo limit 3 -- 3 filas
 	// INFO: Primeros 3 usuarios hallados: dadiz, emple, emple100E
 }
 

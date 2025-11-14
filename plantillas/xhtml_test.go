@@ -140,5 +140,5 @@ func ExampleSendXhtmlMail() {
 		"c2VjcmV0bw==",
 	)
 	fmt.Println(err)
-	// Output: mail: dial tcp: lookup smtp.horus.es: no such host
+	// Output: dial tcp: lookup smtp.horus.es: no such host
 }

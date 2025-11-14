@@ -141,11 +141,11 @@ func GetOneOrZeroRows(c *gin.Context, dst any, query string, params ...any) bool
 	defer rows.Close()
 	err = pgxscan.ScanOne(dst, rows)
 	if pgxscan.NotFound(err) {
-		dbLog.Infof(c, limpio)
+		dbLog.Infof(c, limpio+" -- not found")
 		return false
 	}
 	errores.PanicIfError(err, "GetOneOrZeroRows: %s", limpio)
-	dbLog.Infof(c, limpio)
+	dbLog.Infof(c, limpio+" -- found")
 	return true
 }
 
@@ -160,7 +160,20 @@ func GetOrderedRows(c *gin.Context, dst any, query string, params ...any) {
 	}
 	err := pgxscan.Select(dbCtx, dbPool, dst, query, params...)
 	errores.PanicIfError(err, "GetOrderedRows: %s", limpio)
-	dbLog.Infof(c, limpio)
+	dbLog.Infof(c, limpio+lenComment(dst))
+}
+
+// Funcion para hallar el número de items en el caso de que any sea *[]algo
+func lenComment(a any) string {
+	v := reflect.ValueOf(a)
+	if v.Kind() != reflect.Ptr {
+		return ""
+	}
+	v = v.Elem()
+	if v.Kind() != reflect.Slice {
+		return ""
+	}
+	return fmt.Sprintf(" -- %d filas", v.Len())
 }
 
 // Función auxiliar de insert y update, que parsea especial en un mapa, puede ser:
