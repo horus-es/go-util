@@ -158,7 +158,17 @@ func GetOrderedRows(c *gin.Context, dst any, query string, params ...any) {
 	if strings.HasPrefix(strings.ToLower(limpio), "select * from ") {
 		query = replaceAsterisk(query, dst)
 	}
-	err := pgxscan.Select(dbCtx, dbPool, dst, query, params...)
+	var rows pgx.Rows
+	var err error
+	tx, ok := dbTxs.Load(misc.GetGID())
+	if ok {
+		rows, err = tx.(pgx.Tx).Query(dbCtx, query, params...)
+	} else {
+		rows, err = dbPool.Query(dbCtx, query, params...)
+	}
+	errores.PanicIfError(err, "GetOrderedRows: %s", limpio)
+	defer rows.Close()
+	err = pgxscan.ScanAll(dst, rows)
 	errores.PanicIfError(err, "GetOrderedRows: %s", limpio)
 	dbLog.Infof(c, limpio+lenComment(dst))
 }
@@ -172,6 +182,10 @@ func lenComment(a any) string {
 	v = v.Elem()
 	if v.Kind() != reflect.Slice {
 		return ""
+	}
+	z := v.Len()
+	if z == 1 {
+		return " -- 1 fila"
 	}
 	return fmt.Sprintf(" -- %d filas", v.Len())
 }

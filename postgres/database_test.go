@@ -102,9 +102,11 @@ func ExampleGetOrderedRows() {
 	us := []string{}
 	postgres.GetOrderedRows(nil, &us, "select codigo from personal where operador=$1 and codigo>'dad' order by codigo limit 3", UUIDoperador)
 	logger.Infof(nil, "Primeros 3 usuarios hallados: %s\n", strings.Join(us, ", "))
+	postgres.GetOrderedRows(nil, &us, "select codigo from personal where operador=$1 and codigo='dad' order by codigo limit 3", UUIDoperador)
 	// Output:
 	// INFO: select codigo from personal where operador='0cec7694-eb8d-4ab2-95bb-d5d733a3be94' and codigo>'dad' order by codigo limit 3 -- 3 filas
 	// INFO: Primeros 3 usuarios hallados: dadiz, emple, emple100E
+	// INFO: select codigo from personal where operador='0cec7694-eb8d-4ab2-95bb-d5d733a3be94' and codigo='dad' order by codigo limit 3 -- 0 filas
 }
 
 func TestGetJoin(t *testing.T) {
