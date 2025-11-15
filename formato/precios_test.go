@@ -58,6 +58,12 @@ func TestRedondeaPrecio(t *testing.T) {
 	assert.Equal(t, 12345.68, formato.RedondeaPrecio(12345.6789, 0.01), formato.EUR)
 	assert.Equal(t, 12345.68, formato.RedondeaPrecio(12345.6789, 0.01), formato.USD)
 	assert.Equal(t, 12350.00, formato.RedondeaPrecio(12345.6789, 50), formato.COP)
+	assert.Equal(t, 431.09, formato.RedondeaPrecio(431.09, 0.01), formato.EUR)
+	assert.Equal(t, 1963.87, formato.RedondeaPrecio(1963.87, 0.01), formato.EUR)
+	assert.Equal(t, 10336.13, formato.RedondeaPrecio(10336.13, 0.01), formato.EUR)
+	assert.Equal(t, 450.00, formato.RedondeaPrecio(431.09, 50), formato.COP)
+	assert.Equal(t, 2000.00, formato.RedondeaPrecio(1963.87, 100), formato.COP)
+	assert.Equal(t, 10350.00, formato.RedondeaPrecio(10336.13, 50), formato.COP)
 }
 
 func ExampleRedondeaPrecio() {

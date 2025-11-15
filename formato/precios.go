@@ -74,5 +74,6 @@ func PrintPrecio(v float64, fp Moneda) string {
 
 // Redondea un precio (p) usando la unidad monetaria mínima (umm)
 func RedondeaPrecio(p, umm float64) float64 {
-	return math.Round(p/umm) * umm
+	f := 1 / umm
+	return math.Round(p*f) / f
 }
