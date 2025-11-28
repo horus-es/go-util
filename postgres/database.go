@@ -263,7 +263,10 @@ func InsertRow(c *gin.Context, src any, especiales ...string) string {
 	for _, campo := range campos {
 		fieldName := dbscan.SnakeCaseMapper(campo.Name)
 		especial, ok := mapaEspecial[fieldName]
-		if fieldName == "id" || especial == "-" || (excludeAll && !ok) {
+		if especial == "-" || (excludeAll && !ok) {
+			continue
+		}
+		if fieldName == "id" && (!valor.FieldByName(campo.Name).IsValid() || valor.FieldByName(campo.Name).IsZero()) {
 			continue
 		}
 		if n == 0 {
@@ -285,7 +288,10 @@ func InsertRow(c *gin.Context, src any, especiales ...string) string {
 	for _, campo := range campos {
 		fieldName := dbscan.SnakeCaseMapper(campo.Name)
 		especial, ok := mapaEspecial[fieldName]
-		if fieldName == "id" || especial == "-" || (excludeAll && !ok) {
+		if especial == "-" || (excludeAll && !ok) {
+			continue
+		}
+		if fieldName == "id" && (!valor.FieldByName(campo.Name).IsValid() || valor.FieldByName(campo.Name).IsZero()) {
 			continue
 		}
 		if n == 0 {
@@ -315,12 +321,12 @@ func InsertRow(c *gin.Context, src any, especiales ...string) string {
 	var result string
 	err := row.Scan(&result)
 	errores.PanicIfError(err, "InsertRow: %s", limpio)
+	limpio += " -- " + result
 	if inTest {
 		// Truco para mantener la salida invariante en tests
-		dbLog.Infof(c, limpio+" -- 81c11fc2-0439-4ae5-baa4-3d40716bdce3")
-	} else {
-		dbLog.Infof(c, limpio+" -- "+result)
+		limpio = strings.ReplaceAll(limpio, result, "81c11fc2-0439-4ae5-baa4-3d40716bdce3")
 	}
+	dbLog.Infof(c, limpio)
 	return result
 }
 
@@ -411,11 +417,6 @@ func UpdateRow(c *gin.Context, src any, especiales ...string) {
 // Panic si la fila no existe
 func DeleteRow(c *gin.Context, id string, table string) {
 	query := "delete from " + table + " where id=$1"
-	limpio := reemplaza(query, id)
-	if inTest {
-		// Truco para mantener el log invariante en los tests
-		limpio = reemplaza(query, "81c11fc2-0439-4ae5-baa4-3d40716bdce3")
-	}
 	var tag pgconn.CommandTag
 	var err error
 	tx, ok := dbTxs.Load(misc.GetGID())
@@ -423,6 +424,11 @@ func DeleteRow(c *gin.Context, id string, table string) {
 		tag, err = tx.(pgx.Tx).Exec(dbCtx, query, id)
 	} else {
 		tag, err = dbPool.Exec(dbCtx, query, id)
+	}
+	limpio := reemplaza(query, id)
+	if inTest {
+		// Truco para mantener el log invariante en los tests
+		limpio = strings.ReplaceAll(limpio, id, "81c11fc2-0439-4ae5-baa4-3d40716bdce3")
 	}
 	errores.PanicIfError(err, "DeleteRow: %s", limpio)
 	errores.PanicIfTrue(tag.RowsAffected() == 0, "DeleteRow: Ninguna fila eliminada: %s", limpio)

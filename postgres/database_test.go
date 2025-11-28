@@ -157,15 +157,19 @@ func ExampleInsertRow() {
 	u.Codigo = "TestInsert"
 	u.Nombre = "Usuario de prueba"
 	u.Activo = true
-	u.ID = postgres.InsertRow(nil, u, "hash='zecreto2023'")
-	logger.Infof(nil, "Una fila insertada")
-	postgres.DeleteRow(nil, u.ID, "personal")
-	logger.Infof(nil, "Una fila eliminada")
+	u.ID = postgres.InsertRow(nil, u, "hash='zecreto2023'") // Insertamos la fila sin ID, que lo genera postgres en el insert
+	postgres.DeleteRow(nil, u.ID, "personal")               // Y después la eliminamos
+	// Cambio de contraseña
+	u.Hash.Valid = true
+	u.Hash.String = "top6ecret"
+	postgres.InsertRow(nil, u)                // Volvemos a insertar la fila, reutilizando el ID previo
+	postgres.DeleteRow(nil, u.ID, "personal") // La volvemos a eliminar
+
 	// Output:
 	// INFO: insert into personal (operador,codigo,nombre,hash,activo,administrador,tag) values ('0cec7694-eb8d-4ab2-95bb-d5d733a3be94','TestInsert','Usuario de prueba','zecreto2023',true,false,'') returning id -- 81c11fc2-0439-4ae5-baa4-3d40716bdce3
-	// INFO: Una fila insertada
 	// INFO: delete from personal where id='81c11fc2-0439-4ae5-baa4-3d40716bdce3'
-	// INFO: Una fila eliminada
+	// INFO: insert into personal (id,operador,codigo,nombre,hash,activo,administrador,tag) values ('81c11fc2-0439-4ae5-baa4-3d40716bdce3','0cec7694-eb8d-4ab2-95bb-d5d733a3be94','TestInsert','Usuario de prueba','top6ecret',true,false,'') returning id -- 81c11fc2-0439-4ae5-baa4-3d40716bdce3
+	// INFO: delete from personal where id='81c11fc2-0439-4ae5-baa4-3d40716bdce3'
 }
 
 func ExampleDeleteRow() {
