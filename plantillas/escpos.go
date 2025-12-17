@@ -232,7 +232,7 @@ func win1252(escpos string, familia int) (bin []byte) {
 	defer writer.Close()
 	switch familia {
 	case EPSON:
-		bin = append([]byte{ESC, 't', 16}, buf.Bytes()...)
+		bin = append([]byte{FS, '.', ESC, 't', 16}, buf.Bytes()...)
 	case SEIKO:
 		bin = append([]byte{ESC, 't', 5}, buf.Bytes()...)
 	}
