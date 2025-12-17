@@ -178,7 +178,7 @@ const (
 	ESC   = byte(0x1b)
 	FS    = byte(0x1c)
 	GS    = byte(0x1d)
-	EPSON = 1 // Familia de impresoras normalmente usadas en POS: Epson, Bixolon, Posiflex, Star, Citizen
+	EPSON = 1 // Familia de impresoras normalmente usadas en POS: Epson, Bixolon, Posiflex, Star, Citizen, Sunmi
 	SEIKO = 2 // Familia de impresoras normalmente usadas en KIOSKOS: Nippon Primex, Seiko, Axiohm, Fujitsu
 )
 
