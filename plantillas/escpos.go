@@ -221,19 +221,19 @@ func GenerateEscPos(escpos string, familia int) (bin []byte, width int, err erro
 }
 
 func win1252(escpos string, familia int) (bin []byte) {
-	bin = []byte(escpos)
 	var buf bytes.Buffer
 	writer := transform.NewWriter(&buf, charmap.Windows1252.NewEncoder())
-	_, err := writer.Write(bin)
-	if err != nil {
-		return
-	}
-	defer writer.Close()
+	_, err := writer.Write([]byte(escpos))
+	errores.PanicIfError(err)
+	err = writer.Close()
+	errores.PanicIfError(err)
 	switch familia {
 	case EPSON:
 		bin = append([]byte{ESC, '@', FS, '.', ESC, 't', 16}, buf.Bytes()...)
 	case SEIKO:
 		bin = append([]byte{ESC, '@', FS, '.', ESC, 't', 5}, buf.Bytes()...)
+	default:
+		bin = buf.Bytes()
 	}
 	return
 }
@@ -354,6 +354,8 @@ func processEscPosControls(escpos []byte, familia int) ([]byte, int) {
 		result = reResetEscPos.ReplaceAll(escpos, []byte{ESC, '@', FS, '.', ESC, 't', 16}) // ESC @ FS . ESC t 16
 	case SEIKO:
 		result = reResetEscPos.ReplaceAll(escpos, []byte{ESC, '@', FS, '.', ESC, 't', 5}) // ESC @ FS . ESC t 5
+	default:
+		result = escpos
 	}
 	result = reFullCutEscPos.ReplaceAll(result, []byte{ESC, 'i'})    // ESC i
 	result = rePartialCutEscPos.ReplaceAll(result, []byte{ESC, 'm'}) // ESC m
