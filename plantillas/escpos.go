@@ -187,7 +187,7 @@ const (
 func GenerateEscPos(escpos string, familia int) (bin []byte, width int, err error) {
 
 	// Convertimos a windows-1252
-	bin = win1252(escpos)
+	bin = win1252(escpos, familia)
 
 	// Quitamos espacios iniciales y finales
 	bin = bytes.TrimSpace(bin)
@@ -199,7 +199,7 @@ func GenerateEscPos(escpos string, familia int) (bin []byte, width int, err erro
 	bin = processEscPosStyles(bin)
 
 	// Procesamos códigos de control
-	bin, width = processEscPosControls(bin)
+	bin, width = processEscPosControls(bin, familia)
 
 	switch familia {
 	case EPSON:
@@ -220,7 +220,7 @@ func GenerateEscPos(escpos string, familia int) (bin []byte, width int, err erro
 	return
 }
 
-func win1252(escpos string) (bin []byte) {
+func win1252(escpos string, familia int) (bin []byte) {
 	bin = []byte(escpos)
 	var buf bytes.Buffer
 	writer := transform.NewWriter(&buf, charmap.Windows1252.NewEncoder())
@@ -229,7 +229,12 @@ func win1252(escpos string) (bin []byte) {
 		return
 	}
 	defer writer.Close()
-	bin = append([]byte{ESC, '@', FS, '.', ESC, 't', 16}, buf.Bytes()...)
+	switch familia {
+	case EPSON:
+		bin = append([]byte{ESC, '@', FS, '.', ESC, 't', 16}, buf.Bytes()...)
+	case SEIKO:
+		bin = append([]byte{ESC, '@', FS, '.', ESC, 't', 5}, buf.Bytes()...)
+	}
 	return
 }
 
@@ -341,12 +346,18 @@ func processEscPosStyles(escpos []byte) []byte {
 }
 
 // Procesa las secuencias de control esc/pos y extrae el ancho del papel
-func processEscPosControls(escpos []byte) ([]byte, int) {
+func processEscPosControls(escpos []byte, familia int) ([]byte, int) {
 	var width int
-	result := reResetEscPos.ReplaceAll(escpos, []byte{ESC, '@', FS, '.', ESC, 't', 16}) // ESC @
-	result = reFullCutEscPos.ReplaceAll(result, []byte{ESC, 'i'})                       // ESC i
-	result = rePartialCutEscPos.ReplaceAll(result, []byte{ESC, 'm'})                    // ESC m
-	result = reFormFeedEscPos.ReplaceAll(result, []byte{FF})                            // FF
+	var result []byte
+	switch familia {
+	case EPSON:
+		result = reResetEscPos.ReplaceAll(escpos, []byte{ESC, '@', FS, '.', ESC, 't', 16}) // ESC @ FS . ESC t 16
+	case SEIKO:
+		result = reResetEscPos.ReplaceAll(escpos, []byte{ESC, '@', FS, '.', ESC, 't', 5}) // ESC @ FS . ESC t 5
+	}
+	result = reFullCutEscPos.ReplaceAll(result, []byte{ESC, 'i'})    // ESC i
+	result = rePartialCutEscPos.ReplaceAll(result, []byte{ESC, 'm'}) // ESC m
+	result = reFormFeedEscPos.ReplaceAll(result, []byte{FF})         // FF
 	result = rePaperWidthEscPos.ReplaceAllFunc(result, func(match []byte) []byte {
 		submatches := rePaperWidthEscPos.FindSubmatch(match)
 		w, _ := strconv.Atoi(string(submatches[1]))
