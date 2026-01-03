@@ -106,6 +106,12 @@ func TestParseIsoDuration(t *testing.T) {
 			spanish:     "12 ñordos",
 			wantErr:     true,
 		},
+		{
+			name:        "error T2",
+			isoDuration: "T2",
+			spanish:     "T2",
+			wantErr:     true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

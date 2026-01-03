@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/horus-es/go-util/v3/misc"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type IsoDuration struct {
@@ -126,8 +127,15 @@ var reIsoDuration = regexp.MustCompile(`([0-9\.]+)\s*([a-z]+)`)
 // Parsea una duración especificada como 3 horas y 23 minutos, o 3h23min
 func ParseHumanDuration(s string, m_is_month bool) (*IsoDuration, error) {
 	D := &IsoDuration{}
-	limpio := strings.ToLower(misc.QuitaAcentos(s))
+	limpio := strings.TrimSpace(s)
+	if limpio == "" {
+		return D, nil
+	}
+	limpio = strings.ToLower(misc.QuitaAcentos(limpio))
 	matches := reIsoDuration.FindAllStringSubmatch(limpio, -1)
+	if matches == nil {
+		return nil, fmt.Errorf("error en duración: %s", s)
+	}
 	for _, m := range matches {
 		n, err := strconv.ParseFloat(m[1], 64)
 		if err != nil {
@@ -273,6 +281,15 @@ func IsoDurationToNative(D *IsoDuration) (*time.Duration, error) {
 	segundos := D.Weeks*7*24*60*60 + D.Days*24*60*60 + D.Hours*60*60 + D.Minutes*60 + D.Seconds
 	native := time.Duration(segundos * float64(time.Second))
 	return &native, nil
+}
+
+func IsoDurationToInterval(D *IsoDuration) pgtype.Interval {
+	var interval pgtype.Interval
+	interval.Months = int32(D.Years*12 + D.Months)
+	interval.Days = int32(D.Weeks*7 + D.Days)
+	interval.Microseconds = int64(1000000 * (D.Seconds + D.Minutes*60 + D.Hours*3600))
+	interval.Valid = true
+	return interval
 }
 
 func (D IsoDuration) AddToNative(t time.Time) (*time.Time, error) {
