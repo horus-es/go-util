@@ -2,6 +2,7 @@ package formato_test
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -29,13 +30,19 @@ func ExamplePrintNumero() {
 }
 
 func ExampleParseNumero() {
-	fmt.Println(formato.PrintNumero(12345.6789, 2, ",", "."))
-	fmt.Println(formato.PrintNumero(12345.6789, 0, ",", "."))
-	fmt.Println(formato.PrintNumero(12345.6789, -2, ",", "."))
+	f, _ := formato.ParseNumero("1.000.000", ",")
+	fmt.Println(strconv.FormatFloat(f, 'f', -1, 64))
+	f, _ = formato.ParseNumero("100.000", ".")
+	fmt.Println(strconv.FormatFloat(f, 'f', -1, 64))
+	f, _ = formato.ParseNumero("12.345,67", ",")
+	fmt.Println(strconv.FormatFloat(f, 'f', -1, 64))
+	f, _ = formato.ParseNumero("12'345,67", ",")
+	fmt.Println(strconv.FormatFloat(f, 'f', -1, 64))
 	// Output:
-	// 12.345,68
-	// 12.346
-	// 12.300
+	// 1000000
+	// 100
+	// 12345.67
+	// 12345.67
 }
 
 func compruebaParseLogica(t *testing.T, espera bool, valor string) {

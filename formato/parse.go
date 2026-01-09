@@ -14,6 +14,7 @@ import (
 // Parsea un número, considerando que puede incluir separadores
 func ParseNumero(v, sepDecimal string) (result float64, err error) {
 	s := strings.ReplaceAll(v, " ", "")
+	s = strings.ReplaceAll(s, "'", "")
 	n := strings.LastIndexAny(s, ".,")
 	if n > 0 && len(s)-n != 4 {
 		sepDecimal = s[n : n+1]
