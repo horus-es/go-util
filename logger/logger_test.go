@@ -1,6 +1,7 @@
 package logger_test
 
 import (
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -78,4 +79,16 @@ func TestContext(t *testing.T) {
 func TestEmpty(t *testing.T) {
 	log := logger.NewLogger("testlog", true)
 	log.Flush(&gin.Context{})
+}
+
+func TestPanicRecover(t *testing.T) {
+	fmt.Println("inicio")
+	go func() {
+		c := &gin.Context{}
+		defer logger.PanicRecover(c)
+		fmt.Println("antes del panic")
+		panic("boom")
+	}()
+	time.Sleep(time.Second * 3)
+	fmt.Println("tras 3 segundos")
 }

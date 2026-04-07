@@ -186,15 +186,6 @@ func flush(c *gin.Context, logger *Logger) {
 	logBuf.errores = 0
 }
 
-// Recupera el panic, añade la traza al log, y llama a flush.
-func panicRecover(c *gin.Context, logger *Logger) {
-	causa := recover()
-	if causa != nil {
-		errorf(c, logger, "panic: %v\n%s", causa, debug.Stack())
-	}
-	flush(c, logger)
-}
-
 // Registra un INFO  (interno): por fichero si procede, en otro caso por STDOUT en modo depuración
 func infof(c *gin.Context, logger *Logger, format string, v ...any) {
 	if logger == nil {
@@ -284,14 +275,25 @@ func Flush(c *gin.Context) {
 
 // Recupera un panic registrando eun ERROR
 func (logger *Logger) PanicRecover(c *gin.Context) {
+	causa := recover()
 	if logger == nil {
-		panicRecover(c, defaultLogger)
+		if causa != nil {
+			errorf(c, defaultLogger, "panic: %v\n%s", causa, debug.Stack())
+		}
+		flush(c, defaultLogger)
 	} else {
-		panicRecover(c, logger)
+		if causa != nil {
+			errorf(c, logger, "panic: %v\n%s", causa, debug.Stack())
+		}
+		flush(c, logger)
 	}
 }
 
 // Recupera un panic registrando eun ERROR usando el logger por defecto
 func PanicRecover(c *gin.Context) {
-	panicRecover(c, defaultLogger)
+	causa := recover()
+	if causa != nil {
+		errorf(c, defaultLogger, "panic: %v\n%s", causa, debug.Stack())
+	}
+	flush(c, defaultLogger)
 }
