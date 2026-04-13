@@ -1,13 +1,13 @@
 Mime-Version: 1.0
-Date: Mon, 13 Apr 2026 14:45:44 +0200
-Reply-To: pablo.leon100@gmail.com
+Date: Mon, 13 Apr 2026 17:05:06 +0200
 From: automaticos@horus.es
 To: pablo.leon@horus.es
 Subject: Prueba de correo
+Reply-To: pablo.leon100@gmail.com
 Content-Type: multipart/mixed;
- boundary=9470529d192f396b17c176aee9ef466dad3fca4a21b9fd57d7e67744ebfc
+ boundary=ebbb403b969509d36c3682f8de415193a25c563ae6bd2ccd96c9520067c9
 
---9470529d192f396b17c176aee9ef466dad3fca4a21b9fd57d7e67744ebfc
+--ebbb403b969509d36c3682f8de415193a25c563ae6bd2ccd96c9520067c9
 Content-Transfer-Encoding: quoted-printable
 Content-Type: text/html; charset=UTF-8
 
@@ -235,9 +235,10 @@ ht:bold;color:#333333">15,06 =E2=82=AC</p>
                         </tr>
                       </tbody></table>
                       <button class=3D"btn" onclick=3D"handleAction(&#39;\/=
-plantillas\/invoice.json&#39;)" style=3D"background:#FF8C00;color:white;bor=
-der:none;padding:12px 20px;border-radius:5px;cursor:pointer;font-size:16px;=
-margin:20px 0;font-weight:600">Descargar factura</button>
+plantillas\/invoice.json?id=3Dalgo\u0026otro=3Dmas&#39;)" style=3D"backgrou=
+nd:#FF8C00;color:white;border:none;padding:12px 20px;border-radius:5px;curs=
+or:pointer;font-size:16px;margin:20px 0;font-weight:600">Descargar factura<=
+/button>
                     </div>
                   </td>
                 </tr>
@@ -319,7 +320,7 @@ dahonda</span>
 
 
 </body></html>
---9470529d192f396b17c176aee9ef466dad3fca4a21b9fd57d7e67744ebfc
+--ebbb403b969509d36c3682f8de415193a25c563ae6bd2ccd96c9520067c9
 Content-Disposition: attachment; filename="xhtml_test_expect.pdf"
 Content-Transfer-Encoding: base64
 Content-Type: application/pdf; name="xhtml_test_expect.pdf"
@@ -634,4 +635,4 @@ MDAwMDk2MjQgMDAwMDAgbiAKMDAwMDAwOTIxOSAwMDAwMCBuIAowMDAwMDEwNDU4IDAwMDAwIG4g
 CjAwMDAwMTA2ODQgMDAwMDAgbiAKMDAwMDAxNTQ3MiAwMDAwMCBuIAowMDAwMDE1OTIzIDAwMDAw
 IG4gCjAwMDAwMTU0NTEgMDAwMDAgbiAKdHJhaWxlcgo8PAovU2l6ZSAzMAovSW5mbyAxIDAgUgov
 Um9vdCAxNSAwIFIKPj4Kc3RhcnR4cmVmCjE2OTcwCiUlRU9GCg==
---9470529d192f396b17c176aee9ef466dad3fca4a21b9fd57d7e67744ebfc--
+--ebbb403b969509d36c3682f8de415193a25c563ae6bd2ccd96c9520067c9--
