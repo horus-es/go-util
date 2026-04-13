@@ -1,5 +1,4 @@
-<!DOCTYPE html
-  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 
 <head>
@@ -399,6 +398,22 @@
       padding: 35px;
     }
 
+    .btn {
+      background: #FF8C00;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 20px 0;
+      font-weight: 600;
+    }
+
+    .btn:hover {
+      background: #1c4494;
+    }
+
      
 
     @media only screen and (max-width: 600px) {
@@ -505,21 +520,34 @@
                               
                               
                               <tr>
-                                <td width="80%" class="purchase_footer" valign="middle"><p class="f-fallback purchase_total purchase_total--label">Subtotal</p></td>
-                                <td width="20%" class="purchase_footer" valign="middle"><p class="f-fallback purchase_total">12,45 €</p></td>
+                                <td width="80%" class="purchase_footer" valign="middle">
+                                  <p class="f-fallback purchase_total purchase_total--label">Subtotal</p>
+                                </td>
+                                <td width="20%" class="purchase_footer" valign="middle">
+                                  <p class="f-fallback purchase_total">12,45 €</p>
+                                </td>
                               </tr>
                               <tr>
-                                <td width="80%" class="purchase_footer" valign="middle"><p class="f-fallback purchase_total purchase_total--label">IVA (21%)</p></td>
-                                <td width="20%" class="purchase_footer" valign="middle"><p class="f-fallback purchase_total">2,61 €</p></td>
+                                <td width="80%" class="purchase_footer" valign="middle">
+                                  <p class="f-fallback purchase_total purchase_total--label">IVA (21%)</p>
+                                </td>
+                                <td width="20%" class="purchase_footer" valign="middle">
+                                  <p class="f-fallback purchase_total">2,61 €</p>
+                                </td>
                               </tr>
                               <tr>
-                                <td width="80%" class="purchase_footer" valign="middle"><p class="f-fallback purchase_total purchase_total--label">Total</p></td>
-                                <td width="20%" class="purchase_footer" valign="middle"><p class="f-fallback purchase_total">15,06 €</p></td>
+                                <td width="80%" class="purchase_footer" valign="middle">
+                                  <p class="f-fallback purchase_total purchase_total--label">Total</p>
+                                </td>
+                                <td width="20%" class="purchase_footer" valign="middle">
+                                  <p class="f-fallback purchase_total">15,06 €</p>
+                                </td>
                               </tr>
                             </table>
                           </td>
                         </tr>
                       </table>
+                      <button class="btn" onclick="handleAction('\/plantillas\/invoice.json')">Descargar factura</button>
                     </div>
                   </td>
                 </tr>
@@ -544,6 +572,50 @@
       </td>
     </tr>
   </table>
+
+  <script>
+    function handleAction(apiUrl) {
+
+      console.log("Llamando a:", apiUrl);
+
+      fetch(apiUrl)
+        .then(async (res) => {
+          const contentType = res.headers.get("content-type");
+          const text = await res.text();
+
+          console.log("STATUS:", res.status);
+          console.log("CONTENT-TYPE:", contentType);
+          console.log("RAW RESPONSE:", text);
+
+          
+          if (!contentType || !contentType.includes("application/json")) {
+            throw new Error("La respuesta no es JSON válido");
+          }
+
+          
+          try {
+            return JSON.parse(text);
+          } catch (e) {
+            throw new Error("Error parseando JSON");
+          }
+        })
+        .then((data) => {
+          console.log("JSON PARSEADO:", data);
+
+          if (data.url) {
+            
+            const win = window.open("", "_blank");
+            win.location = data.url;
+          } else {
+            alert("No se recibió la URL de la factura");
+          }
+        })
+        .catch((error) => {
+          console.error("ERROR:", error);
+          alert("Error al descargar la factura");
+        });
+    }
+  </script>
 </body>
 
 </html>

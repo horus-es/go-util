@@ -1,5 +1,4 @@
-<!DOCTYPE html
-  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 
 <head>
@@ -399,6 +398,22 @@
       padding: 35px;
     }
 
+    .btn {
+      background: #FF8C00;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 20px 0;
+      font-weight: 600;
+    }
+
+    .btn:hover {
+      background: #1c4494;
+    }
+
     /*Media Queries ------------------------------ */
 
     @media only screen and (max-width: 600px) {
@@ -472,7 +487,7 @@
       <td align="center">
         <table class="email-content" width="100%" cellpadding="0" cellspacing="0" role="presentation">
           <tr>
-            <td class="email-masthead"><img src="acme.png" alt="ACME" th:alt="{{.Issuer.Name}}"/></td>
+            <td class="email-masthead"><img src="acme.png" alt="ACME" th:alt="{{.Issuer.Name}}" /></td>
           </tr>
           <!-- Email Body -->
           <tr>
@@ -486,14 +501,14 @@
                         <tr>
                           <td valign="top" width="100%">
                             <h1>FACTURA</h1>
-                            <span th:text="Número:&nbsp;{{.ID}}">Número: A0000123</span><br/>
+                            <span th:text="Número:&nbsp;{{.ID}}">Número: A0000123</span><br />
                             <span th:text="Fecha: {{DATE .IssueDate}}">Fecha: 25/06/2022</span>
                           </td>
                           <td valign="top" th:with=".Recipient" style="white-space: nowrap;">
                             <h3>Destinatario:</h3>
-                            <span th:if=".Name" th:text="{{.Name}}">Lumilux</span><br th:if=".Name"/>
-                            <span th:if=".VatID" th:text="CIF: {{.VatID}}">CIF: B23111234</span><br th:if=".VatID"/>
-                            <span th:if=".Address" th:text="{{BR .Address}}">Calle Los Lirios, 44<br/>28220 - Getafe</span>
+                            <span th:if=".Name" th:text="{{.Name}}">Lumilux</span><br th:if=".Name" />
+                            <span th:if=".VatID" th:text="CIF: {{.VatID}}">CIF: B23111234</span><br th:if=".VatID" />
+                            <span th:if=".Address" th:text="{{BR .Address}}">Calle Los Lirios, 44<br />28220 - Getafe</span>
                           </td>
                         </tr>
                       </table>
@@ -514,21 +529,34 @@
                                 <td class="align-right purchase_item" width="20%"><span class="f-fallback">40.00</span></td>
                               </tr>
                               <tr th:if="gt (len .Lines) 1">
-                                <td width="80%" class="purchase_footer" valign="middle"><p class="f-fallback purchase_total purchase_total--label">Subtotal</p></td>
-                                <td width="20%" class="purchase_footer" valign="middle"><p class="f-fallback purchase_total" th:text="{{PRICE .Base}}">16.45 EUR</p></td>
+                                <td width="80%" class="purchase_footer" valign="middle">
+                                  <p class="f-fallback purchase_total purchase_total--label">Subtotal</p>
+                                </td>
+                                <td width="20%" class="purchase_footer" valign="middle">
+                                  <p class="f-fallback purchase_total" th:text="{{PRICE .Base}}">16.45 EUR</p>
+                                </td>
                               </tr>
                               <tr>
-                                <td width="80%" class="purchase_footer" valign="middle"><p class="f-fallback purchase_total purchase_total--label" th:text="IVA ({{.VatRate}}%)">IVA (21%)</p></td>
-                                <td width="20%" class="purchase_footer" valign="middle"><p class="f-fallback purchase_total" th:text="{{PRICE .Vat}}">3.45 EUR</p></td>
+                                <td width="80%" class="purchase_footer" valign="middle">
+                                  <p class="f-fallback purchase_total purchase_total--label" th:text="IVA ({{.VatRate}}%)">IVA (21%)</p>
+                                </td>
+                                <td width="20%" class="purchase_footer" valign="middle">
+                                  <p class="f-fallback purchase_total" th:text="{{PRICE .Vat}}">3.45 EUR</p>
+                                </td>
                               </tr>
                               <tr>
-                                <td width="80%" class="purchase_footer" valign="middle"><p class="f-fallback purchase_total purchase_total--label">Total</p></td>
-                                <td width="20%" class="purchase_footer" valign="middle"><p class="f-fallback purchase_total" th:text="{{PRICE .Total}}">19.90 EUR</p></td>
+                                <td width="80%" class="purchase_footer" valign="middle">
+                                  <p class="f-fallback purchase_total purchase_total--label">Total</p>
+                                </td>
+                                <td width="20%" class="purchase_footer" valign="middle">
+                                  <p class="f-fallback purchase_total" th:text="{{PRICE .Total}}">19.90 EUR</p>
+                                </td>
                               </tr>
                             </table>
                           </td>
                         </tr>
                       </table>
+                      <button class="btn" onclick="handleAction('invoice.json')" th:onclick="handleAction('{{.Url}}')">Descargar factura</button>
                     </div>
                   </td>
                 </tr>
@@ -541,7 +569,7 @@
                 <tr>
                   <td class="content-cell" align="center">
                     <p class="f-fallback sub align-center" th:with=".Issuer">
-                      <span th:text="{{.Name}}">ACME</span> <span th:text="{{.VatID}}">A78055555</span><br/>
+                      <span th:text="{{.Name}}">ACME</span> <span th:text="{{.VatID}}">A78055555</span><br />
                       <span th:text="{{BR .Address}}">Avda. Simón Bolivar, 324<br />234BZ - Bogotá</span>
                     </p>
                   </td>
@@ -553,6 +581,50 @@
       </td>
     </tr>
   </table>
+
+  <script>
+    function handleAction(apiUrl) {
+
+      console.log("Llamando a:", apiUrl);
+
+      fetch(apiUrl)
+        .then(async (res) => {
+          const contentType = res.headers.get("content-type");
+          const text = await res.text();
+
+          console.log("STATUS:", res.status);
+          console.log("CONTENT-TYPE:", contentType);
+          console.log("RAW RESPONSE:", text);
+
+          // Verificamos que realmente sea JSON
+          if (!contentType || !contentType.includes("application/json")) {
+            throw new Error("La respuesta no es JSON válido");
+          }
+
+          // Intentamos parsear manualmente
+          try {
+            return JSON.parse(text);
+          } catch (e) {
+            throw new Error("Error parseando JSON");
+          }
+        })
+        .then((data) => {
+          console.log("JSON PARSEADO:", data);
+
+          if (data.url) {
+            // Abrimos el PDF en nueva pestaña
+            const win = window.open("", "_blank");
+            win.location = data.url;
+          } else {
+            alert("No se recibió la URL de la factura");
+          }
+        })
+        .catch((error) => {
+          console.error("ERROR:", error);
+          alert("Error al descargar la factura");
+        });
+    }
+  </script>
 </body>
 
 </html>

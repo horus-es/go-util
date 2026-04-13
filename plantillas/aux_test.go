@@ -49,6 +49,7 @@ type tFactura struct {
 	VatRate     float64 `json:",omitempty"`
 	Vat         float64 `json:",omitempty"`
 	Total       float64 `json:",omitempty"`
+	Url         string  `json:",omitempty"`
 	Stay        tStay
 	Lines       []tLinea
 	Transaction tTransaction
@@ -88,6 +89,7 @@ var factura = tFactura{
 		Method: "VISA 1234",
 	},
 	Additional: map[string]string{"CUFE": "dd83bc58ab454dd7b90dce6fe61da574e20d24b79aa340b38fc1d25567fc69baf50b5e366528413ea67fbc15599ec0e5"},
+	Url:        "/plantillas/invoice.json",
 }
 
 func crc(t *testing.T, fn string, start, end string) uint32 {

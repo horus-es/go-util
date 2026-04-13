@@ -28,6 +28,7 @@ import (
 	"os/exec"
 	"path"
 	"reflect"
+	"regexp"
 	"strings"
 	"time"
 
@@ -127,6 +128,7 @@ func MergeXhtmlTemplate(name, xhtml string, datos any, assets string, ff formato
 func thTemplate(name, template, assets string) (string, error) {
 	doc := etree.NewDocument()
 	doc.ReadSettings.Entity = map[string]string{"nbsp": "\u00A0"}
+	template, scripts := extractScripts(template)
 	err := doc.ReadFromString(template)
 	if err != nil {
 		return "", err
@@ -182,7 +184,11 @@ func thTemplate(name, template, assets string) (string, error) {
 	}
 	doc.WriteSettings.CanonicalText = true
 	doc.WriteSettings.CanonicalAttrVal = true
-	return doc.WriteToString()
+	template, err = doc.WriteToString()
+	if err != nil {
+		return "", err
+	}
+	return restoreScripts(template, scripts), nil
 }
 
 // Funcion axiliar que cambia el attributo th:attr="item" por {{accion item}}T{{end}}
@@ -251,6 +257,27 @@ func selectSpaceAttr(tag *etree.Element, space string) []*etree.Attr {
 		}
 	}
 	return result
+}
+
+var scriptRe = regexp.MustCompile(`(?is)<script\b[^>]*>.*?</script>`)
+
+// Extrae los <scripts>...</scripts> del XML para que etree no se lie
+func extractScripts(html string) (string, []string) {
+	var scripts []string
+	out := scriptRe.ReplaceAllStringFunc(html, func(s string) string {
+		scripts = append(scripts, s)
+		return fmt.Sprintf("___SCRIPT_PLACEHOLDER_%d___", len(scripts))
+	})
+	return out, scripts
+}
+
+// Inyecta los <scripts>...</scripts> en el XML
+func restoreScripts(html string, scripts []string) string {
+	for i, s := range scripts {
+		ph := fmt.Sprintf("___SCRIPT_PLACEHOLDER_%d___", i+1)
+		html = strings.ReplaceAll(html, ph, s)
+	}
+	return html
 }
 
 // Envia un correo a partir de una plantilla XHTML. Parámetros:
