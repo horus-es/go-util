@@ -1258,11 +1258,11 @@ func imprimeQR(qrData []byte, qrModulo, qrECC int) string {
 		return ""
 	}
 	var buf bytes.Buffer
-	err = qr.WriteAsSVG(go_qr.NewQrCodeImgConfig(1, 3, go_qr.WithOptimalSVG()), &buf, "#FFFFFF", "#000000")
+	err = qr.WriteAsSVG(go_qr.NewQrCodeImgConfig(1, 3, go_qr.WithOptimalSVG()), &buf)
 	if err != nil {
 		return ""
 	}
-	n := qr.GetSize() * qrModulo * 7 / 10
+	n := qr.Size() * qrModulo * 7 / 10
 	doc := etree.NewDocument()
 	doc.ReadFromBytes(buf.Bytes())
 	// eliminamos las cabeceras xml

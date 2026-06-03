@@ -146,10 +146,9 @@ func TestGin(t *testing.T) {
 			NumAvisos  int
 			FhErrores  pgtype.Timestamp
 			NumErrores int
-			Tarifas    []byte
 		}
 		var lista []item
-		postgres.GetOrderedRows(c, &lista, `SELECT p.id, p.nombre::text, o.fechas::text, p.tarifas, (SELECT MAX(p2.desde) FROM problemas p2 LEFT JOIN mensajes m ON m.codigo = p2.codigo WHERE p2.hasta IS NULL AND m.nivel = 'WARN' AND p2.parking = p.id) AS fh_avisos, (SELECT COUNT(*) FROM problemas p2 LEFT JOIN mensajes m ON m.codigo = p2.codigo WHERE p2.hasta IS NULL AND m.nivel = 'WARN' AND p2.parking = p.id) AS num_avisos, (SELECT MAX(p2.desde) FROM problemas p2 LEFT JOIN mensajes m ON m.codigo = p2.codigo WHERE p2.hasta IS NULL AND m.nivel = 'ERROR' AND p2.parking = p.id) AS fh_errores, (SELECT COUNT(*) FROM problemas p2 LEFT JOIN mensajes m ON m.codigo = p2.codigo WHERE p2.hasta IS NULL AND m.nivel = 'ERROR' AND p2.parking = p.id) AS num_errores FROM operadores o JOIN parkings p ON o.id = p.operador JOIN personal pe ON o.id = pe.operador JOIN sesiones s ON pe.id = s.empleado WHERE s.id = 'd6d8770d-5619-4a9d-9d10-95e508a35b71' ORDER BY 2`)
+		postgres.GetOrderedRows(c, &lista, `SELECT p.id, p.nombre::text, o.fechas::text, (SELECT MAX(p2.desde) FROM problemas p2 LEFT JOIN mensajes m ON m.codigo = p2.codigo WHERE p2.hasta IS NULL AND m.nivel = 'WARN' AND p2.parking = p.id) AS fh_avisos, (SELECT COUNT(*) FROM problemas p2 LEFT JOIN mensajes m ON m.codigo = p2.codigo WHERE p2.hasta IS NULL AND m.nivel = 'WARN' AND p2.parking = p.id) AS num_avisos, (SELECT MAX(p2.desde) FROM problemas p2 LEFT JOIN mensajes m ON m.codigo = p2.codigo WHERE p2.hasta IS NULL AND m.nivel = 'ERROR' AND p2.parking = p.id) AS fh_errores, (SELECT COUNT(*) FROM problemas p2 LEFT JOIN mensajes m ON m.codigo = p2.codigo WHERE p2.hasta IS NULL AND m.nivel = 'ERROR' AND p2.parking = p.id) AS num_errores FROM operadores o JOIN parkings p ON o.id = p.operador JOIN personal pe ON o.id = pe.operador JOIN sesiones s ON pe.id = s.empleado WHERE s.id = 'd6d8770d-5619-4a9d-9d10-95e508a35b71' ORDER BY 2`)
 	})
 
 	// Solicitudes
