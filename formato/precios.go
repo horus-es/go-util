@@ -17,6 +17,12 @@ const (
 	MXN Moneda = "MXN" // Pesos mexicanos
 )
 
+const (
+	ALZA  byte = '+' // Redondeo al alza
+	JUSTO byte = '~' // Redondeo al valor mas cercano
+	BAJA  byte = '-' // Redondeo a la baja
+)
+
 // Parsea un precio
 func ParsePrecio(p string, fp Moneda) (result float64, err error) {
 	s := strings.TrimSpace(p)
@@ -72,8 +78,20 @@ func PrintPrecio(v float64, fp Moneda) string {
 	return result
 }
 
-// Redondea un precio (p) usando la unidad monetaria mínima (umm)
-func RedondeaPrecio(p, umm float64) float64 {
-	f := 1 / umm
-	return math.Round(p*f) / f
+// Redondea un precio (p) usando la unidad monetaria mínima (umm). El redondeo puede ser al ALZA, a la BAJA, o al valor mas cercano(JUSTO). Los negativos se redondean igual que los positivos.
+func RedondeaPrecio(p, umm float64, tipo byte) float64 {
+	const epsilon = 0.00001
+	if p < 0 {
+		return -RedondeaPrecio(-p, umm, tipo)
+	}
+	mmu := 1 / umm
+	switch tipo {
+	case ALZA:
+		return math.Ceil(mmu*p-epsilon) / mmu
+	case BAJA:
+		return math.Floor(mmu*p+epsilon) / mmu
+	case JUSTO:
+		return math.Round(mmu*p+epsilon) / mmu
+	}
+	panic("tipo no soportado: " + string(tipo))
 }
