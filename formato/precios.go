@@ -18,9 +18,9 @@ const (
 )
 
 const (
-	ALZA  byte = '+' // Redondeo al alza
-	JUSTO byte = '~' // Redondeo al valor mas cercano
-	BAJA  byte = '-' // Redondeo a la baja
+	ALZA     string = "ALZA"     // Redondeo al alza
+	ESTANDAR string = "ESTANDAR" // Redondeo al valor mas cercano
+	BAJA     string = "BAJA"     // Redondeo a la baja
 )
 
 // Parsea un precio
@@ -79,7 +79,7 @@ func PrintPrecio(v float64, fp Moneda) string {
 }
 
 // Redondea un precio (p) usando la unidad monetaria mínima (umm). El redondeo puede ser al ALZA, a la BAJA, o al valor mas cercano(JUSTO). Los negativos se redondean igual que los positivos.
-func RedondeaPrecio(p, umm float64, tipo byte) float64 {
+func RedondeaPrecio(p, umm float64, tipo string) float64 {
 	const epsilon = 0.00001
 	if p < 0 {
 		return -RedondeaPrecio(-p, umm, tipo)
@@ -90,7 +90,7 @@ func RedondeaPrecio(p, umm float64, tipo byte) float64 {
 		return math.Ceil(mmu*p-epsilon) / mmu
 	case BAJA:
 		return math.Floor(mmu*p+epsilon) / mmu
-	case JUSTO:
+	case ESTANDAR:
 		return math.Round(mmu*p+epsilon) / mmu
 	}
 	panic("tipo no soportado: " + string(tipo))
