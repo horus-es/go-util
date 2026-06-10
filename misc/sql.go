@@ -1,18 +1,19 @@
 package misc
 
-import "strings"
+import (
+	"slices"
+	"strings"
+)
 
 // Compone parte de una clausula WHERE CAMPO IN (VALORES...)
 // Devuelve "in (VALORES...)" o "= VALOR" o "is null"
 func SqlIn(valores ...string) string {
 	lista := []string{}
-	vistos := map[string]any{}
 	for _, v := range valores {
-		_, visto := vistos[v]
-		if !visto {
-			lista = append(lista, v)
-			vistos[v] = nil
+		if v == "" || slices.Contains(lista, v) {
+			continue
 		}
+		lista = append(lista, v)
 	}
 	for k, v := range lista {
 		lista[k] = EscapeSQL(v)

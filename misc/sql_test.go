@@ -22,7 +22,6 @@ func ExampleSqlIn() {
 	sql := `select * from tabla where codigo` + misc.SqlIn(codigos[1:]...)
 	fmt.Println(sql)
 	// Output: select * from tabla where codigo in ('uno','dos','tres')
-
 }
 
 func ExampleEscapeSQL() {
