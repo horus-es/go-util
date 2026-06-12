@@ -130,7 +130,7 @@ func MergeEscPosTemplate(name, escpos string, datos any, assets string, ff forma
 			return ""
 		},
 		"PRICE": func(f float64) string {
-			return fmt.Sprintf("%10s", formato.PrintPrecio(f, fp))
+			return fmt.Sprintf("%10s", formato.PrintPrecio(f, fp, formato.DECIMALES_DEFECTO))
 		},
 	}
 	var opt string

@@ -35,22 +35,23 @@ func ExampleParsePrecio() {
 }
 
 func TestPrintPrecio(t *testing.T) {
-	assert.Equal(t, "12.345,68 €", formato.PrintPrecio(12345.6789, formato.EUR), formato.EUR)
-	assert.Equal(t, "$12,345.68", formato.PrintPrecio(12345.6789, formato.USD), formato.USD)
-	assert.Equal(t, "$12.346", formato.PrintPrecio(12345.6789, formato.COP), formato.COP)
-	assert.Equal(t, "$12.346", formato.PrintPrecio(12345.6789, formato.MXN), formato.MXN)
-	assert.Equal(t, "-$12,345.68", formato.PrintPrecio(-12345.6789, formato.USD), formato.USD)
-	assert.Equal(t, "-$12.346", formato.PrintPrecio(-12345.6789, formato.COP), formato.COP)
-	assert.Equal(t, "-$12.346", formato.PrintPrecio(-12345.6789, formato.MXN), formato.MXN)
-	assert.Equal(t, "-12.345,68 €", formato.PrintPrecio(-12345.6789, formato.EUR), formato.EUR)
-	assert.Equal(t, "345,68 €", formato.PrintPrecio(345.6789, formato.EUR), formato.EUR)
-	assert.Equal(t, "-345,68 €", formato.PrintPrecio(-345.6789, formato.EUR), formato.EUR)
-	assert.Equal(t, "-123.345,68 €", formato.PrintPrecio(-123345.6789, formato.EUR), formato.EUR)
-	assert.Equal(t, "123345.678900", formato.PrintPrecio(123345.6789, "OTRO"), "OTRO")
+	assert.Equal(t, "12.345,68 €", formato.PrintPrecio(12345.6789, formato.EUR, formato.DECIMALES_DEFECTO), formato.EUR)
+	assert.Equal(t, "$12,345.68", formato.PrintPrecio(12345.6789, formato.USD, formato.DECIMALES_DEFECTO), formato.USD)
+	assert.Equal(t, "$12.346", formato.PrintPrecio(12345.6789, formato.COP, formato.DECIMALES_DEFECTO), formato.COP)
+	assert.Equal(t, "$12.346", formato.PrintPrecio(12345.6789, formato.MXN, formato.DECIMALES_DEFECTO), formato.MXN)
+	assert.Equal(t, "-$12,345.68", formato.PrintPrecio(-12345.6789, formato.USD, formato.DECIMALES_DEFECTO), formato.USD)
+	assert.Equal(t, "-$12.346", formato.PrintPrecio(-12345.6789, formato.COP, formato.DECIMALES_DEFECTO), formato.COP)
+	assert.Equal(t, "-$12.346", formato.PrintPrecio(-12345.6789, formato.MXN, formato.DECIMALES_DEFECTO), formato.MXN)
+	assert.Equal(t, "-12.345,68 €", formato.PrintPrecio(-12345.6789, formato.EUR, formato.DECIMALES_DEFECTO), formato.EUR)
+	assert.Equal(t, "345,68 €", formato.PrintPrecio(345.6789, formato.EUR, formato.DECIMALES_DEFECTO), formato.EUR)
+	assert.Equal(t, "-345,68 €", formato.PrintPrecio(-345.6789, formato.EUR, formato.DECIMALES_DEFECTO), formato.EUR)
+	assert.Equal(t, "-123.345,68 €", formato.PrintPrecio(-123345.6789, formato.EUR, formato.DECIMALES_DEFECTO), formato.EUR)
+	assert.Equal(t, "-123.346 €", formato.PrintPrecio(-123345.6789, formato.EUR, 0), formato.EUR)
+	assert.Equal(t, "123345.678900", formato.PrintPrecio(123345.6789, "OTRO", formato.DECIMALES_DEFECTO), "OTRO")
 }
 
 func ExamplePrintPrecio() {
-	fmt.Println(formato.PrintPrecio(12345.6789, formato.EUR))
+	fmt.Println(formato.PrintPrecio(12345.6789, formato.EUR, formato.DECIMALES_DEFECTO))
 	// Output: 12.345,68 €
 }
 

@@ -92,7 +92,7 @@ func MergeXhtmlTemplate(name, xhtml string, datos any, assets string, ff formato
 			return ""
 		},
 		"PRICE": func(f float64) string {
-			return formato.PrintPrecio(f, fp)
+			return formato.PrintPrecio(f, fp, formato.DECIMALES_DEFECTO)
 		},
 		"BR": func(s string) template.HTML {
 			// Cambia los saltos de línea por <br/>

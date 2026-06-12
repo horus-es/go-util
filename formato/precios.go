@@ -5,6 +5,8 @@ import (
 	"math"
 	"strconv"
 	"strings"
+
+	"github.com/horus-es/go-util/v3/errores"
 )
 
 // https://en.wikipedia.org/wiki/ISO_4217
@@ -54,23 +56,34 @@ func ParsePrecio(p string, fp Moneda) (result float64, err error) {
 	return
 }
 
-// Imprime un precio
-func PrintPrecio(v float64, fp Moneda) string {
+const DECIMALES_DEFECTO = 1000
+
+// Imprime un precio. Si decimales=DEFAULT use sa el valor por defecto de la moneda.
+func PrintPrecio(v float64, fp Moneda, decimales int) string {
 	var result string
 	switch fp {
 	case EUR:
-		result = PrintNumero(v, 2, ",", ".") + " €"
+		if decimales == DECIMALES_DEFECTO {
+			decimales = 2
+		}
+		result = PrintNumero(v, decimales, ",", ".") + " €"
 	case USD:
+		if decimales == DECIMALES_DEFECTO {
+			decimales = 2
+		}
 		if v >= 0 {
-			result = "$" + PrintNumero(v, 2, ".", ",")
+			result = "$" + PrintNumero(v, decimales, ".", ",")
 		} else {
-			result = "-$" + PrintNumero(-v, 2, ".", ",")
+			result = "-$" + PrintNumero(-v, decimales, ".", ",")
 		}
 	case COP, MXN:
+		if decimales == DECIMALES_DEFECTO {
+			decimales = 0
+		}
 		if v >= 0 {
-			result = "$" + PrintNumero(v, 0, ",", ".")
+			result = "$" + PrintNumero(v, decimales, ",", ".")
 		} else {
-			result = "-$" + PrintNumero(-v, 0, ",", ".")
+			result = "-$" + PrintNumero(-v, decimales, ",", ".")
 		}
 	default:
 		result = fmt.Sprintf("%f", v)
@@ -78,20 +91,31 @@ func PrintPrecio(v float64, fp Moneda) string {
 	return result
 }
 
-// Redondea un precio (p) usando la unidad monetaria mínima (umm). El redondeo puede ser al ALZA, a la BAJA, o al valor mas cercano(JUSTO). Los negativos se redondean igual que los positivos.
-func RedondeaPrecio(p, umm float64, tipo string) float64 {
-	const epsilon = 0.00001
-	if p < 0 {
-		return -RedondeaPrecio(-p, umm, tipo)
+// Redondea un precio (p) usando la unidad monetaria mínima (umm).
+// El redondeo puede ser al ALZA, a la BAJA, o al valor mas cercano(ESTANDAR).
+// Los precios negativos se redondean igual que los positivos (simetrico respecto a 0).
+// Si umm=0 no se redondea
+func RedondeaPrecio(p, um float64, tipo string) float64 {
+	if um == 0 {
+		return p
 	}
-	mmu := 1 / umm
+	if um < 0 {
+		errores.PanicIfTrue(um < 0, "unidad monetaria negativa: %f", um)
+	}
+	if p < 0 {
+		return -RedondeaPrecio(-p, um, tipo)
+	}
+	const epsilon = 0.00001
+	mu := 1 / um
 	switch tipo {
 	case ALZA:
-		return math.Ceil(mmu*p-epsilon) / mmu
+		return math.Ceil(mu*p-epsilon) / mu
 	case BAJA:
-		return math.Floor(mmu*p+epsilon) / mmu
+		return math.Floor(mu*p+epsilon) / mu
 	case ESTANDAR:
-		return math.Round(mmu*p+epsilon) / mmu
+		return math.Round(mu*p+epsilon) / mu
+	default:
+		errores.PanicIfTrue(true, "tipo no soportado: %s", tipo)
+		return p
 	}
-	panic("tipo no soportado: " + string(tipo))
 }
