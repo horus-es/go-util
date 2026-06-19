@@ -94,13 +94,23 @@ func TestParseHora(t *testing.T) {
 	assert.NoError(t, err)
 	_, err = formato.ParseHora("05-11-2021 15:16:17")
 	assert.NotNil(t, err)
+	h, err = formato.ParseHora("24:00")
+	assert.Equal(t, "24:00", formato.PrintHora(h, false))
+	assert.NoError(t, err)
+	h, err = formato.ParseHora("24:01")
+	assert.NotNil(t, err)
 }
 
 func ExampleParseHora() {
 	h, err := formato.ParseHora("12:45")
 	errores.PanicIfError(err)
 	fmt.Println(formato.PrintHora(h, false))
-	// Output: 12:45
+	h, err = formato.ParseHora("24:00")
+	errores.PanicIfError(err)
+	fmt.Println(formato.PrintHora(h, false))
+	// Output:
+	// 12:45
+	// 24:00
 }
 
 func ExamplePrintHora() {
@@ -116,7 +126,11 @@ func ExamplePrintHora() {
 func ExampleMustParseHora() {
 	h := formato.MustParseHora("15:16:17")
 	fmt.Println(formato.PrintHora(h, true))
-	// Output: 15:16:17
+	h = formato.MustParseHora("24:00")
+	fmt.Println(formato.PrintHora(h, false))
+	// Output:
+	// 15:16:17
+	// 24:00
 }
 
 func TestTimestamp(t *testing.T) {
@@ -192,10 +206,10 @@ func TestTime(t *testing.T) {
 }
 
 func ExamplePrintTime() {
-	t, err := formato.ParseTime("22:55")
+	t, err := formato.ParseTime("24:00")
 	errores.PanicIfError(err)
 	fmt.Println(formato.PrintTime(t, false))
-	// Output: 22:55
+	// Output: 24:00
 }
 
 func ExampleParseTime() {

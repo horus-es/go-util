@@ -104,14 +104,21 @@ func MustParseFechaHora(s string) time.Time {
 	return result
 }
 
-// Parsea una hora
+// Parsea una hora, admite formato 24:00 por compatibilidad con pg
 func ParseHora(s string) (result time.Time, err error) {
+	var offset time.Duration
+	if s == "24:00:00" || s == "24:00" {
+		result = time.Date(0, 1, 2, 0, 0, 0, 0, time.UTC)
+		return
+	}
 	result, err = time.Parse("15:04:05", s)
 	if err == nil {
+		result = result.Add(offset)
 		return
 	}
 	result, err = time.Parse("15:04", s)
 	if err == nil {
+		result = result.Add(offset)
 		return
 	}
 	err = fmt.Errorf("hora %q no reconocida", s)
@@ -158,8 +165,8 @@ func ParseTime(s string) (result pgtype.Time, err error) {
 	}
 	fh, err := ParseHora(s)
 	if err == nil {
-		medianoche := time.Date(fh.Year(), fh.Month(), fh.Day(), 0, 0, 0, 0, fh.Location())
-		result.Microseconds = fh.Sub(medianoche).Microseconds()
+		goDuration := fh.Sub(time.Date(0, 1, 1, 0, 0, 0, 0, time.UTC))
+		result.Microseconds = goDuration.Microseconds()
 		result.Valid = true
 	}
 	return
@@ -191,11 +198,18 @@ func PrintFecha(fh time.Time, ff Fecha) string {
 	}
 }
 
-// Imprime una hora
+// Imprime una hora. Si no tiene fecha se permite 24:00
 func PrintHora(fh time.Time, secs bool) string {
+	h24 := time.Date(0, 1, 2, 0, 0, 0, 0, time.UTC)
 	if secs {
+		if fh.Equal(h24) {
+			return "24:00:00"
+		}
 		return fh.Format("15:04:05")
 	} else {
+		if fh.Equal(h24) {
+			return "24:00"
+		}
 		return fh.Format("15:04")
 	}
 }
@@ -221,6 +235,7 @@ func PrintTime(fh pgtype.Time, secs bool) string {
 	if !fh.Valid {
 		return ""
 	}
-	f := time.Date(2000, 01, 01, 0, 0, 0, int(fh.Microseconds)*1000, time.UTC)
-	return PrintHora(f, secs)
+	h := time.Date(0, 1, 1, 0, 0, 0, 0, time.UTC)
+	h = h.Add(time.Duration(fh.Microseconds) * time.Microsecond)
+	return PrintHora(h, secs)
 }
