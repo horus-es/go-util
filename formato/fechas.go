@@ -145,6 +145,13 @@ func ParseTimestamp(s string, ff Fecha) (result pgtype.Timestamp, err error) {
 	return
 }
 
+// Parsea una fecha+hora a pgtype.Timestamp. Mismas consideraciones que ParseFechaHora. Los vacios se consideran null.
+func MustParseTimestamp(s string, ff Fecha) pgtype.Timestamp {
+	result, err := ParseTimestamp(s, ff)
+	errores.PanicIfError(err)
+	return result
+}
+
 // Parsea una fecha a pgtype.Date. Mismas consideraciones que ParseFechaHora. Los vacios se consideran null.
 func ParseDate(s string, ff Fecha) (result pgtype.Date, err error) {
 	if s == "" {
@@ -156,6 +163,13 @@ func ParseDate(s string, ff Fecha) (result pgtype.Date, err error) {
 		result.Valid = true
 	}
 	return
+}
+
+// Parsea una fecha a pgtype.Date. Mismas consideraciones que ParseFechaHora. Los vacios se consideran null.
+func MustParseDate(s string, ff Fecha) pgtype.Date {
+	result, err := ParseDate(s, ff)
+	errores.PanicIfError(err)
+	return result
 }
 
 // Parsea una hora a pgtype.Time. Mismas consideraciones que ParseFechaHora. Los vacios se consideran null.
@@ -170,6 +184,13 @@ func ParseTime(s string) (result pgtype.Time, err error) {
 		result.Valid = true
 	}
 	return
+}
+
+// Parsea una hora a pgtype.Time. Mismas consideraciones que ParseFechaHora. Los vacios se consideran null.
+func MustParseTime(s string) pgtype.Time {
+	result, err := ParseTime(s)
+	errores.PanicIfError(err)
+	return result
 }
 
 // Imprime una fecha+hora
