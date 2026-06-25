@@ -20,6 +20,7 @@ package plantillas
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"fmt"
 	"html/template"
@@ -383,11 +384,16 @@ func GenerateXhtmlPdf(name, xhtml string, datos any, assets string, ff formato.F
 	// Ejecución wkhtmltopdf
 	args := append([]string{"-q", "--enable-local-file-access"}, opciones...)
 	args = append(args, tmp.Name(), out)
-	cmd := exec.Command("wkhtmltopdf", args...)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second) // timeout de 1 minuto, de momento hardcodeado
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "wkhtmltopdf", args...)
 	var log bytes.Buffer
 	cmd.Stdout = &log
 	cmd.Stderr = &log
 	err = cmd.Run()
+	if ctx.Err() == context.DeadlineExceeded {
+		return fmt.Errorf("timeout")
+	}
 	if err != nil {
 		if log.Len() > 0 {
 			return fmt.Errorf("%s: %s", name, log.String())
