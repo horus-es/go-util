@@ -362,6 +362,7 @@ func SendXhtmlMail(name, xhtml string, datos any, assets string, ff formato.Fech
 //   - out: fichero PDF de salida
 //   - opciones: opciones adicionales utilidad wkhtmltopdf (ver https://wkhtmltopdf.org/usage/wkhtmltopdf.txt)
 func GenerateXhtmlPdf(name, xhtml string, datos any, assets string, ff formato.Fecha, fp formato.Moneda, out string, opciones ...string) error {
+	// TODO: evaluar alternativa https://github.com/benoitkugler/go-weasyprint
 	// Procesa la plantilla XHTML
 	body, err := MergeXhtmlTemplate(name, xhtml, datos, assets, ff, fp)
 	if err != nil {
