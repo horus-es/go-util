@@ -51,7 +51,7 @@ func InitPool(connectString string, logger *logger.Logger) {
 func StartTX(c *gin.Context) {
 	ts := time.Now()
 	chanTxs <- true
-	tx, err := dbPool.BeginTx(dbCtx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead})
+	tx, err := dbPool.BeginTx(dbCtx, pgx.TxOptions{IsoLevel: pgx.ReadCommitted}) // PL: lo cambio de RepeatableRead a ReadCommitted para evitar: could not serialize access due to concurrent update SQLSTATE 40001
 	if err != nil {
 		errores.PanicIfError(err, "StartTX")
 	}
