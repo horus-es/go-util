@@ -99,9 +99,7 @@ func RedondeaPrecio(p, um float64, tipo string) float64 {
 	if um == 0 {
 		return p
 	}
-	if um < 0 {
-		errores.PanicIfTrue(um < 0, "unidad monetaria negativa: %f", um)
-	}
+	errores.PanicIfTrue(um < 0, "unidad monetaria negativa: %f", um)
 	if p < 0 {
 		return -RedondeaPrecio(-p, um, tipo)
 	}
