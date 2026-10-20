@@ -168,3 +168,16 @@ func ExampleGenerateEscPosPdf() {
 	fmt.Println("Generado fichero recibo.pdf")
 	// Output: Generado fichero recibo.pdf
 }
+
+func TestMergeEscPosTemplate2(t *testing.T) {
+	p, err := os.ReadFile("plantilla2.escpos")
+	assert.NoError(t, err)
+	f, err := plantillas.MergeEscPosTemplate("plantilla2.escpos", string(p), factura, "", formato.DMA, formato.EUR)
+	assert.NoError(t, err)
+	err = os.WriteFile("escpos_test2_out.escpos", []byte(f), 0666)
+	assert.NoError(t, err)
+	//os.WriteFile("escpos_test2_expect.escpos", []byte(f), 0666)
+	crc1 := crc(t, "escpos_test2_expect.escpos", "", "")
+	crc2 := crc(t, "escpos_test2_out.escpos", "", "")
+	assert.Equal(t, crc1, crc2)
+}

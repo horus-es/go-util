@@ -116,6 +116,6 @@ func GetBarcodeBARS(code string, kind KIND) (bars, hri string, err error) {
 	case CODABAR:
 		return barcodeCODABAR(code)
 	default:
-		return "", "", fmt.Errorf("unsuported type %q", kind)
+		return "", "", fmt.Errorf("unsuported type %d", kind)
 	}
 }

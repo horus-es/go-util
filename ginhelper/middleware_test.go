@@ -19,7 +19,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-// NOTA: pot motivos misteriosos, este test pasa con 'run test' o con 'debug test' pero falla con 'run package tests' o con 'go test ./... -count=1' (go1.25.3: parece que tiene que ver con la captura de stdout/stderr).
+// NOTA: por motivos misteriosos, este test pasa con 'run test' o con 'debug test' pero falla con 'run package tests' o con 'go test ./... -count=1' (go1.25.3: parece que tiene que ver con la captura de stdout/stderr).
 // De momento comento las llamadas a logger para soslayar este problema
 func Example() {
 	// Borramos el fichero de log para el ejemplo
@@ -102,7 +102,7 @@ func Example() {
 	// ==================================================
 	// INFO: POST /multipart
 	// INFO: Content-Type: multipart/form-data
-	// INFO: Content-Length: 538
+	// INFO: Content-Length: 554
 	// INFO: HTTP 201 Created - 0ms
 	// INFO: {}
 	// ==================================================
@@ -143,16 +143,17 @@ func TestGin(t *testing.T) {
 	router.GET("/gin_test", func(c *gin.Context) {
 
 		type item struct {
-			Id         pgtype.UUID
-			Nombre     string
-			Fechas     formato.Fecha
-			FhAvisos   pgtype.Timestamp
-			NumAvisos  int
-			FhErrores  pgtype.Timestamp
-			NumErrores int
+			Id            pgtype.UUID
+			Nombre        string
+			Fechas        formato.Fecha
+			FhAvisos      pgtype.Timestamp
+			NumAvisos     int
+			FhErrores     pgtype.Timestamp
+			NumErrores    int
+			Integraciones []byte
 		}
 		var lista []item
-		postgres.GetOrderedRows(c, &lista, `SELECT p.id, p.nombre::text, o.fechas::text, (SELECT MAX(p2.desde) FROM problemas p2 LEFT JOIN mensajes m ON m.codigo = p2.codigo WHERE p2.hasta IS NULL AND m.nivel = 'WARN' AND p2.parking = p.id) AS fh_avisos, (SELECT COUNT(*) FROM problemas p2 LEFT JOIN mensajes m ON m.codigo = p2.codigo WHERE p2.hasta IS NULL AND m.nivel = 'WARN' AND p2.parking = p.id) AS num_avisos, (SELECT MAX(p2.desde) FROM problemas p2 LEFT JOIN mensajes m ON m.codigo = p2.codigo WHERE p2.hasta IS NULL AND m.nivel = 'ERROR' AND p2.parking = p.id) AS fh_errores, (SELECT COUNT(*) FROM problemas p2 LEFT JOIN mensajes m ON m.codigo = p2.codigo WHERE p2.hasta IS NULL AND m.nivel = 'ERROR' AND p2.parking = p.id) AS num_errores FROM operadores o JOIN parkings p ON o.id = p.operador JOIN personal pe ON o.id = pe.operador JOIN sesiones s ON pe.id = s.empleado WHERE s.id = 'd6d8770d-5619-4a9d-9d10-95e508a35b71' ORDER BY 2`)
+		postgres.GetOrderedRows(c, &lista, `SELECT p.id, p.nombre::text, o.fechas::text, p.integraciones, (SELECT MAX(p2.desde) FROM problemas p2 LEFT JOIN mensajes m ON m.codigo = p2.codigo WHERE p2.hasta IS NULL AND m.nivel = 'WARN' AND p2.parking = p.id) AS fh_avisos, (SELECT COUNT(*) FROM problemas p2 LEFT JOIN mensajes m ON m.codigo = p2.codigo WHERE p2.hasta IS NULL AND m.nivel = 'WARN' AND p2.parking = p.id) AS num_avisos, (SELECT MAX(p2.desde) FROM problemas p2 LEFT JOIN mensajes m ON m.codigo = p2.codigo WHERE p2.hasta IS NULL AND m.nivel = 'ERROR' AND p2.parking = p.id) AS fh_errores, (SELECT COUNT(*) FROM problemas p2 LEFT JOIN mensajes m ON m.codigo = p2.codigo WHERE p2.hasta IS NULL AND m.nivel = 'ERROR' AND p2.parking = p.id) AS num_errores FROM operadores o JOIN parkings p ON o.id = p.operador JOIN personal pe ON o.id = pe.operador JOIN sesiones s ON pe.id = s.empleado WHERE s.id = 'd6d8770d-5619-4a9d-9d10-95e508a35b71' ORDER BY 2`)
 	})
 
 	// Solicitudes

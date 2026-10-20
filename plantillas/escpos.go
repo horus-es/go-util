@@ -71,6 +71,7 @@ import (
 	"strings"
 	"text/template"
 	"time"
+	"unicode/utf8"
 
 	"github.com/beevik/etree"
 	"github.com/horus-es/go-util/v3/barcode"
@@ -132,6 +133,29 @@ func MergeEscPosTemplate(name, escpos string, datos any, assets string, ff forma
 		"PRICE": func(f float64) string {
 			return fmt.Sprintf("%10s", formato.PrintPrecio(f, fp, formato.DECIMALES_DEFECTO))
 		},
+		"FILL": func(width int, left, right, fill string) string {
+			l := utf8.RuneCountInString(reCualquiera.ReplaceAllString(left, ""))
+			r := utf8.RuneCountInString(reCualquiera.ReplaceAllString(right, ""))
+			w := width - l - r
+			if w <= 0 {
+				return left + right
+			}
+			if fill == "" {
+				fill = " "
+			}
+			f := []rune(fill)
+			relleno := make([]rune, w)
+			for i := range relleno {
+				relleno[i] = f[i%len(f)]
+			}
+			return left + string(relleno) + right
+		},
+		"PERIODS": func(dividendo, divisor int) int {
+			return ((dividendo - 1) / divisor) + 1
+		},
+		"CONTAINS": func(objeto any, algo string) bool {
+			return strings.Contains(fmt.Sprintf("%+v", objeto), algo)
+		},
 	}
 	var opt string
 	if reflect.TypeOf(datos).Kind() == reflect.Map {
@@ -169,6 +193,9 @@ var reQrEccEscPos = regexp.MustCompile(`{qr-ecc (L|M|Q|H)}`)
 var reQrEscPos = regexp.MustCompile(`{qr ([^{}]+)}`)
 var reQrAnyEscPos = regexp.MustCompile(`{qr-modulo ([0-9]+)}|{qr-ecc (L|M|Q|H)}|{qr ([^{}]+)}`)
 var reImgEscPos = regexp.MustCompile(`{img ([^{}]+)}`)
+
+// Cualquiera de los anteriores
+var reCualquiera = regexp.MustCompile(`{[whsbuioxlrc]*}|{reset}|{full-cut}|{partial-cut}|{form-feed}|{paper-width ([0-9]+)}|{bc-height ([0-9]+)}|{bc-modulo ([0-9]+)}|{bc-hri (none|above|below|both)}|{(code128|code128a|code128b|code128c|itf|upc-a|upc-e|ean-13|ean-8|code39|code93|codabar) ([^{}]+)}|{qr-modulo ([0-9]+)}|{qr-ecc (L|M|Q|H)}|{qr ([^{}]+)}|{qr-modulo ([0-9]+)}|{qr-ecc (L|M|Q|H)}|{qr ([^{}]+)}|{img ([^{}]+)}`)
 
 const (
 	TAB   = byte(0x09)

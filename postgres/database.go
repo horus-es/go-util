@@ -118,7 +118,7 @@ func GetOneRow(c *gin.Context, dst any, query string, params ...any) {
 	defer rows.Close()
 	err = pgxscan.ScanOne(dst, rows)
 	errores.PanicIfError(err, "GetOneRow: %s", limpio)
-	dbLog.Infof(c, limpio)
+	dbLog.Infof(c, limpio+firstComment(dst))
 }
 
 // Función de utilidad para consultas que solo pueden devolver una (resultado true)
@@ -145,7 +145,7 @@ func GetOneOrZeroRows(c *gin.Context, dst any, query string, params ...any) bool
 		return false
 	}
 	errores.PanicIfError(err, "GetOneOrZeroRows: %s", limpio)
-	dbLog.Infof(c, limpio+" -- found")
+	dbLog.Infof(c, limpio+firstComment(dst))
 	return true
 }
 
@@ -173,7 +173,42 @@ func GetOrderedRows(c *gin.Context, dst any, query string, params ...any) {
 	dbLog.Infof(c, limpio+lenComment(dst))
 }
 
-// Funcion para hallar el número de items en el caso de que any sea *[]algo
+// Devuelve el primer campo de una estructura (limitado a 50 caracteres)
+func firstComment(v any) string {
+	const found = " -- found"
+	if v == nil {
+		return found
+	}
+	r := reflect.ValueOf(v)
+	for r.Kind() == reflect.Pointer || r.Kind() == reflect.Interface {
+		if r.IsNil() {
+			return found
+		}
+		r = r.Elem()
+	}
+	if r.Kind() == reflect.Struct {
+		if r.NumField() == 0 {
+			return found
+		}
+		r = r.Field(0)
+	}
+	if !r.CanInterface() {
+		return found
+	}
+	s := fmt.Sprint(r.Interface())
+	if len(s) == 0 {
+		return found
+	}
+	s = strconv.Quote(s)
+	s = s[1 : len(s)-1]
+	caracteres := []rune(s)
+	if len(caracteres) > 50 {
+		s = string(caracteres[:50]) + "..."
+	}
+	return " -- " + s
+}
+
+// Devuelve el número de items en el caso de que any sea *[]algo
 func lenComment(a any) string {
 	v := reflect.ValueOf(a)
 	if v.Kind() != reflect.Ptr {
@@ -187,7 +222,7 @@ func lenComment(a any) string {
 	if z == 1 {
 		return " -- 1 fila"
 	}
-	return fmt.Sprintf(" -- %d filas", v.Len())
+	return fmt.Sprintf(" -- %d filas", z)
 }
 
 // Función auxiliar de insert y update, que parsea especial en un mapa, puede ser:

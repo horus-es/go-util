@@ -14,14 +14,16 @@ import (
 )
 
 type T_personal struct {
-	ID            string
-	Operador      pgtype.UUID
-	Codigo        string
-	Nombre        string
-	Hash          pgtype.Text
-	Activo        bool
-	Administrador bool
-	Tag           string
+	ID              string
+	Operador        pgtype.UUID
+	Codigo          string
+	Nombre          string
+	Hash            pgtype.Text
+	Activo          bool
+	Administrador   bool
+	Tag             string
+	Perfil          string
+	Autentificacion string
 }
 
 func init() {
@@ -38,6 +40,7 @@ func init() {
 var (
 	UUIDempleado = "fe90b961-0646-4f8e-a698-d3a153abf7d2"
 	UUIDoperador = "0cec7694-eb8d-4ab2-95bb-d5d733a3be94"
+	UUIDperfil   = "a0259b5b-700d-490b-836d-7fc3eeb97344"
 	UUIDnoexiste = "fe90b951-9999-9999-9999-999999999999"
 )
 
@@ -49,8 +52,8 @@ func ExampleGetOneRow() {
 	postgres.GetOneRow(nil, &u, "select codigo,activo from personal where id=$1", UUIDempleado)
 	logger.Infof(nil, "%v", u)
 	// Output:
-	// INFO: select codigo,activo from personal where id='fe90b961-0646-4f8e-a698-d3a153abf7d2'
-	// INFO: {pablo7 true}
+	// INFO: select codigo,activo from personal where id='fe90b961-0646-4f8e-a698-d3a153abf7d2' -- fernando55
+	// INFO: {fernando55 true}
 }
 
 func TestGetOneRowSummary(t *testing.T) {
@@ -85,8 +88,8 @@ func ExampleGetOneOrZeroRows() {
 		logger.Infof(nil, "Usuario no hallado.\n")
 	}
 	// Output:
-	// INFO: select codigo,activo from personal where id='fe90b961-0646-4f8e-a698-d3a153abf7d2' -- found
-	// INFO: Hallado usuario: "pablo7"
+	// INFO: select codigo,activo from personal where id='fe90b961-0646-4f8e-a698-d3a153abf7d2' -- fernando55
+	// INFO: Hallado usuario: "fernando55"
 	// INFO: select codigo,activo from personal where id='fe90b951-9999-9999-9999-999999999999' -- not found
 	// INFO: Usuario no hallado.
 }
@@ -137,6 +140,8 @@ func TestInsertUpdateDelete(t *testing.T) {
 	p1.Nombre = "InsertRow"
 	p1.Codigo = "TestInsertUpdateDelete " + time.Now().Format("01-02-2006 15:04:05")
 	p1.Hash.Valid = true
+	p1.Perfil = UUIDperfil
+	p1.Autentificacion = "LOCAL"
 	p1.ID = postgres.InsertRow(nil, p1)
 	p2 := T_personal{}
 	postgres.GetOneRow(nil, &p2, "select * from personal where id=$1", p1.ID)
@@ -157,6 +162,8 @@ func ExampleInsertRow() {
 	u.Codigo = "TestInsert"
 	u.Nombre = "Usuario de prueba"
 	u.Activo = true
+	u.Perfil = UUIDperfil
+	u.Autentificacion = "LOCAL"
 	u.ID = postgres.InsertRow(nil, u, "hash='zecreto2023'") // Insertamos la fila sin ID, que lo genera postgres en el insert
 	postgres.DeleteRow(nil, u.ID, "personal")               // Y después la eliminamos
 	// Cambio de contraseña
@@ -166,9 +173,9 @@ func ExampleInsertRow() {
 	postgres.DeleteRow(nil, u.ID, "personal") // La volvemos a eliminar
 
 	// Output:
-	// INFO: insert into personal (operador,codigo,nombre,hash,activo,administrador,tag) values ('0cec7694-eb8d-4ab2-95bb-d5d733a3be94','TestInsert','Usuario de prueba','zecreto2023',true,false,'') returning id -- 81c11fc2-0439-4ae5-baa4-3d40716bdce3
+	// INFO: insert into personal (operador,codigo,nombre,hash,activo,administrador,tag,perfil,autentificacion) values ('0cec7694-eb8d-4ab2-95bb-d5d733a3be94','TestInsert','Usuario de prueba','zecreto2023',true,false,'','a0259b5b-700d-490b-836d-7fc3eeb97344','LOCAL') returning id -- 81c11fc2-0439-4ae5-baa4-3d40716bdce3
 	// INFO: delete from personal where id='81c11fc2-0439-4ae5-baa4-3d40716bdce3'
-	// INFO: insert into personal (id,operador,codigo,nombre,hash,activo,administrador,tag) values ('81c11fc2-0439-4ae5-baa4-3d40716bdce3','0cec7694-eb8d-4ab2-95bb-d5d733a3be94','TestInsert','Usuario de prueba','top6ecret',true,false,'') returning id -- 81c11fc2-0439-4ae5-baa4-3d40716bdce3
+	// INFO: insert into personal (id,operador,codigo,nombre,hash,activo,administrador,tag,perfil,autentificacion) values ('81c11fc2-0439-4ae5-baa4-3d40716bdce3','0cec7694-eb8d-4ab2-95bb-d5d733a3be94','TestInsert','Usuario de prueba','top6ecret',true,false,'','a0259b5b-700d-490b-836d-7fc3eeb97344','LOCAL') returning id -- 81c11fc2-0439-4ae5-baa4-3d40716bdce3
 	// INFO: delete from personal where id='81c11fc2-0439-4ae5-baa4-3d40716bdce3'
 }
 
@@ -178,12 +185,14 @@ func ExampleDeleteRow() {
 	u.Codigo = "TestDelete"
 	u.Nombre = "Usuario de prueba"
 	u.Activo = true
+	u.Perfil = UUIDperfil
+	u.Autentificacion = "LOCAL"
 	u.ID = postgres.InsertRow(nil, u, "hash='zecreto2023'")
 	logger.Infof(nil, "Una fila insertada")
 	postgres.DeleteRow(nil, u.ID, "personal")
 	logger.Infof(nil, "Una fila eliminada")
 	// Output:
-	// INFO: insert into personal (operador,codigo,nombre,hash,activo,administrador,tag) values ('0cec7694-eb8d-4ab2-95bb-d5d733a3be94','TestDelete','Usuario de prueba','zecreto2023',true,false,'') returning id -- 81c11fc2-0439-4ae5-baa4-3d40716bdce3
+	// INFO: insert into personal (operador,codigo,nombre,hash,activo,administrador,tag,perfil,autentificacion) values ('0cec7694-eb8d-4ab2-95bb-d5d733a3be94','TestDelete','Usuario de prueba','zecreto2023',true,false,'','a0259b5b-700d-490b-836d-7fc3eeb97344','LOCAL') returning id -- 81c11fc2-0439-4ae5-baa4-3d40716bdce3
 	// INFO: Una fila insertada
 	// INFO: delete from personal where id='81c11fc2-0439-4ae5-baa4-3d40716bdce3'
 	// INFO: Una fila eliminada
@@ -193,14 +202,24 @@ func ExampleUpdateRow() {
 	u := T_personal{}
 	postgres.GetOneRow(nil, &u, "select * from personal where id=$1", UUIDempleado)
 	logger.Infof(nil, "Usuario cargado")
-	u.Codigo = "pablo7"
+	u.Codigo = "pablo67"
 	postgres.UpdateRow(nil, u, "codigo")
-	logger.Infof(nil, "Nombre actualizado")
+	logger.Infof(nil, "Sólo código actualizado a pablo67")
+	u.Nombre = "Fernando Pérez"
+	postgres.UpdateRow(nil, u, "codigo='fernando3'")
+	logger.Infof(nil, "Código actualizado a fernando3 y nombre actualizado a Fernando Pérez")
+	u.Nombre = "Fernando López"
+	postgres.UpdateRow(nil, u, "nombre", "codigo='fernando55'")
+	logger.Infof(nil, "Sólo código actualizado a fernando55 y nombre actualizado a Fernando López")
 	// Output:
-	// INFO: select * from personal where id='fe90b961-0646-4f8e-a698-d3a153abf7d2'
+	// INFO: select * from personal where id='fe90b961-0646-4f8e-a698-d3a153abf7d2' -- fe90b961-0646-4f8e-a698-d3a153abf7d2
 	// INFO: Usuario cargado
-	// INFO: update personal set codigo='pablo7' where id='fe90b961-0646-4f8e-a698-d3a153abf7d2'
-	// INFO: Nombre actualizado
+	// INFO: update personal set codigo='pablo67' where id='fe90b961-0646-4f8e-a698-d3a153abf7d2'
+	// INFO: Sólo código actualizado a pablo67
+	// INFO: update personal set operador='0cec7694-eb8d-4ab2-95bb-d5d733a3be94',codigo='fernando3',nombre='Fernando Pérez',hash='',activo=true,administrador=true,tag='1234',perfil='a0259b5b-700d-490b-836d-7fc3eeb97344',autentificacion='LOCAL' where id='fe90b961-0646-4f8e-a698-d3a153abf7d2'
+	// INFO: Código actualizado a fernando3 y nombre actualizado a Fernando Pérez
+	// INFO: update personal set codigo='fernando55',nombre='Fernando López' where id='fe90b961-0646-4f8e-a698-d3a153abf7d2'
+	// INFO: Sólo código actualizado a fernando55 y nombre actualizado a Fernando López
 }
 
 func TestInsertUpdateDeleteEspecial(t *testing.T) {
@@ -209,6 +228,8 @@ func TestInsertUpdateDeleteEspecial(t *testing.T) {
 	p1.Nombre = "postgres.InsertRow"
 	p1.Codigo = "TestInsertUpdateDeleteExclude " + time.Now().Format("01-02-2006 15:04:05")
 	p1.Activo = true
+	p1.Perfil = UUIDperfil
+	p1.Autentificacion = "LOCAL"
 	p1.ID = postgres.InsertRow(nil, p1, "-hash", "activo=false")
 	p1.Activo = false
 	p1.Hash.Valid = true

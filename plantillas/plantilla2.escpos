@@ -1,0 +1,42 @@
+{paper-width 80}{cb}{{.Issuer.Name}}{}
+{c}{{.Issuer.Address}}{}
+
+{c}{{.Issuer.VatID}}{}
+________________________________________
+
+{b}FECHA:{} {{DATETIME .Transaction.Date}}
+{{- if .Recipient.Name}}
+{b}CLIENTE:{} {{.Recipient.Name}}
+
+{b}RUC/CI:{} {{.Recipient.VatID}}{{- end}}
+________________________________________
+{{if .Stay.EntryDate}}
+{{FILL 40 "{b}FECHA INGRESO:{}" (DATE .Stay.EntryDate) "·"}}
+{{FILL 40 "{b}DURACIÓN:{}" .Stay.Duration "-." }}
+{{- if .Stay.Plate}}
+{{FILL 40 "{b}PLACA:{}" .Stay.Plate "" }}
+{{- end}}{{end}}
+________________________________________
+
+{{if CONTAINS .Lines "Lavado"}}
+{{range .Lines }}
+{{.Service }}: {{.Price}}{{end}}
+{{- end}}
+
+{b}TOTAL:{} {{.Total}}
+________________________________________
+{cb}GRACIAS POR SU VISITA{}
+{{if .Stay.EntryDate}}
+{b}HORA MÁXIMA SALIDA DEL PARQUEO:{} {{TIME .Stay.EntryDate}}{{end}}
+
+{b}NUMERO DE PERIODOS DE 15 MIN:{}
+59 minutos: {{PERIODS 59 15}}
+60 minutos: {{PERIODS 60 15}}
+61 minutos: {{PERIODS 61 15}}
+
+
+{cb}* DOCUMENTO SIN VALIDEZ TRIBUTARIA *{} 
+
+
+
+{partial-cut}
