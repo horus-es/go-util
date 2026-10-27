@@ -183,11 +183,18 @@ func TestMergeEscPosTemplate2(t *testing.T) {
 }
 
 func TestRellenar(t *testing.T) {
-	left := "Descripción de un producto muy largo"
-	right := "123456789,00 €"
+	left := "Descripción del producto"
+	right := "123,45 €"
 	fill := "·"
-	width := 30
+	width := 40
 	s := plantillas.RellenaLinea(width, left, right, fill)
+	assert.Equal(t, "Descripción del producto········123,45 €", s)
+
+	left = "Descripción de un producto muy largo"
+	right = "123456789,00 €"
+	fill = "·"
+	width = 30
+	s = plantillas.RellenaLinea(width, left, right, fill)
 	assert.Equal(t, "Descripción de un producto muy\nlargo···········123456789,00 €", s)
 
 	left = "{b}Descripción de un producto muy largo{}"
