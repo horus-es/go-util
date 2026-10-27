@@ -133,29 +133,10 @@ func MergeEscPosTemplate(name, escpos string, datos any, assets string, ff forma
 		"PRICE": func(f float64) string {
 			return fmt.Sprintf("%10s", formato.PrintPrecio(f, fp, formato.DECIMALES_DEFECTO))
 		},
-		"FILL": func(width int, left, right, fill string) string {
-			l := utf8.RuneCountInString(reCualquiera.ReplaceAllString(left, ""))
-			r := utf8.RuneCountInString(reCualquiera.ReplaceAllString(right, ""))
-			w := width - l - r
-			if w <= 0 {
-				return left + right
-			}
-			if fill == "" {
-				fill = " "
-			}
-			f := []rune(fill)
-			relleno := make([]rune, w)
-			for i := range relleno {
-				relleno[i] = f[i%len(f)]
-			}
-			return left + string(relleno) + right
-		},
-		"PERIODS": func(dividendo, divisor int) int {
-			return ((dividendo - 1) / divisor) + 1
-		},
 		"CONTAINS": func(objeto any, algo string) bool {
 			return strings.Contains(fmt.Sprintf("%+v", objeto), algo)
 		},
+		"FILL": RellenaLinea,
 	}
 	var opt string
 	if reflect.TypeOf(datos).Kind() == reflect.Map {
@@ -175,6 +156,73 @@ func MergeEscPosTemplate(name, escpos string, datos any, assets string, ff forma
 		return "", err
 	}
 	return marshaled.String(), nil
+}
+
+func RellenaLinea(width int, left, right, fill string) string {
+	const minFill = 3
+
+	if fill == "" {
+		fill = " "
+	}
+
+	visibleLen := func(s string) int {
+		return utf8.RuneCountInString(
+			reCualquiera.ReplaceAllString(s, ""),
+		)
+	}
+
+	padding := func(n int) string {
+		if n <= 0 {
+			return ""
+		}
+		f := []rune(fill)
+		var b strings.Builder
+		for i := 0; i < n; i++ {
+			b.WriteRune(f[i%len(f)])
+		}
+		return b.String()
+	}
+
+	// Dividir el texto izquierdo en líneas completas.
+	var lines []string
+	line := ""
+
+	for _, word := range strings.Fields(left) {
+		candidate := word
+		if line != "" {
+			candidate = line + " " + word
+		}
+
+		if visibleLen(candidate) <= width {
+			line = candidate
+		} else {
+			if line != "" {
+				lines = append(lines, line)
+			}
+			line = word
+		}
+	}
+
+	// Añadir el texto derecho, con un mínimo de 3 rellenos.
+	if visibleLen(line)+visibleLen(right)+minFill <= width {
+		lines = append(lines,
+			line+padding(width-visibleLen(line)-visibleLen(right))+right,
+		)
+	} else {
+		// Completar la última línea izquierda.
+		if line != "" {
+			lines = append(lines,
+				line+padding(width-visibleLen(line)),
+			)
+		}
+
+		// Texto derecho en una línea independiente.
+		lines = append(lines,
+			padding(width-visibleLen(right))+right,
+		)
+	}
+
+	return strings.Join(lines, "\n")
 }
 
 // Expresiones regulares esc/pos

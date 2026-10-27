@@ -181,3 +181,41 @@ func TestMergeEscPosTemplate2(t *testing.T) {
 	crc2 := crc(t, "escpos_test2_out.escpos", "", "")
 	assert.Equal(t, crc1, crc2)
 }
+
+func TestRellenar(t *testing.T) {
+	left := "Descripción de un producto muy largo"
+	right := "123456789,00 €"
+	fill := "·"
+	width := 30
+	s := plantillas.RellenaLinea(width, left, right, fill)
+	assert.Equal(t, "Descripción de un producto muy\nlargo···········123456789,00 €", s)
+
+	left = "{b}Descripción de un producto muy largo{}"
+	right = "123456789,00 €"
+	fill = "·"
+	width = 30
+	s = plantillas.RellenaLinea(width, left, right, fill)
+	assert.Equal(t, "{b}Descripción de un producto muy\nlargo{}···········123456789,00 €", s)
+
+	left = "{b}Descripción de un producto{}"
+	right = "123456789,00 €"
+	fill = "·"
+	width = 30
+	s = plantillas.RellenaLinea(width, left, right, fill)
+	assert.Equal(t, "{b}Descripción de un producto{}····\n················123456789,00 €", s)
+
+	left = "{b}Descripción de un producto xxx{}"
+	right = "123456789,00 €"
+	fill = "·"
+	width = 30
+	s = plantillas.RellenaLinea(width, left, right, fill)
+	assert.Equal(t, "{b}Descripción de un producto xxx{}\n················123456789,00 €", s)
+
+	left = "{b}Descripción de un producto xxxx{}"
+	right = "123456789,00 €"
+	fill = "·"
+	width = 30
+	s = plantillas.RellenaLinea(width, left, right, fill)
+	assert.Equal(t, "{b}Descripción de un producto\nxxxx{}············123456789,00 €", s)
+
+}

@@ -29,12 +29,6 @@ ________________________________________
 {{if .Stay.EntryDate}}
 {b}HORA MÁXIMA SALIDA DEL PARQUEO:{} {{TIME .Stay.EntryDate}}{{end}}
 
-{b}NUMERO DE PERIODOS DE 15 MIN:{}
-59 minutos: {{PERIODS 59 15}}
-60 minutos: {{PERIODS 60 15}}
-61 minutos: {{PERIODS 61 15}}
-
-
 {cb}* DOCUMENTO SIN VALIDEZ TRIBUTARIA *{} 
 
 
