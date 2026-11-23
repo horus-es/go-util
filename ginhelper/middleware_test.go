@@ -59,7 +59,6 @@ func Example() {
 		// ver comentario cabecera test
 		//panic("panico inesperado")
 		c.String(409, "panico inesperado")
-
 	})
 
 	// Solicitud Ping/Pong
@@ -102,7 +101,7 @@ func Example() {
 	// ==================================================
 	// INFO: POST /multipart
 	// INFO: Content-Type: multipart/form-data
-	// INFO: Content-Length: 554
+	// INFO: Content-Length: 538
 	// INFO: HTTP 201 Created - 0ms
 	// INFO: {}
 	// ==================================================

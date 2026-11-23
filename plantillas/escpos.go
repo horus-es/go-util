@@ -179,7 +179,7 @@ func RellenaLinea(width int, left, right, fill string) string {
 		}
 		f := []rune(fill)
 		var b strings.Builder
-		for i := 0; i < n; i++ {
+		for i := range n {
 			b.WriteRune(f[i%len(f)])
 		}
 		return b.String()
