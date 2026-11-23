@@ -38,6 +38,8 @@ type tTransaction struct {
 	Method string    `json:",omitempty"`
 }
 
+type Precio float64
+
 type tFactura struct {
 	ID          string    `json:",omitempty"`
 	IssueDate   time.Time `json:",omitempty"`
@@ -48,7 +50,7 @@ type tFactura struct {
 	Base        float64 `json:",omitempty"`
 	VatRate     float64 `json:",omitempty"`
 	Vat         float64 `json:",omitempty"`
-	Total       float64 `json:",omitempty"`
+	Total       Precio  `json:",omitempty"`
 	Url         string  `json:",omitempty"`
 	Stay        tStay
 	Lines       []tLinea

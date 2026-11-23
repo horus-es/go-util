@@ -92,8 +92,10 @@ func MergeXhtmlTemplate(name, xhtml string, datos any, assets string, ff formato
 			errores.PanicIfTrue(true, "fecha %q no soportada", x)
 			return ""
 		},
-		"PRICE": func(f float64) string {
-			return formato.PrintPrecio(f, fp, formato.DECIMALES_DEFECTO)
+		"PRICE": func(x any) string {
+			rx := reflect.ValueOf(x)
+			errores.PanicIfTrue(!rx.IsValid() || rx.Kind() != reflect.Float64, "precio %q no soportado", x)
+			return formato.PrintPrecio(rx.Float(), fp, formato.DECIMALES_DEFECTO)
 		},
 		"BR": func(s string) template.HTML {
 			// Cambia los saltos de línea por <br/>

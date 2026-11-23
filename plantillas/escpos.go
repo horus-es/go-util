@@ -133,7 +133,7 @@ func MergeEscPosTemplate(name, escpos string, datos any, assets string, ff forma
 		"PRICE": func(x any) string {
 			rx := reflect.ValueOf(x)
 			errores.PanicIfTrue(!rx.IsValid() || rx.Kind() != reflect.Float64, "precio %q no soportado", x)
-			return fmt.Sprintf("%10s", formato.PrintPrecio(rx.Float(), fp, formato.DECIMALES_DEFECTO))
+			return formato.PrintPrecio(rx.Float(), fp, formato.DECIMALES_DEFECTO)
 		},
 		"CONTAINS": func(objeto any, algo string) bool {
 			return strings.Contains(fmt.Sprintf("%+v", objeto), algo)

@@ -10,8 +10,7 @@ Estancia : 148 min
 Matricula : 1708FVS
 Ticket número : 1234-ABCD
 Precio estancia : 0,00 €
-Estancia 23/08/2022 12:43 (37 min): 3,0
-0 €
+Estancia 23/08/2022 12:43 (37 min): 3,00 €
 Lavado integral vehiculo: 5,96 €
 Base imponible : 12,45 €
 I.V.A. (21%) : 2,61 €
