@@ -71,6 +71,7 @@ import (
 	"strings"
 	"text/template"
 	"time"
+	"unicode/utf8"
 
 	"github.com/beevik/etree"
 	"github.com/horus-es/go-util/v3/barcode"
@@ -134,6 +135,10 @@ func MergeEscPosTemplate(name, escpos string, datos any, assets string, ff forma
 			errores.PanicIfTrue(!rx.IsValid() || rx.Kind() != reflect.Float64, "precio %q no soportado", x)
 			return fmt.Sprintf("%10s", formato.PrintPrecio(rx.Float(), fp, formato.DECIMALES_DEFECTO))
 		},
+		"CONTAINS": func(objeto any, algo string) bool {
+			return strings.Contains(fmt.Sprintf("%+v", objeto), algo)
+		},
+		"FILL": RellenaLinea,
 	}
 	var opt string
 	if reflect.TypeOf(datos).Kind() == reflect.Map {
@@ -155,6 +160,73 @@ func MergeEscPosTemplate(name, escpos string, datos any, assets string, ff forma
 	return marshaled.String(), nil
 }
 
+func RellenaLinea(width int, left, right, fill string) string {
+	const minFill = 3
+
+	if fill == "" {
+		fill = " "
+	}
+
+	visibleLen := func(s string) int {
+		return utf8.RuneCountInString(
+			reCualquiera.ReplaceAllString(s, ""),
+		)
+	}
+
+	padding := func(n int) string {
+		if n <= 0 {
+			return ""
+		}
+		f := []rune(fill)
+		var b strings.Builder
+		for i := 0; i < n; i++ {
+			b.WriteRune(f[i%len(f)])
+		}
+		return b.String()
+	}
+
+	// Dividir el texto izquierdo en líneas completas.
+	var lines []string
+	line := ""
+
+	for _, word := range strings.Fields(left) {
+		candidate := word
+		if line != "" {
+			candidate = line + " " + word
+		}
+
+		if visibleLen(candidate) <= width {
+			line = candidate
+		} else {
+			if line != "" {
+				lines = append(lines, line)
+			}
+			line = word
+		}
+	}
+
+	// Añadir el texto derecho, con un mínimo de 3 rellenos.
+	if visibleLen(line)+visibleLen(right)+minFill <= width {
+		lines = append(lines,
+			line+padding(width-visibleLen(line)-visibleLen(right))+right,
+		)
+	} else {
+		// Completar la última línea izquierda.
+		if line != "" {
+			lines = append(lines,
+				line+padding(width-visibleLen(line)),
+			)
+		}
+
+		// Texto derecho en una línea independiente.
+		lines = append(lines,
+			padding(width-visibleLen(right))+right,
+		)
+	}
+
+	return strings.Join(lines, "\n")
+}
+
 // Expresiones regulares esc/pos
 var reEstilosEscPos = regexp.MustCompile(`{[whsbuioxlrc]*}`)
 var reResetEscPos = regexp.MustCompile(`{reset}`)
@@ -171,6 +243,9 @@ var reQrEccEscPos = regexp.MustCompile(`{qr-ecc (L|M|Q|H)}`)
 var reQrEscPos = regexp.MustCompile(`{qr ([^{}]+)}`)
 var reQrAnyEscPos = regexp.MustCompile(`{qr-modulo ([0-9]+)}|{qr-ecc (L|M|Q|H)}|{qr ([^{}]+)}`)
 var reImgEscPos = regexp.MustCompile(`{img ([^{}]+)}`)
+
+// Cualquiera de los anteriores
+var reCualquiera = regexp.MustCompile(`{[whsbuioxlrc]*}|{reset}|{full-cut}|{partial-cut}|{form-feed}|{paper-width ([0-9]+)}|{bc-height ([0-9]+)}|{bc-modulo ([0-9]+)}|{bc-hri (none|above|below|both)}|{(code128|code128a|code128b|code128c|itf|upc-a|upc-e|ean-13|ean-8|code39|code93|codabar) ([^{}]+)}|{qr-modulo ([0-9]+)}|{qr-ecc (L|M|Q|H)}|{qr ([^{}]+)}|{qr-modulo ([0-9]+)}|{qr-ecc (L|M|Q|H)}|{qr ([^{}]+)}|{img ([^{}]+)}`)
 
 const (
 	TAB   = byte(0x09)

@@ -168,3 +168,61 @@ func ExampleGenerateEscPosPdf() {
 	fmt.Println("Generado fichero recibo.pdf")
 	// Output: Generado fichero recibo.pdf
 }
+
+func TestMergeEscPosTemplate2(t *testing.T) {
+	p, err := os.ReadFile("plantilla2.escpos")
+	assert.NoError(t, err)
+	f, err := plantillas.MergeEscPosTemplate("plantilla2.escpos", string(p), factura, "", formato.DMA, formato.EUR)
+	assert.NoError(t, err)
+	err = os.WriteFile("escpos_test2_out.escpos", []byte(f), 0666)
+	assert.NoError(t, err)
+	//os.WriteFile("escpos_test2_expect.escpos", []byte(f), 0666)
+	crc1 := crc(t, "escpos_test2_expect.escpos", "", "")
+	crc2 := crc(t, "escpos_test2_out.escpos", "", "")
+	assert.Equal(t, crc1, crc2)
+}
+
+func TestRellenar(t *testing.T) {
+	left := "Descripción del producto"
+	right := "123,45 €"
+	fill := "·"
+	width := 40
+	s := plantillas.RellenaLinea(width, left, right, fill)
+	assert.Equal(t, "Descripción del producto········123,45 €", s)
+
+	left = "Descripción de un producto muy largo"
+	right = "123456789,00 €"
+	fill = "·"
+	width = 30
+	s = plantillas.RellenaLinea(width, left, right, fill)
+	assert.Equal(t, "Descripción de un producto muy\nlargo···········123456789,00 €", s)
+
+	left = "{b}Descripción de un producto muy largo{}"
+	right = "123456789,00 €"
+	fill = "·"
+	width = 30
+	s = plantillas.RellenaLinea(width, left, right, fill)
+	assert.Equal(t, "{b}Descripción de un producto muy\nlargo{}···········123456789,00 €", s)
+
+	left = "{b}Descripción de un producto{}"
+	right = "123456789,00 €"
+	fill = "·"
+	width = 30
+	s = plantillas.RellenaLinea(width, left, right, fill)
+	assert.Equal(t, "{b}Descripción de un producto{}····\n················123456789,00 €", s)
+
+	left = "{b}Descripción de un producto xxx{}"
+	right = "123456789,00 €"
+	fill = "·"
+	width = 30
+	s = plantillas.RellenaLinea(width, left, right, fill)
+	assert.Equal(t, "{b}Descripción de un producto xxx{}\n················123456789,00 €", s)
+
+	left = "{b}Descripción de un producto xxxx{}"
+	right = "123456789,00 €"
+	fill = "·"
+	width = 30
+	s = plantillas.RellenaLinea(width, left, right, fill)
+	assert.Equal(t, "{b}Descripción de un producto\nxxxx{}············123456789,00 €", s)
+
+}

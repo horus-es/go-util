@@ -40,8 +40,8 @@ func init() {
 const (
 	UUIDempleado = "fe90b961-0646-4f8e-a698-d3a153abf7d2"
 	UUIDoperador = "0cec7694-eb8d-4ab2-95bb-d5d733a3be94"
-	UUIDnoexiste = "fe90b951-9999-9999-9999-999999999999"
 	UUIDperfil   = "a0259b5b-700d-490b-836d-7fc3eeb97344"
+	UUIDnoexiste = "fe90b951-9999-9999-9999-999999999999"
 )
 
 func ExampleGetOneRow() {
@@ -52,8 +52,8 @@ func ExampleGetOneRow() {
 	postgres.GetOneRow(nil, &u, "select codigo,activo from personal where id=$1", UUIDempleado)
 	logger.Infof(nil, "%v", u)
 	// Output:
-	// INFO: select codigo,activo from personal where id='fe90b961-0646-4f8e-a698-d3a153abf7d2'
-	// INFO: {pablo7 true}
+	// INFO: select codigo,activo from personal where id='fe90b961-0646-4f8e-a698-d3a153abf7d2' -- fernando55
+	// INFO: {fernando55 true}
 }
 
 func TestGetOneRowSummary(t *testing.T) {
@@ -88,8 +88,8 @@ func ExampleGetOneOrZeroRows() {
 		logger.Infof(nil, "Usuario no hallado.\n")
 	}
 	// Output:
-	// INFO: select codigo,activo from personal where id='fe90b961-0646-4f8e-a698-d3a153abf7d2' -- found
-	// INFO: Hallado usuario: "pablo7"
+	// INFO: select codigo,activo from personal where id='fe90b961-0646-4f8e-a698-d3a153abf7d2' -- fernando55
+	// INFO: Hallado usuario: "fernando55"
 	// INFO: select codigo,activo from personal where id='fe90b951-9999-9999-9999-999999999999' -- not found
 	// INFO: Usuario no hallado.
 }
@@ -202,14 +202,24 @@ func ExampleUpdateRow() {
 	u := T_personal{}
 	postgres.GetOneRow(nil, &u, "select * from personal where id=$1", UUIDempleado)
 	logger.Infof(nil, "Usuario cargado")
-	u.Codigo = "pablo7"
+	u.Codigo = "pablo67"
 	postgres.UpdateRow(nil, u, "codigo")
-	logger.Infof(nil, "Nombre actualizado")
+	logger.Infof(nil, "Sólo código actualizado a pablo67")
+	u.Nombre = "Fernando Pérez"
+	postgres.UpdateRow(nil, u, "codigo='fernando3'")
+	logger.Infof(nil, "Código actualizado a fernando3 y nombre actualizado a Fernando Pérez")
+	u.Nombre = "Fernando López"
+	postgres.UpdateRow(nil, u, "nombre", "codigo='fernando55'")
+	logger.Infof(nil, "Sólo código actualizado a fernando55 y nombre actualizado a Fernando López")
 	// Output:
-	// INFO: select * from personal where id='fe90b961-0646-4f8e-a698-d3a153abf7d2'
+	// INFO: select * from personal where id='fe90b961-0646-4f8e-a698-d3a153abf7d2' -- fe90b961-0646-4f8e-a698-d3a153abf7d2
 	// INFO: Usuario cargado
-	// INFO: update personal set codigo='pablo7' where id='fe90b961-0646-4f8e-a698-d3a153abf7d2'
-	// INFO: Nombre actualizado
+	// INFO: update personal set codigo='pablo67' where id='fe90b961-0646-4f8e-a698-d3a153abf7d2'
+	// INFO: Sólo código actualizado a pablo67
+	// INFO: update personal set operador='0cec7694-eb8d-4ab2-95bb-d5d733a3be94',codigo='fernando3',nombre='Fernando Pérez',hash='',activo=true,administrador=true,tag='1234',perfil='a0259b5b-700d-490b-836d-7fc3eeb97344',autentificacion='LOCAL' where id='fe90b961-0646-4f8e-a698-d3a153abf7d2'
+	// INFO: Código actualizado a fernando3 y nombre actualizado a Fernando Pérez
+	// INFO: update personal set codigo='fernando55',nombre='Fernando López' where id='fe90b961-0646-4f8e-a698-d3a153abf7d2'
+	// INFO: Sólo código actualizado a fernando55 y nombre actualizado a Fernando López
 }
 
 func TestInsertUpdateDeleteEspecial(t *testing.T) {
