@@ -2,13 +2,11 @@ package plantillas_test
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"testing"
-	"time"
 
-	"github.com/davrux/go-smtptester"
+	"github.com/chrj/smtpd/v2/smtptest"
 	"github.com/horus-es/go-util/v3/errores"
 	"github.com/horus-es/go-util/v3/formato"
 	"github.com/horus-es/go-util/v3/plantillas"
@@ -83,15 +81,9 @@ func ExampleGenerateXhtmlPdf() {
 
 func TestSendXhtmlMail(t *testing.T) {
 	// servidor SMTP dummy
-	s := smtptester.Standard()
-	go func() {
-		err := s.ListenAndServe()
-		if err != nil {
-			log.Printf("smtp server response %s", err)
-		}
-	}()
+	rec := &smtptest.Recorder{}
+	s := smtptest.NewServer(rec.Handler)
 	defer s.Close()
-	time.Sleep(time.Second * 10) // Tiempo para deshabilitar el fw de windows
 	// cargamos plantilla
 	plantilla, err := os.ReadFile("plantilla.html")
 	assert.NoError(t, err)
@@ -101,13 +93,11 @@ func TestSendXhtmlMail(t *testing.T) {
 	bcc := "pablo.leon100@gmail.com"
 	err = plantillas.SendXhtmlMail("plantilla.html", string(plantilla), factura, "https://spark2.horus.es/assets", formato.DMA, formato.EUR, []string{"xhtml_test_expect.pdf"},
 		from, to, "Prueba de correo", []string{bcc}, []string{bcc},
-		"localhost", 2525, "smtpuser", "c2VjcmV0bw==")
+		"localhost", s.Port, "smtpuser", "c2VjcmV0bw==")
 	assert.NoError(t, err)
 	// comparamos
-	eml, ok := smtptester.GetBackend(s).Load(from, []string{to, bcc})
-	if !ok {
-		t.Fatal("Correo no transmitido")
-	}
+	assert.Equal(t, 1, len(rec.Messages()))
+	eml := rec.Messages()[0]
 	err = os.WriteFile("xhtml_test_out.eml", eml.Data, 0666)
 	assert.NoError(t, err)
 	//os.WriteFile("xhtml_test_expect.eml", eml.Data, 0666)

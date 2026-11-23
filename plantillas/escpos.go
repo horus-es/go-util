@@ -129,8 +129,10 @@ func MergeEscPosTemplate(name, escpos string, datos any, assets string, ff forma
 			errores.PanicIfTrue(true, "fecha %q no soportada", x)
 			return ""
 		},
-		"PRICE": func(f float64) string {
-			return fmt.Sprintf("%10s", formato.PrintPrecio(f, fp, formato.DECIMALES_DEFECTO))
+		"PRICE": func(x any) string {
+			rx := reflect.ValueOf(x)
+			errores.PanicIfTrue(!rx.IsValid() || rx.Kind() != reflect.Float64, "precio %q no soportado", x)
+			return fmt.Sprintf("%10s", formato.PrintPrecio(rx.Float(), fp, formato.DECIMALES_DEFECTO))
 		},
 	}
 	var opt string
